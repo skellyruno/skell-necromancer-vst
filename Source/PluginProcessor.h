@@ -49,7 +49,7 @@ private:
  std::atomic<int>osRequested{0},currentLatency{0};
  bool autoPass1Applied=false;
  double sampleRateHz=44100;int maxBlockSize=512;
- juce::SmoothedValue<float,juce::ValueSmoothingTypes::Linear> reviveSm,mixSm,inputSm,outputSm,widthSm,fadeSm,pushSm,guardSm;
+ juce::SmoothedValue<float,juce::ValueSmoothingTypes::Linear> reviveSm,mixSm,inputSm,outputSm,widthSm,fadeSm,bypassSm,pushSm,guardSm;
  std::array<juce::SmoothedValue<float,juce::ValueSmoothingTypes::Linear>,4> toneSm;
  float sideLow[2]{},wetPower=1.e-6f,dryPower=1.e-6f;int sampleCounter=0;
  std::array<float,64>monoHistory{};int monoHead=0;
