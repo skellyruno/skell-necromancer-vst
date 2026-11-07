@@ -4,7 +4,7 @@
 
 This is a complete, self-contained **source package** for a VST3 + Standalone target, starting from the structure of the `skellyruno/skell-vst-template` JUCE/CMake project. The WAV Monopoly screenshots were used as **layout and material references only**. No reference artwork, rune sprite, trademark, or DSP code has been copied.
 
-> **Status: source implemented; native JUCE compilation/DAW verification outstanding.** C++ DSP modules compile against a minimal math shim, and local numerical tests pass. That is **not** proof that the JUCE VST3/Standalone build succeeds or that its DSP meets professional audio specifications. Please run the GitHub build workflow or use a local JUCE SDK and test in FL Studio before release.
+> **Status:** Windows JUCE VST3/Standalone compilation and VST3 packaging have passed on an earlier revision; the latest UI/DSP changes require a fresh build result. FL Studio host-load testing, reference listening, metering conformity, and CPU benchmarks remain outstanding. Do not treat a green build as proof of mastering-grade DSP.
 
 ## Functional architecture
 
@@ -15,6 +15,8 @@ There is also a delayed dry reference for `BYPASS` and level-matched `DELTA LIST
 ### Implemented controls
 
 - Main REANIMATE (default 65%), REVIVE ON, BYPASS, AUTO, VOCAL / MASTER / BUS.
+- Compact window now opens at **S 70%** (approximately **810×428**) by default, including a one-time migration of older saved windows. Optional M 100%, L 125%, XL 150% remain. The first-run tour is opt-in from Help rather than blocking the title.
+- Slider/button labels use ASCII-safe text for reliable rendering with optional font fallbacks. REVIVE and full bypass transitions are smoothed; the limiter enable/disable also crossfades while preserving its lookahead delay.
 - Input, Output, LOW, MID (I/II/III ranges), HIGH, HF ADJUST; parallel MIX and optional DELTA LISTEN and gain-matched BYPASS.
 - LIMITER and PUSH (0–24 dB), -0.1/-0.3/-1.0 dBTP ceiling choices, optional soft clip; oversampling Off/2×/4×, M/S width and mono-to-stereo.
 - Stereo input/output bars with peak-hold ticks, gain-reduction, 400 ms momentary / 3 s short-term / approximate gated-integrated LUFS, and target setting (-14, -9, or custom in half-LU increments).
@@ -60,7 +62,7 @@ build/SkellNecromancer_artefacts/Release/VST3/Skell-Necromancer.vst3
 build/SkellNecromancer_artefacts/Release/Standalone/Skell-Necromancer.app
 ```
 
-Without `JUCE_PATH`, the project follows the SKELL starter template's `FetchContent` path to JUCE 8.0.12. The included `.github/workflows/build.yml` compiles Windows and macOS builds and attempts to package the outputs as Actions artifacts. This workflow has **not** been exercised against GitHub Actions yet.
+Without `JUCE_PATH`, the project follows the SKELL starter template's `FetchContent` path to JUCE 8.0.12. The included `.github/workflows/build.yml` compiles Windows VST3 and Standalone, packages the VST3, and uploads a GitHub Actions artifact. macOS is supported by local CMake/Xcode instructions but is not currently a GitHub Actions target. The workflow runs on source changes and cancels superseded runs.
 
 ## Original art assets
 
@@ -91,7 +93,7 @@ python tests/test_limiter.py
 - **Passed (independent numerical model, not the VST3):** boost-then-cut null-test for shelves/peaks at 44.1, 48, 96 kHz: residual lower than -90 dB, normally about -240 dB or lower for the test vector.
 - **Passed:** DSP header compilation and 13 seconds of synthetic audio against a minimal JUCE math/parameter shim, no NaNs/Inf, and AUTO entered its second-pass waiting state.
 - **Passed (limited artificial stress):** 4× reconstructed true-peak checks on 36 synthetic cases across 44.1/48/96 kHz with PUSH 0/12/24 dB at a -1.0 dBTP ceiling. The limiter uses a conservative safety margin. **This is not an ITU, EBU, or commercial limiter certification.**
-- **Not executed:** real JUCE build, VST3 host load, Windows/MSVC or macOS/Xcode builds, actual DAW UI rendering, LUFS validation against standard reference implementation, CPU profiling, reference vocal/master listening tests, 4× high-quality polyphase oversampling tests, sample-accurate bypass null tests through oversampling changes.
+- **Not executed for the latest changes:** confirmed final Windows VST3 build, VST3 host load, macOS/Xcode build, actual DAW UI rendering, LUFS validation against a reference implementation, CPU profiling, reference vocal/master listening tests, polyphase oversampling quality checks, bypass null tests during oversampling changes.
 
 ## Known engineering gaps / release blockers
 
