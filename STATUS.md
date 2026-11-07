@@ -2,7 +2,7 @@
 
 ## Build status
 - Earlier Windows JUCE 8 VST3 build: passed on GitHub Actions.
-- Latest compact UI/DSP plus DSP regression suite: awaiting the result of the latest Windows workflow run.
+- Latest compact UI/DSP + regression suite: **PASSED** [Windows build #42403563396](https://github.com/skellyruno/skell-necromancer-vst/actions/runs/42403563396), including CMake, plugin compilation, DSP CTest, source integrity, packaging, and uploaded Windows VST3.
 - Build success is distinct from validating sound quality, true-peak compliance, or DAW stability.
 
 ## Recent changes
