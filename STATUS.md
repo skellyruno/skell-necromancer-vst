@@ -1,22 +1,24 @@
-# Current status — 2026-11-07
+# Skell-Necromancer — engineering status (2026-11-07)
 
-Status: **source prototype, not compiled against JUCE, not verified in FL Studio**.
+## Build status
+- Earlier Windows JUCE 8 VST3 build: passed on GitHub Actions.
+- Latest compact UI/DSP plus DSP regression suite: awaiting the result of the latest Windows workflow run.
+- Build success is distinct from validating sound quality, true-peak compliance, or DAW stability.
 
-Implemented / locally smoke-tested:
-- JUCE source target, parameter skeleton, module tree, original assets
-- 4-band reciprocal EQ numerical null tests
-- tape/glue/harmonic/transient/glow DSP source, source-level DSP smoke
-- 4× true-peak detection lookahead source, synthetic stress test cases
-- LUFS streaming approximation and AUTO two-pass state/source
-- UI controls, window sizes, preset/A-B state support and CI recipe
+## Recent changes
+- Default compact 70% UI, with persisted L/XL preferences respected.
+- Preserved custom metal knobs, 3D central cap and rune ring; clearer control typography, panels, and bypass status.
+- Reduced duplicate dial paints and avoided per-sample dB conversion for input/output trims.
+- VOCAL high/air boosts now respond to stereo-linked sibilance detection and the de-ess guard amount.
+- AUTO verification now measures the processed signal using a dedicated K-weighted 3-second meter, rather than the input RMS.
+- Added Windows CTest smoke target for the DSP path, two-pass AUTO and limiter switching, with Release-safe failure checks.
+- CI triggers on Source, tests, assets and CMake changes; cancels superseded workflow runs.
 
-Release blockers:
-- Build actual JUCE target and fix any compiler/platform issues
-- Listen/benchmark on rights-cleared vocal/master clips
-- Validate true peak and LUFS vs standard references
-- Replace prototype oversampler and measure exact PDC in each mode
-- Host regression (FL Studio, Reaper, Logic, AU if later requested)
-- CPU/NaN/denormal tests at 44.1/48/96/192 kHz
-- Validate custom knobs, tooltip and preset UI in rendered plugin
+## Known limitations / release blockers
+- Prototype interpolation/decimation oversampler is not a measured mastering-quality half-band implementation.
+- True-peak detection and LUFS output require independent standard-reference testing and sample-accurate host verification.
+- Oversampling mode changes and reported latency need explicit host PDC/automation testing.
+- Real-time CPU budget, 44.1/48/96/192 kHz stress tests, live knob automation, mono/stereo tests, and listening benchmarks remain incomplete.
+- FL Studio / Reaper VST3 load, resize, preset restore and host-close tests are still outstanding.
 
-Nothing listed as a release blocker is claimed tested or complete.
+Do not market this build as production-mastering certified without these checks.
