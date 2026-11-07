@@ -2,12 +2,12 @@
 #include "RuneRing.h"
 class ReanimateDial:public juce::Slider {
 public:
- ReanimateDial() {setSliderStyle(juce::Slider::RotaryVerticalDrag);setTextBoxStyle(juce::Slider::NoTextBox,false,0,0);
+ ReanimateDial() {setRange(0.0,100.0,0.1);setValue(65.0,juce::dontSendNotification);setSliderStyle(juce::Slider::RotaryVerticalDrag);setTextBoxStyle(juce::Slider::NoTextBox,false,0,0);
  setDoubleClickReturnValue(true,65);setPopupMenuEnabled(true);setPopupDisplayEnabled(true,false,nullptr);setMouseCursor(juce::MouseCursor::PointingHandCursor);
  well=juce::ImageCache::getFromMemory(BinaryData::dial_well_png,BinaryData::dial_well_pngSize);
  cap=juce::ImageCache::getFromMemory(BinaryData::knob_cap_big_png,BinaryData::knob_cap_big_pngSize);
  setTooltip("REANIMATE blends tape weight, gentle compression, harmonic life and restored transients. Double-click returns to 65%.");}
- void setLive(float v){live=v;repaint();}
+ void setLive(float v){live=juce::jlimit(0.f,1.f,v);}
  void advance(){++frame;repaint();}
  void paint(juce::Graphics&g)override {
   g.drawImage(well,getLocalBounds().toFloat());
