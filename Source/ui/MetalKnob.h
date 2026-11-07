@@ -25,10 +25,10 @@ public:
       g.addTransform(juce::AffineTransform::rotation(a,cx,cy));g.drawImage(small,juce::Rectangle<float>(cx-r,cy-r,r*2,r*2));}
   else{g.setColour(Theme::border);g.fillEllipse(cx-r,cy-r,2*r,2*r);}
   if(isMouseOverOrDragging()){g.setColour(Theme::green.withAlpha(.8f));g.drawEllipse(cx-r-2,cy-r-2,2*r+4,2*r+4,1.f);}
-  g.setFont(Theme::mono(14));g.setColour(Theme::bone);
+  g.setFont(Theme::mono(15));g.setColour(Theme::bone);
   g.drawFittedText(juce::String(getValue(),1)+(caption=="MIX"||caption=="WIDTH"?" %":" dB"),
      juce::Rectangle<int>(0,(int)(cy+r+9),getWidth(),18),juce::Justification::centred,1);
-  g.setFont(Theme::mono(10));g.setColour(Theme::faint.brighter(.7f));
+  g.setFont(Theme::mono(12));g.setColour(Theme::bone.withAlpha(.78f));
   g.drawFittedText(caption,juce::Rectangle<int>(0,(int)(cy+r+26),getWidth(),18),juce::Justification::centred,1);
  }
 private:juce::String caption;juce::Image small;
