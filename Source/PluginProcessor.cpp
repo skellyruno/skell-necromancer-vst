@@ -71,7 +71,7 @@ void SkellNecromancerAudioProcessor::processBlock(AudioBuffer<float>& buffer,Mid
  ScopedNoDenormals noDenormals;midi.clear();const int n=buffer.getNumSamples();if(n==0)return;
  for(int i=getTotalNumInputChannels();i<buffer.getNumChannels();++i) buffer.clear(i,0,n);
  if(autoRequested.exchange(false)){
-   bool playing=true;if(auto*playHead=getPlayHead())if(auto pos=playHead->getPosition())playing=pos->getIsPlaying().value_or(false);
+   bool playing=true;if(auto*playHead=getPlayHead())if(auto pos=playHead->getPosition())playing=pos->getIsPlaying();
    if(playing){
      if(analyzer.getState()==NecroDSP::AutoAnalyzer::needsReplay)analyzer.startVerification();
      else analyzer.start();
