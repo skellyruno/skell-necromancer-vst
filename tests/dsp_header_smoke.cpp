@@ -21,5 +21,21 @@ int main(){
  }
  std::cout<<"DSP smoke OK | GR="<<limiter.reduction()<<" | LUFS="<<loud.s()<<" | auto state="<<autoAnalyzer.getState()<<"\n";
  assert(autoAnalyzer.getState()==NecroDSP::AutoAnalyzer::needsReplay);
+ // Second AUTO pass must measure a processed (not raw) stereo program via K weighting.
+ autoAnalyzer.startVerification();
+ for(int n=0;n<48000*3;++n) {
+   const float x=.12f*std::sin(2*juce::MathConstants<double>::pi*820*n/48000);
+   autoAnalyzer.push(x,x*.88f);
+ }
+ assert(autoAnalyzer.getState()==NecroDSP::AutoAnalyzer::complete);
+ const float verifyLufs=autoAnalyzer.getReplayLufs();
+ assert(std::isfinite(verifyLufs) && verifyLufs>-55.f && verifyLufs<0.f);
+ std::cout<<"AUTO verification short-term LUFS="<<verifyLufs<<"\n";
+ // Limiter ON/OFF fades should not produce infinities or reset its lookahead ring.
+ limiter.set(false,6.f,-.3f,false);
+ for(int n=0;n<48000/5;++n){
+   l=.2f*std::sin(2*juce::MathConstants<double>::pi*1200*n/48000);
+   r=l;limiter.process(l,r);assert(std::isfinite(l)&&std::isfinite(r));
+ }
  return 0;
 }
