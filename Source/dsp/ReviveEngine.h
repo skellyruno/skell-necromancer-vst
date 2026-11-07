@@ -22,6 +22,7 @@ public:
   l=life.process(0,l);r=life.process(1,r);glow.process(l,r);
  }
  float getGainReduction() const noexcept {return glue.getGainReduction();}
+ float sibilanceStrength() const noexcept {return life.sibilanceStrength();}
 private:TapeStage tape;GlueStage glue;HarmonicLife life;TransientRestore transient;Glow glow;
 };
 }
