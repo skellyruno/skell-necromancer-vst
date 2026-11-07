@@ -28,7 +28,7 @@ public:
     const float heldPos=(float)barH*(1.f-value(held[c]));
     g.setColour(Theme::greenLight);g.fillRect((float)barX,heldPos,13.f,1.5f);
   }
-  for(int d:{0,-6,-12,-24,-48}){const float f=value((float)d);int y=(int)((getHeight()-25)*(1-f));
+  for(int d:{0,-6,-12,-24,-48}){const float f=value((float)d);int y=juce::jlimit(6,getHeight()-33,(int)((getHeight()-25)*(1-f)));
    g.setFont(Theme::mono(8));g.setColour(Theme::faint.brighter(.4f));
    if(rightScale)g.drawText(juce::String(d),55,y-6,21,13,juce::Justification::centredLeft);
    else g.drawText(juce::String(d),0,y-6,20,13,juce::Justification::centredRight);
