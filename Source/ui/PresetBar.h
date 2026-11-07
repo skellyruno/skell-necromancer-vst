@@ -17,7 +17,7 @@ public:
     save.onClick=[this]{juce::String error;if(!processor.writeUserPreset(name.getText(),error))juce::AlertWindow::showMessageBoxAsync(juce::MessageBoxIconType::WarningIcon,"Preset save",error);};
     abA.onClick=[this]{processor.selectAB(0);};abB.onClick=[this]{processor.selectAB(1);};
     copy.onClick=[this]{processor.copyAB(processor.selectedSlot,1-processor.selectedSlot);};
-    setTooltip("Save user presets in Skell Audio's user application data folder. Factory and user presets load from the menu.");
+    // This panel is a plain Component, not a SettableTooltipClient.
  }
  void resized()override {
   name.setBounds(0,0,240,27);drop.setBounds(241,0,26,27);
@@ -50,9 +50,11 @@ private:
                       juce::FileBrowserComponent::openMode|juce::FileBrowserComponent::canSelectFiles,
    [safe,exportIt](const juce::FileChooser& fc){if(safe==nullptr)return;const auto f=fc.getResult();if(f==juce::File())return;
     juce::String error;
-    if(exportIt){juce::MemoryBlock data;safe->processor.getStateInformation(data);
-       auto xml=juce::getXmlFromBinary(data.getData(),(int)data.getSize());
-       if(xml&&!xml->writeTo(f))error="Could not write XML";
+    if(exportIt){
+       juce::XmlElement xml("NECRO_PRESET");
+       xml.setAttribute("name",safe->name.getText());
+       if(auto state=safe->processor.apvts.copyState().createXml()) xml.addChildElement(state.release());
+       if(!xml.writeTo(f))error="Could not write XML";
     }else safe->processor.loadUserPreset(f,error);
     if(error.isNotEmpty())juce::AlertWindow::showMessageBoxAsync(juce::MessageBoxIconType::WarningIcon,"Preset",error);
    });
