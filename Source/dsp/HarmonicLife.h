@@ -19,7 +19,8 @@ public:
   auto e=os.process(ch,upper,factor,[&](float u) noexcept {return std::tanh(u*2.6f)-u;});
   const float sibilance=(float)std::sqrt(hiRms/(midRms+1e-8));
   const float deessFactor=voice==0?1.0f-deEss*juce::jlimit(0.f,.95f,(sibilance-.3f)*1.75f):1.f;
-  return x + (float)air[ch].process(ch,e)*(a*.20f*voiceBoost*(.4f+.6f*dullness)*deessFactor);
+  const float alignedDry=os.alignDry(ch,x,factor);
+  return alignedDry+(float)air[ch].process(ch,e)*(a*.20f*voiceBoost*(.4f+.6f*dullness)*deessFactor);
  }
 private:double rate=44100,hiRms=0,midRms=0;float a=0,deEss=0;int voice=0,factor=1;std::array<Biquad,2>split,air,detectors;Oversampler os;
 };

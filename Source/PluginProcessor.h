@@ -41,7 +41,7 @@ private:
  void parameterChanged(const juce::String&,float)override {presetDirty.store(true);}void setParam(const char*,float);float param(const char*)const noexcept;
  void ensureLatency(int quality);void updateAutoResult();void writeUiDefaults();
  NecroDSP::ReviveEngine revive;NecroDSP::ToneSection tone;
- NecroDSP::TruePeakLimiter limiter;NecroDSP::SampleDelay bypassDelay,wetDelay;
+ NecroDSP::TruePeakLimiter limiter;NecroDSP::SampleDelay bypassDelay,reviveDryDelay;
  NecroDSP::LufsMeter lufs;NecroDSP::AutoAnalyzer analyzer;
  std::atomic<bool>autoRequested{false},autoCancelRequested{false},latencyChanged{false},softClipActive{false};
  std::atomic<int>autoNotice{0};

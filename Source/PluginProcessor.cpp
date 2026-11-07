@@ -51,7 +51,9 @@ bool SkellNecromancerAudioProcessor::isBusesLayoutSupported(const BusesLayout& b
 void SkellNecromancerAudioProcessor::prepareToPlay(double sr,int block){
  sampleRateHz=sr;maxBlockSize=juce::jmax(32,block);
  revive.prepare(sr);tone.prepare(sr);limiter.prepare(sr,maxBlockSize);lufs.prepare(sr);analyzer.prepare(sr);
- const int cap=juce::jmax(128,(int)std::ceil(sr*.015));bypassDelay.prepare(cap+limiter.latencySamples());wetDelay.prepare(cap);
+ const int maxReviveDelay=2*NecroDSP::Oversampler::latencyForFactor(4);
+ bypassDelay.prepare(limiter.latencySamples()+maxReviveDelay+64);
+ reviveDryDelay.prepare(maxReviveDelay+64);
  for(auto*s:{&reviveSm,&mixSm,&inputSm,&outputSm,&widthSm,&pushSm,&guardSm})s->reset(sr,.02);fadeSm.reset(sr,.010);bypassSm.reset(sr,.015);
  reviveSm.setCurrentAndTargetValue(param("reanimate")*.01f);mixSm.setCurrentAndTargetValue(param("mix")*.01f);
  inputSm.setCurrentAndTargetValue((float)NecroDSP::dbToGain(param("input")));outputSm.setCurrentAndTargetValue((float)NecroDSP::dbToGain(param("output")));widthSm.setCurrentAndTargetValue(param("width")*.01f);
@@ -64,7 +66,8 @@ void SkellNecromancerAudioProcessor::prepareToPlay(double sr,int block){
 void SkellNecromancerAudioProcessor::releaseResources(){}
 void SkellNecromancerAudioProcessor::ensureLatency(int quality){
  // Lookahead is fixed; oversampling additional delay is aligned for wet + dry.
- currentLatency=limiter.latencySamples()+(quality==0?0:quality==1?2:4);
+ const int factor=quality==0?1:quality==1?2:4;
+ currentLatency.store(limiter.latencySamples()+2*NecroDSP::Oversampler::latencyForFactor(factor));
  setLatencySamples(currentLatency.load());
 }
 void SkellNecromancerAudioProcessor::processBlock(AudioBuffer<float>& buffer,MidiBuffer& midi){
@@ -84,7 +87,14 @@ void SkellNecromancerAudioProcessor::processBlock(AudioBuffer<float>& buffer,Mid
    else {analyzer.reset();autoNotice.store(1);triggerAsyncUpdate();}
  }
  int quality=juce::jlimit(0,2,(int)param("oversampling"));
- if(quality!=osQuality){osQuality=quality;osRequested=quality;muteSamples=(int)(sampleRateHz*.025);latencyChanged.store(true);triggerAsyncUpdate();revive.reset();}
+ if(quality!=osQuality){
+    osQuality=quality;osRequested=quality;
+    const int factor=quality==0?1:quality==1?2:4;
+    currentLatency.store(limiter.latencySamples()+2*NecroDSP::Oversampler::latencyForFactor(factor));
+    muteSamples=(int)(sampleRateHz*.025);
+    bypassDelay.reset();reviveDryDelay.reset();limiter.reset();revive.reset();
+    latencyChanged.store(true);triggerAsyncUpdate();
+ }
  const int factor=quality==0?1:quality==1?2:4;
  const int mode=juce::jlimit(0,2,(int)param("mode"));
  reviveSm.setTargetValue(param("reanimate")*.01f);mixSm.setTargetValue(param("mix")*.01f);
@@ -121,7 +131,10 @@ void SkellNecromancerAudioProcessor::processBlock(AudioBuffer<float>& buffer,Mid
    }
    float revL=l,revR=r;revive.process(revL,revR);
    // The REVIVE bypass is crossfaded (10-20 ms), trim/EQ/limiter remain active.
-   const float t=parallel*fade;l=l+(revL-l)*t;r=r+(revR-r)*t;
+   float alignedL=l,alignedR=r;
+   reviveDryDelay.process(alignedL,alignedR,2*NecroDSP::Oversampler::latencyForFactor(factor));
+   const float t=parallel*fade;
+   l=alignedL+(revL-alignedL)*t;r=alignedR+(revR-alignedR)*t;
    const float rangeValue=tone.nextRangeValue();
    if(mode==1){float m=.5f*(l+r),s=.5f*(l-r);
        m=tone.process(0,m,rangeValue);s=tone.process(1,s,rangeValue);
@@ -136,7 +149,6 @@ void SkellNecromancerAudioProcessor::processBlock(AudioBuffer<float>& buffer,Mid
    }
    const float post=outputSm.getNextValue();l*=post;r*=post;
    limiter.process(l,r);
-   wetDelay.process(l,r,quality==0?0:quality==1?2:4);
    bypassDelay.process(dryL,dryR,currentLatency.load());
    const float wetSquare=.5f*(l*l+r*r),drySquare=.5f*(dryL*dryL+dryR*dryR);
    wetPower=rmsSmooth*wetPower+(1.f-rmsSmooth)*wetSquare;

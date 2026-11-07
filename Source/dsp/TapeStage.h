@@ -21,7 +21,8 @@ public:
     x/=std::max(.75f,drive*.78f);
     // Symmetric pre/post frequency shaping: the DC filter protects the host.
     const float processed=(float)dc[ch].process(ch,x);
-    return input+(processed-input)*a;
+    const float alignedDry=os.alignDry(ch,input,quality);
+    return alignedDry+(processed-alignedDry)*a;
  }
 private: double sr=44100;float a=0,lastAmount=-100.f;int quality=1,lastMode=-1;std::array<Biquad,2>dc,bump;Oversampler os;
 };

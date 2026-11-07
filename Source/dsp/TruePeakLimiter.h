@@ -32,7 +32,7 @@ public:
   while(qtail>qhead&&queue[qhead%cap].index+static_cast<uint64_t>(lookahead+9)<frame)++qhead;
   const double futurePeak=queue[qhead%cap].peak;
   ++frame;
-  const double target=std::min(1.0,ceiling*0.915/futurePeak); // conservative 4x reconstruction margin
+  const double target=std::min(1.0,ceiling*0.88/futurePeak); // measured against independent 8x reconstruction stress set
   if(target<env)env=target; else {env=releaseCoeff*env+(1-releaseCoeff)*target;}
   gr=(float)-gainToDb(env);
   const int rd=(head+ringSize-lookahead)%ringSize;
