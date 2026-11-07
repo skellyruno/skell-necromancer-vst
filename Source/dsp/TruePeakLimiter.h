@@ -7,10 +7,11 @@ class TruePeakLimiter {
 public:
  void prepare(double rate,int maxBlock) {
    sr=rate;lookahead=juce::jmax(1,(int)std::ceil(sr*.0025));
-   ring.assign((size_t)(lookahead+juce::jmax(maxBlock,32)+32)*2,0.f);ringSize=(int)ring.size()/2;queue.assign((size_t)lookahead+64,{});
+   // Keep wet and dry signals in the same lookahead ring so limiter bypass is latency matched.
+   ring.assign((size_t)(lookahead+juce::jmax(maxBlock,32)+32)*4,0.f);ringSize=(int)ring.size()/4;queue.assign((size_t)lookahead+64,{});
    history.fill({}); buildKernel();reset();
  }
- void reset() noexcept {std::fill(ring.begin(),ring.end(),0.f);history.fill({});head=0;env=1.0;gr=0;qhead=qtail=0;frame=0;}
+ void reset() noexcept {std::fill(ring.begin(),ring.end(),0.f);history.fill({});head=0;env=1.0;gr=0;qhead=qtail=0;frame=0;enabledBlend=on?1.f:0.f;}
  int latencySamples() const noexcept {return lookahead;}
  void set(bool enabled,float pushDb,float ceilingDb,bool softclip) noexcept {on=enabled;push=dbToGain(pushDb);ceiling=dbToGain(ceilingDb);clip=softclip;}
  void process(float& l,float& r) noexcept {
@@ -35,10 +36,18 @@ public:
   if(target<env)env=target; else {const double a=std::exp(-1.0/(sr*.13));env=a*env+(1-a)*target;}
   gr=(float)-gainToDb(env);
   const int rd=(head+ringSize-lookahead)%ringSize;
-  const float delayedL=ring[(size_t)rd*2],delayedR=ring[(size_t)rd*2+1];
-  ring[(size_t)head*2]=on?x[0]:dryL;ring[(size_t)head*2+1]=on?x[1]:dryR;
+  const size_t ri=(size_t)rd*4,wi=(size_t)head*4;
+  const float delayedWetL=ring[ri],delayedWetR=ring[ri+1];
+  const float delayedDryL=ring[ri+2],delayedDryR=ring[ri+3];
+  ring[wi]=x[0];ring[wi+1]=x[1];
+  ring[wi+2]=dryL;ring[wi+3]=dryR;
   head=(head+1)%ringSize;
-  l=delayedL*(on?(float)env:1.f);r=delayedR*(on?(float)env:1.f);
+  // Smooth enabling/disabling over 12 ms; preserve exactly the same lookahead.
+  const float delta=(on?1.f:0.f)-enabledBlend;
+  const float step=(float)(1.0/(sr*.012));
+  enabledBlend+=juce::jlimit(-step,step,delta);
+  l=delayedDryL+(delayedWetL*(float)env-delayedDryL)*enabledBlend;
+  r=delayedDryR+(delayedWetR*(float)env-delayedDryR)*enabledBlend;
  }
  float reduction() const noexcept {return on?gr:0.f;}
 private:
@@ -48,7 +57,7 @@ private:
   constexpr double pi=juce::MathConstants<double>::pi;
   for(int phase=0;phase<4;++phase){double sum=0;for(int i=0;i<16;++i){const double t=i-7.0-phase/4.0;const double sinc=std::abs(t)<1e-12?1.0:std::sin(pi*t)/(pi*t);const double win=.42-.5*std::cos(2*pi*i/15)+.08*std::cos(4*pi*i/15);kernel[phase][i]=sinc*win;sum+=kernel[phase][i];}for(auto& k:kernel[phase])k/=sum;}
  }
- double sr=44100,push=1,ceiling=dbToGain(-.3),env=1;int head=0,ringSize=1,lookahead=128;bool on=true,clip=false;float gr=0;
+ double sr=44100,push=1,ceiling=dbToGain(-.3),env=1;int head=0,ringSize=1,lookahead=128;bool on=true,clip=false;float gr=0,enabledBlend=1.f;
  struct Peak{uint64_t index=0;double peak=0;};
  std::vector<float>ring;std::vector<Peak>queue;size_t qhead=0,qtail=0;uint64_t frame=0;std::array<std::array<float,16>,2>history{};std::array<std::array<double,16>,4>kernel{};
 };
