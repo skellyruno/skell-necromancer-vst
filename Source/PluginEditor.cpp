@@ -18,9 +18,9 @@ void SkellNecromancerAudioProcessorEditor::Panel::paint(Graphics&g){
  wing.startNewSubPath(47,51);wing.lineTo(60,47);wing.lineTo(54,57);wing.lineTo(63,60);wing.lineTo(47,61);
  g.strokePath(wing,PathStrokeType(2.f));
  g.setFont(Theme::display(24));g.setColour(Theme::bone);
- g.drawFittedText("S K E L L  -  N E C R O M A N C E R",300,40,510,31,Justification::centred,1);
+ g.drawFittedText("S K E L L  -  N E C R O M A N C E R",257,40,516,29,Justification::centred,1);
  g.setColour(Theme::greenLight);g.setFont(Theme::mono(9));
- g.drawText("R A I S E   T H E   D E A D   M I X",423,69,292,13,Justification::centred);
+ g.drawText("R A I S E   T H E   D E A D   M I X",360,68,310,12,Justification::centred);
  g.setFont(Theme::mono(9));g.setColour(Theme::faint.brighter(.7f));g.drawText("SKELL AUDIO",27,586,160,16,Justification::centredLeft);
  g.setFont(Theme::mono(8));g.setColour(Theme::greenDim.brighter(.8f));
  g.drawFittedText("REVIVE / TONE / LOUDNESS",440,558,264,10,Justification::centred,1);
@@ -40,11 +40,11 @@ SkellNecromancerAudioProcessorEditor::SkellNecromancerAudioProcessorEditor(Skell
  attachSlider(low,"low");attachSlider(mid,"mid");attachSlider(high,"high");attachSlider(hf,"hfAdjust");attachSlider(input,"input");attachSlider(output,"output");
  add(range);range.setBounds(303,351,50,24);attachChoice(range,"midRange");
  add(inMeter);add(outMeter);inMeter.setBounds(65,96,84,325);outMeter.setBounds(998,96,84,325);
- setTextButton(autoButton,"⏻ AUTO",791,47,111,26,"Analyze 12 s, then replay the loudest section for the second pass.");
- setTextButton(onButton,"⏻ ON",917,47,100,26,"Toggle just the REVIVE engine; EQ, trim and limiter remain active.",true);
- setTextButton(bypassButton,"⏻ BYPASS",1030,47,116,26,"Latency-aligned, optional gain-matched bypass.",true);
- setTextButton(limiterButton,"⏻ LIMITER",820,584,105,24,"True-peak detection limiter; configure the ceiling in Settings.",true);
- setTextButton(deltaButton,"Δ LISTEN",784,547,94,25,"Listen to level-matched difference between processed and dry signal.",true);
+ setTextButton(autoButton,"AUTO",791,47,111,26,"Analyze 12 s, then replay the loudest section for the second pass.");
+ setTextButton(onButton,"ON",917,47,100,26,"Toggle just the REVIVE engine; EQ, trim and limiter remain active.",true);
+ setTextButton(bypassButton,"BYPASS",1030,47,116,26,"Latency-aligned, optional gain-matched bypass.",true);
+ setTextButton(limiterButton,"LIMITER",820,584,105,24,"True-peak detection limiter; configure the ceiling in Settings.",true);
+ setTextButton(deltaButton,"DELTA",784,547,94,25,"Listen to level-matched difference between processed and dry signal.",true);
  setTextButton(matchButton,"GAIN MATCH",886,547,109,25,"Loudness-compensated compare; uses a smoothed RMS estimate.",true);
  attachButton(onButton,"reanimateOn");attachButton(bypassButton,"bypass");attachButton(limiterButton,"limiterOn");
  attachButton(deltaButton,"deltaListen");attachButton(matchButton,"levelMatch");
@@ -57,7 +57,7 @@ SkellNecromancerAudioProcessorEditor::SkellNecromancerAudioProcessorEditor(Skell
  add(mixValue);mixValue.setBounds(648,536,92,22);mixValue.setFont(Theme::mono(10));mixValue.setColour(Label::textColourId,Theme::bone);
  add(push);push.setBounds(942,587,103,18);push.setRange(0,24,.1);attachSlider(push,"push");
  add(pushValue);pushValue.setBounds(1053,583,90,22);pushValue.setColour(Label::textColourId,Theme::bone);pushValue.setFont(Theme::mono(13));
- add(autopsy);autopsy.setBounds(257,580,235,31);
+ add(autopsy);autopsy.setBounds(221,580,268,31);
  add(lufs);lufs.setBounds(501,583,244,25);lufs.setFont(Theme::mono(10));lufs.setColour(Label::textColourId,Theme::greenLight);
  add(gr);gr.setBounds(749,583,69,23);gr.setFont(Theme::mono(10));gr.setColour(Label::textColourId,Theme::bone);
  add(status);status.setBounds(10,546,325,24);status.setFont(Theme::mono(10));status.setColour(Label::textColourId,Theme::greenLight);
@@ -65,18 +65,22 @@ SkellNecromancerAudioProcessorEditor::SkellNecromancerAudioProcessorEditor(Skell
  top.settings.onClick=[this]{openSettings();};top.help.onClick=[this]{showTour();};
  hintsOn=(bool)processor.uiState.getProperty("hints",true);
  if(hintsOn)tooltips=std::make_unique<TooltipWindow>(this,500);
- setResizable(true,true);setResizeLimits(868,459,1736,918);
+ setResizable(true,true);setResizeLimits(810,428,1736,918);
  if(auto* c=getConstrainer())c->setFixedAspectRatio((double)Theme::width/Theme::height);
- auto size=processor.uiState.getProperty("window","M").toString();changeSize(size=="S"?0:size=="L"?2:size=="XL"?3:1);
+ // One-time upgrade: existing saved M-size windows open at the new compact default.
+ if (!(bool)processor.uiState.getProperty("compactV2", false)) {
+    processor.uiState.setProperty("window", "S", nullptr);
+    processor.uiState.setProperty("compactV2", true, nullptr);
+ }
+ auto size=processor.uiState.getProperty("window","S").toString();
+ changeSize(size=="S"?0:size=="L"?2:size=="XL"?3:1);
  // Align the moving rune, dial and meters with the display refresh.
  vblank=std::make_unique<VBlankAttachment>(this,[this](double){
      dial.setLive(processor.liveLevel.load());dial.advance();
      auto hold=(int)processor.uiState.getProperty("meterHold",1000);inMeter.setHoldMilliseconds(hold);outMeter.setHoldMilliseconds(hold);inMeter.tick();outMeter.tick();
  });
  startTimerHz(10);
- if(!(bool)processor.uiState.getProperty("tourSeen",false)){
-     processor.uiState.setProperty("tourSeen",true,nullptr);showTour();
- }
+ // The help tour is opt-in; automatically opening it covered the title/header.
 }
 SkellNecromancerAudioProcessorEditor::~SkellNecromancerAudioProcessorEditor(){stopTimer();vblank.reset();setLookAndFeel(nullptr);}
 void SkellNecromancerAudioProcessorEditor::attachSlider(Slider&v,const String&id){sliderAttachments.push_back(std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(processor.apvts,id,v));}
@@ -91,11 +95,12 @@ void SkellNecromancerAudioProcessorEditor::resized(){
  panel.setBounds(0,0,Theme::width,Theme::height);panel.setTransform(AffineTransform::scale(s));
 }
 void SkellNecromancerAudioProcessorEditor::changeSize(int index){
- static const double factors[]={.75,1.,1.25,1.5};const int ix=juce::jlimit(0,3,index);
+ static const double factors[]={.70,1.,1.25,1.5};const int ix=juce::jlimit(0,3,index);
  processor.uiState.setProperty("window",StringArray{"S","M","L","XL"}[ix],nullptr);
  setSize((int)std::round(Theme::width*factors[ix]),(int)std::round(Theme::height*factors[ix]));
 }
 void SkellNecromancerAudioProcessorEditor::showTour(){
+ processor.uiState.setProperty("tourSeen",true,nullptr);
  if(tourStep>=4){tourStep=-1;hints.setVisible(false);return;}
  tourStep=(tourStep+1)%5;hints.showTour(tourStep);
 }
@@ -111,7 +116,7 @@ void SkellNecromancerAudioProcessorEditor::timerCallback(){
 }
 void SkellNecromancerAudioProcessorEditor::openSettings(){
  PopupMenu menu;
- menu.addSectionHeader("WINDOW SIZE");for(int i=0;i<4;++i)menu.addItem(10+i,StringArray{"S 75%","M 100%","L 125%","XL 150%"}[i]);
+ menu.addSectionHeader("WINDOW SIZE");for(int i=0;i<4;++i)menu.addItem(10+i,StringArray{"S 70%","M 100%","L 125%","XL 150%"}[i]);
  menu.addSeparator();menu.addSectionHeader("MODE");
  menu.addItem(20,"VOCAL");menu.addItem(21,"MASTER");menu.addItem(22,"BUS");
  menu.addSeparator();menu.addSectionHeader("PROCESSING");
