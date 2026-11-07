@@ -6,7 +6,7 @@ namespace NecroDSP {
 class TruePeakLimiter {
 public:
  void prepare(double rate,int maxBlock) {
-   sr=rate;lookahead=juce::jmax(1,(int)std::ceil(sr*.0025));
+   sr=rate;releaseCoeff=std::exp(-1.0/(sr*.13));lookahead=juce::jmax(1,(int)std::ceil(sr*.0025));
    // Keep wet and dry signals in the same lookahead ring so limiter bypass is latency matched.
    ring.assign((size_t)(lookahead+juce::jmax(maxBlock,32)+32)*4,0.f);ringSize=(int)ring.size()/4;queue.assign((size_t)lookahead+64,{});
    history.fill({}); buildKernel();reset();
@@ -33,7 +33,7 @@ public:
   const double futurePeak=queue[qhead%cap].peak;
   ++frame;
   const double target=std::min(1.0,ceiling*0.915/futurePeak); // conservative 4x reconstruction margin
-  if(target<env)env=target; else {const double a=std::exp(-1.0/(sr*.13));env=a*env+(1-a)*target;}
+  if(target<env)env=target; else {env=releaseCoeff*env+(1-releaseCoeff)*target;}
   gr=(float)-gainToDb(env);
   const int rd=(head+ringSize-lookahead)%ringSize;
   const size_t ri=(size_t)rd*4,wi=(size_t)head*4;
@@ -57,7 +57,7 @@ private:
   constexpr double pi=juce::MathConstants<double>::pi;
   for(int phase=0;phase<4;++phase){double sum=0;for(int i=0;i<16;++i){const double t=i-7.0-phase/4.0;const double sinc=std::abs(t)<1e-12?1.0:std::sin(pi*t)/(pi*t);const double win=.42-.5*std::cos(2*pi*i/15)+.08*std::cos(4*pi*i/15);kernel[phase][i]=sinc*win;sum+=kernel[phase][i];}for(auto& k:kernel[phase])k/=sum;}
  }
- double sr=44100,push=1,ceiling=dbToGain(-.3),env=1;int head=0,ringSize=1,lookahead=128;bool on=true,clip=false;float gr=0,enabledBlend=1.f;
+ double sr=44100,push=1,ceiling=dbToGain(-.3),env=1,releaseCoeff=.999;int head=0,ringSize=1,lookahead=128;bool on=true,clip=false;float gr=0,enabledBlend=1.f;
  struct Peak{uint64_t index=0;double peak=0;};
  std::vector<float>ring;std::vector<Peak>queue;size_t qhead=0,qtail=0;uint64_t frame=0;std::array<std::array<float,16>,2>history{};std::array<std::array<double,16>,4>kernel{};
 };
