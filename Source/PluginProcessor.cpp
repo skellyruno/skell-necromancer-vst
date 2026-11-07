@@ -108,8 +108,15 @@ void SkellNecromancerAudioProcessor::processBlock(AudioBuffer<float>& buffer,Mid
    const float a=reviveSm.getNextValue(),parallel=mixSm.getNextValue(),fade=fadeSm.getNextValue();
    if(i%16==0){
        const int smoothStep=juce::jmin(16,n-i);
-       tone.set(toneSm[0].skip(smoothStep),toneSm[1].skip(smoothStep),(int)param("midRange"),toneSm[2].skip(smoothStep),toneSm[3].skip(smoothStep));
-       revive.set(a,mode,factor,guardSm.skip(smoothStep));
+       const float guard=guardSm.skip(smoothStep);
+       const float highDb=toneSm[2].skip(smoothStep),airDb=toneSm[3].skip(smoothStep);
+       // VOCAL only: transient sibilance reduces *boosts*, never turns cuts into boosts.
+       // Sibilance is stereo-linked and tracked from pre-EQ program material.
+       const float protection=mode==0?guard*revive.sibilanceStrength():0.f;
+       const float protectedHigh=highDb>0.f?highDb*(1.f-.48f*protection):highDb;
+       const float protectedAir=airDb>0.f?airDb*(1.f-.70f*protection):airDb;
+       tone.set(toneSm[0].skip(smoothStep),toneSm[1].skip(smoothStep),(int)param("midRange"),protectedHigh,protectedAir);
+       revive.set(a,mode,factor,guard);
        limiter.set(limiterEnabled,pushSm.skip(smoothStep),ceilings[juce::jlimit(0,2,(int)param("ceiling"))],softClipActive.load());
    }
    float revL=l,revR=r;revive.process(revL,revR);
