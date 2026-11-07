@@ -52,10 +52,10 @@ void SkellNecromancerAudioProcessor::prepareToPlay(double sr,int block){
  sampleRateHz=sr;maxBlockSize=juce::jmax(32,block);
  revive.prepare(sr);tone.prepare(sr);limiter.prepare(sr,maxBlockSize);lufs.prepare(sr);analyzer.prepare(sr);
  const int cap=juce::jmax(128,(int)std::ceil(sr*.015));bypassDelay.prepare(cap+limiter.latencySamples());wetDelay.prepare(cap);
- for(auto*s:{&reviveSm,&mixSm,&inputSm,&outputSm,&widthSm,&pushSm,&guardSm})s->reset(sr,.02);fadeSm.reset(sr,.010);
+ for(auto*s:{&reviveSm,&mixSm,&inputSm,&outputSm,&widthSm,&pushSm,&guardSm})s->reset(sr,.02);fadeSm.reset(sr,.010);bypassSm.reset(sr,.015);
  reviveSm.setCurrentAndTargetValue(param("reanimate")*.01f);mixSm.setCurrentAndTargetValue(param("mix")*.01f);
  inputSm.setCurrentAndTargetValue(param("input"));outputSm.setCurrentAndTargetValue(param("output"));widthSm.setCurrentAndTargetValue(param("width")*.01f);
- fadeSm.setCurrentAndTargetValue(param("reanimateOn")>.5f?1.f:0.f);pushSm.setCurrentAndTargetValue(param("push"));guardSm.setCurrentAndTargetValue(param("deEssGuard")*.01f);
+ fadeSm.setCurrentAndTargetValue(param("reanimateOn")>.5f?1.f:0.f);bypassSm.setCurrentAndTargetValue(param("bypass")>.5f?1.f:0.f);pushSm.setCurrentAndTargetValue(param("push"));guardSm.setCurrentAndTargetValue(param("deEssGuard")*.01f);
  for(size_t i=0;i<toneSm.size();++i){toneSm[i].reset(sr,.03);toneSm[i].setCurrentAndTargetValue(param(toneIds[i]));}
  osQuality=juce::jlimit(0,2,(int)param("oversampling"));osRequested=osQuality;
  ensureLatency(osQuality);muteSamples=0;sampleCounter=0;sideLow[0]=sideLow[1]=0;monoHistory.fill(0);monoHead=0;softClipActive.store((bool)uiState.getProperty("softClip",false));
@@ -85,26 +85,28 @@ void SkellNecromancerAudioProcessor::processBlock(AudioBuffer<float>& buffer,Mid
  const int mode=juce::jlimit(0,2,(int)param("mode"));
  reviveSm.setTargetValue(param("reanimate")*.01f);mixSm.setTargetValue(param("mix")*.01f);
  inputSm.setTargetValue(param("input"));outputSm.setTargetValue(param("output"));widthSm.setTargetValue(param("width")*.01f);
- fadeSm.setTargetValue(param("reanimateOn")>.5f?1.f:0.f);pushSm.setTargetValue(param("push"));guardSm.setTargetValue(param("deEssGuard")*.01f);
+ fadeSm.setTargetValue(param("reanimateOn")>.5f?1.f:0.f);bypassSm.setTargetValue(param("bypass")>.5f?1.f:0.f);pushSm.setTargetValue(param("push"));guardSm.setTargetValue(param("deEssGuard")*.01f);
  for(size_t i=0;i<toneSm.size();++i)toneSm[i].setTargetValue(param(toneIds[i]));
  static constexpr float ceilings[]={-.1f,-.3f,-1.f};
- const bool reanimateOn=param("reanimateOn")>.5f,bypass=param("bypass")>.5f,delta=param("deltaListen")>.5f,matching=param("levelMatch")>.5f;
+ const bool delta=param("deltaListen")>.5f,matching=param("levelMatch")>.5f,monoStereo=param("monoToStereo")>.5f;
  const bool limiterEnabled=param("limiterOn")>.5f;
+ const int inputChannels=getTotalNumInputChannels(),outputChannels=getTotalNumOutputChannels();
  auto*left=buffer.getWritePointer(0);auto*right=buffer.getNumChannels()>1?buffer.getWritePointer(1):nullptr;
  const float rmsSmooth=(float)std::exp(-1.0/(sampleRateHz*1.0));
  float inPeakL=0,inPeakR=0,outPeakL=0,outPeakR=0;
  const float monoBassCoeff=(float)(1.0-std::exp(-juce::MathConstants<double>::twoPi*120./sampleRateHz));
  for(int i=0;i<n;++i){
-   const float rawL=left[i],rawR=(getTotalNumInputChannels()>1&&right)?right[i]:rawL;
+   const float rawL=left[i],rawR=(inputChannels>1&&right)?right[i]:rawL;
    inPeakL=std::max(inPeakL,std::abs(rawL));inPeakR=std::max(inPeakR,std::abs(rawR));
    const float pre=(float)NecroDSP::dbToGain(inputSm.getNextValue());
    float l=rawL*pre,r=rawR*pre;
    float dryL=rawL,dryR=rawR;
    const float a=reviveSm.getNextValue(),parallel=mixSm.getNextValue(),fade=fadeSm.getNextValue();
    if(i%16==0){
-       tone.set(toneSm[0].skip(16),toneSm[1].skip(16),(int)param("midRange"),toneSm[2].skip(16),toneSm[3].skip(16));
-       revive.set(a,mode,factor,guardSm.skip(16));
-       limiter.set(limiterEnabled,pushSm.skip(16),ceilings[juce::jlimit(0,2,(int)param("ceiling"))],softClipActive.load());
+       const int smoothStep=juce::jmin(16,n-i);
+       tone.set(toneSm[0].skip(smoothStep),toneSm[1].skip(smoothStep),(int)param("midRange"),toneSm[2].skip(smoothStep),toneSm[3].skip(smoothStep));
+       revive.set(a,mode,factor,guardSm.skip(smoothStep));
+       limiter.set(limiterEnabled,pushSm.skip(smoothStep),ceilings[juce::jlimit(0,2,(int)param("ceiling"))],softClipActive.load());
    }
    float revL=l,revR=r;revive.process(revL,revR);
    // The REVIVE bypass is crossfaded (10-20 ms), trim/EQ/limiter remain active.
@@ -115,7 +117,7 @@ void SkellNecromancerAudioProcessor::processBlock(AudioBuffer<float>& buffer,Mid
        sideLow[0]+=monoBassCoeff*(s-sideLow[0]);
        s=(s-sideLow[0])*widthSm.getNextValue();l=m+s;r=m-s;
    }else{l=tone.process(0,l,rangeValue);r=tone.process(1,r,rangeValue);(void)widthSm.getNextValue();}
-   if(getTotalNumInputChannels()==1&&right&&param("monoToStereo")>.5f){
+   if(inputChannels==1&&right&&monoStereo){
        // Very subtle original upper-mid decorrelation; high-passed below 120 Hz.
        float delayed=monoHistory[(size_t)((monoHead+64-23)%64)];
        monoHistory[(size_t)monoHead]=l;monoHead=(monoHead+1)%64;
@@ -130,10 +132,15 @@ void SkellNecromancerAudioProcessor::processBlock(AudioBuffer<float>& buffer,Mid
    dryPower=rmsSmooth*dryPower+(1.f-rmsSmooth)*drySquare;
    const float match=matching?juce::jlimit(.25f,4.f,std::sqrt(wetPower/std::max(dryPower,1e-9f))):1.f;
    const float matchedDryL=dryL*match,matchedDryR=dryR*match;
-   if(delta){l-=matchedDryL;r-=matchedDryR;}
-   else if(bypass){l=matchedDryL;r=matchedDryR;}
+   if(delta){l-=matchedDryL;r-=matchedDryR;(void)bypassSm.getNextValue();}
+   else {
+      // ON/BYPASS are level-aligned and now transition across 15 ms, not a hard sample switch.
+      const float crossfade=bypassSm.getNextValue();
+      l+=(matchedDryL-l)*crossfade;
+      r+=(matchedDryR-r)*crossfade;
+   }
    if(muteSamples>0){const float m=1.f-(float)muteSamples/std::max(1.f,(float)(sampleRateHz*.025));l*=m;r*=m;--muteSamples;}
-   lufs.process(l,r,getTotalNumOutputChannels());analyzer.push(rawL,rawR);
+   lufs.process(l,r,outputChannels);analyzer.push(rawL,rawR);
    outPeakL=std::max(outPeakL,std::abs(l));outPeakR=std::max(outPeakR,std::abs(r));
    left[i]=l;if(right)right[i]=r;
  }
