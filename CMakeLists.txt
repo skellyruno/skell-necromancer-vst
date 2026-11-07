@@ -56,3 +56,11 @@ target_compile_features(SkellNecromancer PRIVATE cxx_std_17)
 target_compile_definitions(SkellNecromancer PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0 ${NECRO_FONT_FLAGS})
 target_link_libraries(SkellNecromancer PRIVATE
   NecroAssets juce::juce_audio_utils juce::juce_audio_processors juce::juce_gui_extra juce::juce_dsp)
+
+# Portable DSP regression target: uses only the tiny JUCE math shim in tests/stubs.
+# The actual VST3 still builds against the full JUCE SDK above.
+add_executable(NecromancerDSPTest tests/dsp_header_smoke.cpp)
+target_include_directories(NecromancerDSPTest PRIVATE tests/stubs)
+target_compile_features(NecromancerDSPTest PRIVATE cxx_std_17)
+enable_testing()
+add_test(NAME NecromancerDSP_StreamAndAuto COMMAND NecromancerDSPTest)
