@@ -4,7 +4,7 @@
 
 This is a complete, self-contained **source package** for a VST3 + Standalone target, starting from the structure of the `skellyruno/skell-vst-template` JUCE/CMake project. The WAV Monopoly screenshots were used as **layout and material references only**. No reference artwork, rune sprite, trademark, or DSP code has been copied.
 
-> **Status:** Windows JUCE VST3/Standalone compilation and VST3 packaging have passed on an earlier revision; the latest UI/DSP changes require a fresh build result. FL Studio host-load testing, reference listening, metering conformity, and CPU benchmarks remain outstanding. Do not treat a green build as proof of mastering-grade DSP.
+> **Status:** Latest Windows JUCE VST3/Standalone compilation, DSP regression test, and VST3 packaging **passed** ([GitHub Actions #42403563396](https://github.com/skellyruno/skell-necromancer-vst/actions/runs/42403563396)). FL Studio host-load testing, reference listening, metering conformity, and CPU benchmarks remain outstanding. A green build is not mastering-grade certification.
 
 ## Functional architecture
 
@@ -93,7 +93,8 @@ python tests/test_limiter.py
 - **Passed (independent numerical model, not the VST3):** boost-then-cut null-test for shelves/peaks at 44.1, 48, 96 kHz: residual lower than -90 dB, normally about -240 dB or lower for the test vector.
 - **Passed:** DSP header compilation and 13 seconds of synthetic audio against a minimal JUCE math/parameter shim, no NaNs/Inf, and AUTO entered its second-pass waiting state.
 - **Passed (limited artificial stress):** 4× reconstructed true-peak checks on 36 synthetic cases across 44.1/48/96 kHz with PUSH 0/12/24 dB at a -1.0 dBTP ceiling. The limiter uses a conservative safety margin. **This is not an ITU, EBU, or commercial limiter certification.**
-- **Not executed for the latest changes:** confirmed final Windows VST3 build, VST3 host load, macOS/Xcode build, actual DAW UI rendering, LUFS validation against a reference implementation, CPU profiling, reference vocal/master listening tests, polyphase oversampling quality checks, bypass null tests during oversampling changes.
+- **Passed for the latest changes:** Windows CMake configuration, VST3/Standalone compilation, CTest streaming/AUTO/limiter smoke, source integrity check, and VST3 packaging/artifact upload.
+- **Not executed for the latest changes:** VST3 host load, macOS/Xcode build, actual DAW UI rendering, reference LUFS validation, CPU profiling, reference vocal/master listening, high-quality polyphase oversampling checks, and bypass null tests during oversampling changes.
 
 ## Known engineering gaps / release blockers
 
