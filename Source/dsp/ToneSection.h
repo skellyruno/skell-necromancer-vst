@@ -3,14 +3,17 @@
 namespace NecroDSP {
 class ToneSection {
 public:
- void prepare(double rate) noexcept {sr=rate; reset();}
+ void prepare(double rate) noexcept {sr=rate;cachedLow=cachedMid=cachedHigh=cachedAir=1.e9f;reset();}
  void reset() noexcept {for(auto& f:filters)f.reset();for(auto& f:midFilters)f.reset();rangeBlend.reset(sr,.025);rangeBlend.setCurrentAndTargetValue(0);}
  void set(float lowDb,float midDb,int range,float highDb,float airDb) noexcept {
   // Designs are updated per block, never per sample.
-  filters[0].design(Biquad::Kind::lowShelf,sr,100,lowDb);
-  filters[1].design(Biquad::Kind::highShelf,sr,8000,highDb);
-  filters[2].design(Biquad::Kind::highShelf,sr,15000,airDb);
-  const double hz[3]={400,1600,4000};for(int i=0;i<3;++i)midFilters[i].design(Biquad::Kind::peak,sr,hz[i],midDb,0.62);
+  if(std::abs(lowDb-cachedLow)>1.e-5f){filters[0].design(Biquad::Kind::lowShelf,sr,100,lowDb);cachedLow=lowDb;}
+  if(std::abs(highDb-cachedHigh)>1.e-5f){filters[1].design(Biquad::Kind::highShelf,sr,8000,highDb);cachedHigh=highDb;}
+  if(std::abs(airDb-cachedAir)>1.e-5f){filters[2].design(Biquad::Kind::highShelf,sr,15000,airDb);cachedAir=airDb;}
+  if(std::abs(midDb-cachedMid)>1.e-5f){const double hz[3]={400,1600,4000};
+     for(int i=0;i<3;++i)midFilters[i].design(Biquad::Kind::peak,sr,hz[i],midDb,0.62);
+     cachedMid=midDb;
+  }
   rangeBlend.setTargetValue(static_cast<float>(juce::jlimit(0,2,range)));
  }
  float nextRangeValue() noexcept {return rangeBlend.getNextValue();}
@@ -22,7 +25,7 @@ public:
   return (float)filters[2].process(ch,filters[1].process(ch,y));
  }
 private:
- double sr=44100;std::array<Biquad,3> filters;std::array<Biquad,3> midFilters;
+ double sr=44100;float cachedLow=1.e9f,cachedMid=1.e9f,cachedHigh=1.e9f,cachedAir=1.e9f;std::array<Biquad,3> filters;std::array<Biquad,3> midFilters;
  juce::SmoothedValue<float,juce::ValueSmoothingTypes::Linear> rangeBlend;
 };
 }
