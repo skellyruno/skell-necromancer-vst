@@ -70,8 +70,12 @@ void SkellNecromancerAudioProcessor::ensureLatency(int quality){
 void SkellNecromancerAudioProcessor::processBlock(AudioBuffer<float>& buffer,MidiBuffer& midi){
  ScopedNoDenormals noDenormals;midi.clear();const int n=buffer.getNumSamples();if(n==0)return;
  for(int i=getTotalNumInputChannels();i<buffer.getNumChannels();++i) buffer.clear(i,0,n);
+ if(autoCancelRequested.exchange(false)){
+   analyzer.reset();autoNotice.store(2);triggerAsyncUpdate();
+ }
  if(autoRequested.exchange(false)){
-   bool playing=true;if(auto*playHead=getPlayHead())if(auto pos=playHead->getPosition())playing=pos->getIsPlaying();
+   // Do not begin an AUTO pass without a running host transport.
+   bool playing=false;if(auto*playHead=getPlayHead())if(auto pos=playHead->getPosition())playing=pos->getIsPlaying();
    if(playing){
      if(analyzer.getState()==NecroDSP::AutoAnalyzer::needsReplay)analyzer.startVerification();
      else analyzer.start();
@@ -151,8 +155,13 @@ void SkellNecromancerAudioProcessor::processBlock(AudioBuffer<float>& buffer,Mid
  liveLevel.store(juce::jlimit(0.f,1.f,(float)std::sqrt(wetPower)*2.2f));
  int st=analyzer.getState();if(st!=previousAutoState){previousAutoState=st;triggerAsyncUpdate();}
 }
-void SkellNecromancerAudioProcessor::requestAuto(){autoRequested.store(true);}
-void SkellNecromancerAudioProcessor::cancelAuto(){analyzer.reset();autoStatusText="AUTO: cancelled";triggerAsyncUpdate();}
+void SkellNecromancerAudioProcessor::requestAuto(){
+  const int state=analyzer.getState();
+  if(state==NecroDSP::AutoAnalyzer::listening||state==NecroDSP::AutoAnalyzer::verifying)
+      cancelAuto();
+  else autoRequested.store(true);
+}
+void SkellNecromancerAudioProcessor::cancelAuto(){autoCancelRequested.store(true);}
 void SkellNecromancerAudioProcessor::updateAutoResult(){
  const auto a=analyzer.getResult();
  StringArray flags;if(a.dull)flags.add("dull top");if(a.thin)flags.add("thin low-mids");if(a.boxy)flags.add("boxy mids");
@@ -175,7 +184,9 @@ void SkellNecromancerAudioProcessor::updateAutoResult(){
 }
 void SkellNecromancerAudioProcessor::handleAsyncUpdate(){
  if(latencyChanged.exchange(false))ensureLatency(osRequested.load());
- if(autoNotice.exchange(0)==1)autoStatusText="AUTO: start playback first";
+ const int notice=autoNotice.exchange(0);
+ if(notice==1)autoStatusText="AUTO: start playback first";
+ else if(notice==2)autoStatusText="AUTO: cancelled";
  const auto st=analyzer.getState();
  if(st==NecroDSP::AutoAnalyzer::listening){autoPass1Applied=false;autoStatusText="AUTO: LISTENING 12s";}
  else if(st==NecroDSP::AutoAnalyzer::verifying)autoStatusText="AUTO: VERIFYING 3s";
