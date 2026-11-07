@@ -11,7 +11,9 @@ public:
  }
  void setDefault(double d){setDoubleClickReturnValue(true,d);}
  void paint(juce::Graphics&g)override{
-  const auto b=getLocalBounds().toFloat(),cx=b.getCentreX(),radius=std::min(b.getWidth(),b.getHeight()-31.f)*.39f;
+  const auto b=getLocalBounds().toFloat();
+  const float cx=b.getCentreX();
+  const float radius=std::min(b.getWidth(),b.getHeight()-31.f)*.39f;
   const float cy=radius+7, r=radius;
   g.setColour(Theme::greenDim.withAlpha(.32f));g.fillEllipse(cx-r-7,cy-r-7,2*(r+7),2*(r+7));
   for(int k=0;k<=25;++k){float angle=juce::MathConstants<float>::pi*(.75f+1.5f*k/25.f);
