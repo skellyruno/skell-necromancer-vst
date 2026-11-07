@@ -1,0 +1,91 @@
+OK bg_brushed.png: (1157, 612) / RGBA
+OK dial_well.png: (440, 440) / RGBA
+OK knob_cap_big.png: (256, 256) / RGBA
+OK knob_cap_small.png: (96, 96) / RGBA
+OK rune_atlas.png: (256, 160) / RGBA
+OK Source/PluginProcessor.h
+OK Source/PluginProcessor.cpp
+OK Source/PluginEditor.h
+OK Source/PluginEditor.cpp
+OK Source/Theme.h
+OK Source/ui/ReanimateDial.h
+OK Source/ui/RuneRing.h
+OK Source/ui/MetalKnob.h
+OK Source/ui/RangeSelector.h
+OK Source/ui/PeakMeter.h
+OK Source/ui/PushSlider.h
+OK Source/ui/TopBar.h
+OK Source/ui/PresetBar.h
+OK Source/ui/HintOverlay.h
+OK Source/ui/AutopsyReadout.h
+OK Source/ui/LookAndFeel.h
+OK Source/dsp/ReviveEngine.h
+OK Source/dsp/TapeStage.h
+OK Source/dsp/GlueStage.h
+OK Source/dsp/HarmonicLife.h
+OK Source/dsp/TransientRestore.h
+OK Source/dsp/ToneSection.h
+OK Source/dsp/TruePeakLimiter.h
+OK Source/dsp/LufsMeter.h
+OK Source/dsp/AutoAnalyzer.h
+OK Source/dsp/Oversampler.h
+OK Source/dsp/Biquad.h
+OK CMakeLists.txt
+OK: all 20 automatable parameters present; AUTO is UI trigger
+ 44100 Hz | lowShelf     100 Hz | null residual  -253.7 dB
+ 44100 Hz | peak         400 Hz | null residual  -279.1 dB
+ 44100 Hz | peak        1600 Hz | null residual  -295.7 dB
+ 44100 Hz | peak        4000 Hz | null residual  -300.0 dB
+ 44100 Hz | highShelf   8000 Hz | null residual  -300.0 dB
+ 44100 Hz | highShelf  15000 Hz | null residual  -300.0 dB
+ 48000 Hz | lowShelf     100 Hz | null residual  -252.2 dB
+ 48000 Hz | peak         400 Hz | null residual  -279.2 dB
+ 48000 Hz | peak        1600 Hz | null residual  -294.9 dB
+ 48000 Hz | peak        4000 Hz | null residual  -300.0 dB
+ 48000 Hz | highShelf   8000 Hz | null residual  -300.0 dB
+ 48000 Hz | highShelf  15000 Hz | null residual  -300.0 dB
+ 96000 Hz | lowShelf     100 Hz | null residual  -242.0 dB
+ 96000 Hz | peak         400 Hz | null residual  -269.7 dB
+ 96000 Hz | peak        1600 Hz | null residual  -285.9 dB
+ 96000 Hz | peak        4000 Hz | null residual  -298.6 dB
+ 96000 Hz | highShelf   8000 Hz | null residual  -296.5 dB
+ 96000 Hz | highShelf  15000 Hz | null residual  -300.0 dB
+DSP smoke OK | GR=-0 | LUFS=-23.2071 | auto state=2
+ 44100 Hz | push  0 dB | stimulus 0 | peak  -1.50 dBTP | ceiling -1.0 dBTP
+ 44100 Hz | push  0 dB | stimulus 1 | peak  -1.08 dBTP | ceiling -1.0 dBTP
+ 44100 Hz | push  0 dB | stimulus 2 | peak  -1.27 dBTP | ceiling -1.0 dBTP
+ 44100 Hz | push  0 dB | stimulus 3 | peak  -1.77 dBTP | ceiling -1.0 dBTP
+ 44100 Hz | push 12 dB | stimulus 0 | peak  -1.50 dBTP | ceiling -1.0 dBTP
+ 44100 Hz | push 12 dB | stimulus 1 | peak  -1.08 dBTP | ceiling -1.0 dBTP
+ 44100 Hz | push 12 dB | stimulus 2 | peak  -1.27 dBTP | ceiling -1.0 dBTP
+ 44100 Hz | push 12 dB | stimulus 3 | peak  -1.77 dBTP | ceiling -1.0 dBTP
+ 44100 Hz | push 24 dB | stimulus 0 | peak  -1.50 dBTP | ceiling -1.0 dBTP
+ 44100 Hz | push 24 dB | stimulus 1 | peak  -1.08 dBTP | ceiling -1.0 dBTP
+ 44100 Hz | push 24 dB | stimulus 2 | peak  -1.27 dBTP | ceiling -1.0 dBTP
+ 44100 Hz | push 24 dB | stimulus 3 | peak  -1.77 dBTP | ceiling -1.0 dBTP
+ 48000 Hz | push  0 dB | stimulus 0 | peak  -1.50 dBTP | ceiling -1.0 dBTP
+ 48000 Hz | push  0 dB | stimulus 1 | peak  -1.08 dBTP | ceiling -1.0 dBTP
+ 48000 Hz | push  0 dB | stimulus 2 | peak  -1.28 dBTP | ceiling -1.0 dBTP
+ 48000 Hz | push  0 dB | stimulus 3 | peak  -1.77 dBTP | ceiling -1.0 dBTP
+ 48000 Hz | push 12 dB | stimulus 0 | peak  -1.50 dBTP | ceiling -1.0 dBTP
+ 48000 Hz | push 12 dB | stimulus 1 | peak  -1.08 dBTP | ceiling -1.0 dBTP
+ 48000 Hz | push 12 dB | stimulus 2 | peak  -1.28 dBTP | ceiling -1.0 dBTP
+ 48000 Hz | push 12 dB | stimulus 3 | peak  -1.77 dBTP | ceiling -1.0 dBTP
+ 48000 Hz | push 24 dB | stimulus 0 | peak  -1.50 dBTP | ceiling -1.0 dBTP
+ 48000 Hz | push 24 dB | stimulus 1 | peak  -1.08 dBTP | ceiling -1.0 dBTP
+ 48000 Hz | push 24 dB | stimulus 2 | peak  -1.28 dBTP | ceiling -1.0 dBTP
+ 48000 Hz | push 24 dB | stimulus 3 | peak  -1.77 dBTP | ceiling -1.0 dBTP
+ 96000 Hz | push  0 dB | stimulus 0 | peak  -1.39 dBTP | ceiling -1.0 dBTP
+ 96000 Hz | push  0 dB | stimulus 1 | peak  -1.08 dBTP | ceiling -1.0 dBTP
+ 96000 Hz | push  0 dB | stimulus 2 | peak  -1.33 dBTP | ceiling -1.0 dBTP
+ 96000 Hz | push  0 dB | stimulus 3 | peak  -1.77 dBTP | ceiling -1.0 dBTP
+ 96000 Hz | push 12 dB | stimulus 0 | peak  -1.39 dBTP | ceiling -1.0 dBTP
+ 96000 Hz | push 12 dB | stimulus 1 | peak  -1.08 dBTP | ceiling -1.0 dBTP
+ 96000 Hz | push 12 dB | stimulus 2 | peak  -1.33 dBTP | ceiling -1.0 dBTP
+ 96000 Hz | push 12 dB | stimulus 3 | peak  -1.77 dBTP | ceiling -1.0 dBTP
+ 96000 Hz | push 24 dB | stimulus 0 | peak  -1.39 dBTP | ceiling -1.0 dBTP
+ 96000 Hz | push 24 dB | stimulus 1 | peak  -1.08 dBTP | ceiling -1.0 dBTP
+ 96000 Hz | push 24 dB | stimulus 2 | peak  -1.33 dBTP | ceiling -1.0 dBTP
+ 96000 Hz | push 24 dB | stimulus 3 | peak  -1.77 dBTP | ceiling -1.0 dBTP
+
+All local source-model tests PASS. JUCE plugin build NOT performed.
