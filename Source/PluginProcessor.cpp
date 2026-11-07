@@ -16,7 +16,7 @@ SkellNecromancerAudioProcessor::~SkellNecromancerAudioProcessor(){
  cancelPendingUpdate();
 }
 void SkellNecromancerAudioProcessor::writeUiDefaults(){
- uiState.setProperty("preset","INIT",nullptr);uiState.setProperty("window","M",nullptr);
+ uiState.setProperty("preset","INIT",nullptr);uiState.setProperty("window","S",nullptr);
  uiState.setProperty("hints",true,nullptr);uiState.setProperty("autopsy","AUTOPSY: standby",nullptr);
  uiState.setProperty("softClip",false,nullptr);uiState.setProperty("drag","vertical",nullptr);
  uiState.setProperty("meterHold",1000,nullptr);uiState.setProperty("lufsWindow","short",nullptr);
