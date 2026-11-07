@@ -54,7 +54,7 @@ void SkellNecromancerAudioProcessor::prepareToPlay(double sr,int block){
  const int cap=juce::jmax(128,(int)std::ceil(sr*.015));bypassDelay.prepare(cap+limiter.latencySamples());wetDelay.prepare(cap);
  for(auto*s:{&reviveSm,&mixSm,&inputSm,&outputSm,&widthSm,&pushSm,&guardSm})s->reset(sr,.02);fadeSm.reset(sr,.010);bypassSm.reset(sr,.015);
  reviveSm.setCurrentAndTargetValue(param("reanimate")*.01f);mixSm.setCurrentAndTargetValue(param("mix")*.01f);
- inputSm.setCurrentAndTargetValue(param("input"));outputSm.setCurrentAndTargetValue(param("output"));widthSm.setCurrentAndTargetValue(param("width")*.01f);
+ inputSm.setCurrentAndTargetValue((float)NecroDSP::dbToGain(param("input")));outputSm.setCurrentAndTargetValue((float)NecroDSP::dbToGain(param("output")));widthSm.setCurrentAndTargetValue(param("width")*.01f);
  fadeSm.setCurrentAndTargetValue(param("reanimateOn")>.5f?1.f:0.f);bypassSm.setCurrentAndTargetValue(param("bypass")>.5f?1.f:0.f);pushSm.setCurrentAndTargetValue(param("push"));guardSm.setCurrentAndTargetValue(param("deEssGuard")*.01f);
  for(size_t i=0;i<toneSm.size();++i){toneSm[i].reset(sr,.03);toneSm[i].setCurrentAndTargetValue(param(toneIds[i]));}
  osQuality=juce::jlimit(0,2,(int)param("oversampling"));osRequested=osQuality;
@@ -88,7 +88,7 @@ void SkellNecromancerAudioProcessor::processBlock(AudioBuffer<float>& buffer,Mid
  const int factor=quality==0?1:quality==1?2:4;
  const int mode=juce::jlimit(0,2,(int)param("mode"));
  reviveSm.setTargetValue(param("reanimate")*.01f);mixSm.setTargetValue(param("mix")*.01f);
- inputSm.setTargetValue(param("input"));outputSm.setTargetValue(param("output"));widthSm.setTargetValue(param("width")*.01f);
+ inputSm.setTargetValue((float)NecroDSP::dbToGain(param("input")));outputSm.setTargetValue((float)NecroDSP::dbToGain(param("output")));widthSm.setTargetValue(param("width")*.01f);
  fadeSm.setTargetValue(param("reanimateOn")>.5f?1.f:0.f);bypassSm.setTargetValue(param("bypass")>.5f?1.f:0.f);pushSm.setTargetValue(param("push"));guardSm.setTargetValue(param("deEssGuard")*.01f);
  for(size_t i=0;i<toneSm.size();++i)toneSm[i].setTargetValue(param(toneIds[i]));
  static constexpr float ceilings[]={-.1f,-.3f,-1.f};
@@ -102,7 +102,7 @@ void SkellNecromancerAudioProcessor::processBlock(AudioBuffer<float>& buffer,Mid
  for(int i=0;i<n;++i){
    const float rawL=left[i],rawR=(inputChannels>1&&right)?right[i]:rawL;
    inPeakL=std::max(inPeakL,std::abs(rawL));inPeakR=std::max(inPeakR,std::abs(rawR));
-   const float pre=(float)NecroDSP::dbToGain(inputSm.getNextValue());
+   const float pre=inputSm.getNextValue();
    float l=rawL*pre,r=rawR*pre;
    float dryL=rawL,dryR=rawR;
    const float a=reviveSm.getNextValue(),parallel=mixSm.getNextValue(),fade=fadeSm.getNextValue();
@@ -127,7 +127,7 @@ void SkellNecromancerAudioProcessor::processBlock(AudioBuffer<float>& buffer,Mid
        monoHistory[(size_t)monoHead]=l;monoHead=(monoHead+1)%64;
        const float d=(l-delayed)*.012f;l+=d;r-=d;
    }
-   const float post=(float)NecroDSP::dbToGain(outputSm.getNextValue());l*=post;r*=post;
+   const float post=outputSm.getNextValue();l*=post;r*=post;
    limiter.process(l,r);
    wetDelay.process(l,r,quality==0?0:quality==1?2:4);
    bypassDelay.process(dryL,dryR,currentLatency.load());
