@@ -151,7 +151,10 @@ void SkellNecromancerAudioProcessor::processBlock(AudioBuffer<float>& buffer,Mid
       r+=(matchedDryR-r)*crossfade;
    }
    if(muteSamples>0){const float m=1.f-(float)muteSamples/std::max(1.f,(float)(sampleRateHz*.025));l*=m;r*=m;--muteSamples;}
-   lufs.process(l,r,outputChannels);analyzer.push(rawL,rawR);
+   lufs.process(l,r,outputChannels);
+   // Pass 1 diagnoses the original signal; pass 2 measures the *processed* output.
+   if(analyzer.getState()==NecroDSP::AutoAnalyzer::verifying)analyzer.push(l,r);
+   else analyzer.push(rawL,rawR);
    outPeakL=std::max(outPeakL,std::abs(l));outPeakR=std::max(outPeakR,std::abs(r));
    left[i]=l;if(right)right[i]=r;
  }
