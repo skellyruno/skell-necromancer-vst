@@ -17,7 +17,7 @@ public:
   g.setColour(b.getToggleState()?Theme::green:(hover?Theme::greenLight:Theme::border));g.drawRoundedRectangle(r,5,hover?1.5f:1.f);
  }
  void drawButtonText(juce::Graphics&g,juce::TextButton&b,bool hover,bool)override{
-  g.setColour(hover?Theme::greenLight:Theme::bone);g.setFont(Theme::mono(11));
+  g.setColour(hover?Theme::greenLight:Theme::bone);g.setFont(Theme::mono(12));
   g.drawFittedText(b.getButtonText(),b.getLocalBounds(),juce::Justification::centred,1);
  }
  void drawComboBox(juce::Graphics&g,int w,int h,bool,int,int,int,int,juce::ComboBox&)override{
