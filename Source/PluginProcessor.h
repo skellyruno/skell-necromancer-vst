@@ -43,7 +43,7 @@ private:
  NecroDSP::ReviveEngine revive;NecroDSP::ToneSection tone;
  NecroDSP::TruePeakLimiter limiter;NecroDSP::SampleDelay bypassDelay,wetDelay;
  NecroDSP::LufsMeter lufs;NecroDSP::AutoAnalyzer analyzer;
- std::atomic<bool>autoRequested{false},latencyChanged{false},softClipActive{false};
+ std::atomic<bool>autoRequested{false},autoCancelRequested{false},latencyChanged{false},softClipActive{false};
  std::atomic<int>autoNotice{0};
  int osQuality=0,muteSamples=0,previousAutoState=0;
  std::atomic<int>osRequested{0},currentLatency{0};
