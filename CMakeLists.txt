@@ -64,3 +64,17 @@ target_include_directories(NecromancerDSPTest PRIVATE tests/stubs)
 target_compile_features(NecromancerDSPTest PRIVATE cxx_std_17)
 enable_testing()
 add_test(NAME NecromancerDSP_StreamAndAuto COMMAND NecromancerDSPTest)
+
+# Exact FIR group-delay, zero-amount revival null, and passband checks.
+add_executable(NecromancerOversamplerTest tests/oversampler_latency.cpp)
+target_include_directories(NecromancerOversamplerTest PRIVATE tests/stubs)
+target_compile_features(NecromancerOversamplerTest PRIVATE cxx_std_17)
+add_test(NAME NecromancerFIR_LatencyAndNull COMMAND NecromancerOversamplerTest)
+
+# Deterministic probes compared with independent Python reference libraries.
+add_executable(NecromancerLufsProbe tests/lufs_probe.cpp)
+target_include_directories(NecromancerLufsProbe PRIVATE tests/stubs)
+target_compile_features(NecromancerLufsProbe PRIVATE cxx_std_17)
+add_executable(NecromancerLimiterProbe tests/limiter_probe.cpp)
+target_include_directories(NecromancerLimiterProbe PRIVATE tests/stubs)
+target_compile_features(NecromancerLimiterProbe PRIVATE cxx_std_17)

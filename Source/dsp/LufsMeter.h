@@ -2,8 +2,9 @@
 #include "Biquad.h"
 #include <array>
 namespace NecroDSP {
-// 100-ms-block, K-weighted streaming loudness. Momentary/short-term and
-// approximate relative-gated integrated LUFS, without real-time allocations.
+// 100ms-block K-weighted streaming meter with 400ms/100ms overlapping
+// integrated gating windows (-70 LUFS absolute and -10 LU relative). A
+// fixed 0.1-LU histogram gives bounded memory/CPU without audio-thread heap use.
 class LufsMeter {
 public:
  void prepare(double sampleRate) noexcept {sr=sampleRate;blockSamples=juce::jmax(1,(int)std::round(sr*.1));
@@ -37,7 +38,7 @@ private:
   double total=0;uint64_t n=0;for(int k=0;k<1101;++k){total+=histEnergy[(size_t)k];n+=histCount[(size_t)k];}
   if(!n)return;
   const double relative=toLufs(total/n)-10.;total=0;n=0;
-  for(int k=0;k<111;++k) if(k*0.1-70.>=relative) {total+=histEnergy[(size_t)k];n+=histCount[(size_t)k];}
+  for(int k=0;k<1101;++k) if(k*0.1-70.>=relative) {total+=histEnergy[(size_t)k];n+=histCount[(size_t)k];}
   integrated=n?toLufs(total/n):-100.;
  }
  double sr=44100,sampleEnergy=0,momentary=-100,shortTerm=-100,integrated=-100;

@@ -98,7 +98,7 @@ python tests/test_limiter.py
 
 ## Known engineering gaps / release blockers
 
-1. The `Oversampler` is a streaming interpolation and two-pole-decimation **prototype**. It is not yet a production multi-stage half-band FIR/IIR oversampler, and its phase/delay cannot be treated as precisely calibrated across all quality settings. The quality changes use a short fade and latency update, but should be subjected to sample-accurate transition/host-PDC regression tests.
+1. The oversampler uses two streaming 65-tap linear-phase sparse half-band FIR stages, with explicitly tested group delays. The measured anti-alias suppression is limited to the synthetic regression suite; a full frequency/IMD/CPU benchmark is still required. The quality changes use a short fade and latency update, but should be subjected to sample-accurate transition/host-PDC regression tests.
 2. The true-peak limiter uses 4× interpolated **detection** with a 2.5ms lookahead plus a sliding maximum. It needs BS.1770/EBU/DAW verification across edge cases. A conservative safety margin means its actual ceiling may be slightly quieter than selected.
 3. The loudness meter uses K-weight-like double biquads and 100ms buckets; LUFS/gating and AUTO target calibration are **approximate**, not independently validated against a conformance suite. The ±0.5 LU target is *not guaranteed*.
 4. AUTO suggests correction from simplified spectral ratios and requires manual replay of the loudest region. It is not a trained classifier, machine-learning reference matcher, or DAW timeline editor. A/B and AUTO may group multiple host gestures into more than one undo transaction depending on the host.
@@ -110,3 +110,10 @@ python tests/test_limiter.py
 Create 10–20 rights-cleared clips representing dull/thin/harsh voices, muddy/narrow/flat masters, over-compressed buses, silence, DC offset, mono/stereo cases and fast transients. Repeat at 44.1/48/96/192 kHz and 64/128/512/2048 sample blocks. Test automation sweeps, ON/OFF, bypass null and host PDC, 4× true peaks with extreme input, oversampling transitions, A/B recall, XML preset round-trip, AUTO transport/quiet abort, UI resizing/HiDPI, and DAW close/reopen. Publish CPU and latency reports before declaring release-ready.
 
 **No plugin binary is included**: the source must be built with JUCE first.
+
+## New FIR / PDC / independent reference checks
+
+- 2x / 4x oversampling now uses a cascaded sparse FIR half-band implementation with a fixed sample-delay contract. The two REVIVE stages add 64 samples at 2x or 96 at 4x; limiter lookahead is added to the host PDC total.
+- Tests: `NecromancerFIR_LatencyAndNull` validates impulse timing, dry/wet nulling, response and alias rejection. `tests/test_reference_metering.py` compares LUFS with `pyloudnorm` and reconstructed 8x peaks with `scipy.signal.resample_poly`.
+- Manual FL Studio check procedure and expected per-rate latency values: [docs/FL_STUDIO_PDC_TEST.md](docs/FL_STUDIO_PDC_TEST.md).
+- Reference tests are synthetic; real project sound, long-term CPU and FL Studio host compensation remain unverified until independently checked.

@@ -28,6 +28,9 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
       - name: Configure
         run: cmake -S . -B build -A x64
       - name: Build
@@ -36,6 +39,11 @@ jobs:
         run: ctest --test-dir build --build-config Release --output-on-failure
       - name: Source integrity
         run: python tests/test_project_structure.py
+      - name: Independent LUFS / 8x true-peak reference checks
+        shell: pwsh
+        run: |
+          python -m pip install --disable-pip-version-check --quiet numpy scipy pyloudnorm
+          python tests/test_reference_metering.py --lufs "build/Release/NecromancerLufsProbe.exe" --limiter "build/Release/NecromancerLimiterProbe.exe"
       - name: Package
         shell: pwsh
         run: |
