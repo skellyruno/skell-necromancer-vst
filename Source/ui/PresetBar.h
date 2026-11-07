@@ -10,8 +10,8 @@ public:
     name.setColour(juce::Label::outlineColourId,Theme::border);
     name.onTextChange=[this]{processor.uiState.setProperty("preset",name.getText(),nullptr);};addAndMakeVisible(name);
     for(auto*b:{&drop,&undo,&redo,&save,&abA,&abB,&copy})addAndMakeVisible(*b);
-    drop.setButtonText("⌄");undo.setButtonText("↶");redo.setButtonText("↷");save.setButtonText("SAVE");
-    abA.setButtonText("A");abB.setButtonText("B");copy.setButtonText("A→B");
+    drop.setButtonText("V");undo.setButtonText("UNDO");redo.setButtonText("REDO");save.setButtonText("SAVE");
+    abA.setButtonText("A");abB.setButtonText("B");copy.setButtonText("A>B");
     drop.onClick=[this]{openPresetMenu();};
     undo.onClick=[this]{processor.undoManager.undo();};redo.onClick=[this]{processor.undoManager.redo();};
     save.onClick=[this]{juce::String error;if(!processor.writeUserPreset(name.getText(),error))juce::AlertWindow::showMessageBoxAsync(juce::MessageBoxIconType::WarningIcon,"Preset save",error);};
@@ -20,9 +20,9 @@ public:
     // This panel is a plain Component, not a SettableTooltipClient.
  }
  void resized()override {
-  name.setBounds(0,0,240,27);drop.setBounds(241,0,26,27);
-  undo.setBounds(278,0,27,27);redo.setBounds(309,0,27,27);save.setBounds(340,0,45,27);
-  abA.setBounds(394,0,24,27);abB.setBounds(420,0,24,27);copy.setBounds(447,0,50,27);
+  name.setBounds(0,0,233,27);drop.setBounds(234,0,25,27);
+  undo.setBounds(267,0,38,27);redo.setBounds(308,0,38,27);save.setBounds(349,0,46,27);
+  abA.setBounds(400,0,23,27);abB.setBounds(426,0,23,27);copy.setBounds(452,0,50,27);
  }
  void paint(juce::Graphics&g)override{if(processor.presetDirty.load()){g.setColour(Theme::green);g.fillEllipse(226.f,8.f,6.f,6.f);}}
  void sync(){repaint();juce::String p=processor.uiState.getProperty("preset","INIT").toString();if(!name.isBeingEdited()&&name.getText()!=p)name.setText(p,juce::dontSendNotification);
