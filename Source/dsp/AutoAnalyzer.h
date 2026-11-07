@@ -1,4 +1,5 @@
 #pragma once
+#include "LufsMeter.h"
 #include <JuceHeader.h>
 #include <array>
 #include <cmath>
@@ -13,17 +14,18 @@ public:
  void prepare(double sampleRate) noexcept {sr=sampleRate;framesPerBucket=juce::jmax(1,(int)std::round(sr*.10));
   constexpr double cutoff[4]={110,450,2400,8000};
   for(int i=0;i<4;++i)onePoleAlpha[(size_t)i]=1.0-std::exp(-juce::MathConstants<double>::twoPi*cutoff[i]/sr);
+  verifyLoudness.prepare(sampleRate);
   reset();}
  void reset() noexcept {state.store(idle);sampleInBucket=0;bucket=0;filled=totalBuckets=0;windows.fill({});sum.fill(0);current.fill(0);best=Autopsy{};bestEnergy=0;totalFrames=0;onePole.fill(0);}
  void start() noexcept {reset();state.store(listening);}
- void startVerification() noexcept {sampleInBucket=0;bucket=0;verifyEnergy=0;verifyN=0;totalFrames=0;state.store(verifying);}
+ void startVerification() noexcept {sampleInBucket=0;bucket=0;verifyEnergy=0;verifyN=0;totalFrames=0;verifyLoudness.reset();state.store(verifying);}
  int getState()const noexcept {return state.load(std::memory_order_acquire);}
  Autopsy getResult()const noexcept {return best;}
- float getReplayLufs()const noexcept {return (float)(-0.691+10*std::log10(std::max(verifyEnergy/std::max(1,verifyN),1.e-12)));}
+ float getReplayLufs()const noexcept {return verifyLoudness.s();}
  void push(float l,float r) noexcept {
   const int st=state.load(std::memory_order_relaxed);if(st!=listening&&st!=verifying)return;
   const double center=.5*(l+r);const double side=.5*(l-r);
-  if(st==verifying) {verifyEnergy+=center*center+side*side;++verifyN;if(++totalFrames>=sr*3.0)state.store(complete,std::memory_order_release);return;}
+  if(st==verifying) {verifyLoudness.process(l,r,2);++verifyN;if(++totalFrames>=sr*3.0)state.store(complete,std::memory_order_release);return;}
   const double x=center;double prior=0;double e[8]{};
   for(int i=0;i<4;++i){onePole[(size_t)i]+=onePoleAlpha[(size_t)i]*(x-onePole[(size_t)i]);}
   e[0]=onePole[0]*onePole[0];e[1]=(onePole[1]-onePole[0])*(onePole[1]-onePole[0]);
@@ -55,7 +57,7 @@ public:
  }
 private:
  double sr=44100,bestEnergy=0,verifyEnergy=0;int framesPerBucket=4410,sampleInBucket=0,bucket=0,filled=0,totalBuckets=0,totalFrames=0,verifyN=0;
- std::atomic<int>state{idle};Autopsy best;
+ std::atomic<int>state{idle};Autopsy best;LufsMeter verifyLoudness;
  std::array<double,4>onePole{},onePoleAlpha{};std::array<double,8>sum{},current{};
  std::array<std::array<double,8>,30>windows{};
 };
