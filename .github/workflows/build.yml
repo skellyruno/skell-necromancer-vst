@@ -16,6 +16,11 @@ on:
       - 'CMakeLists.txt'
       - '.github/workflows/build.yml'
 
+# New UI/DSP commits supersede older builds of the same branch.
+concurrency:
+  group: necromancer-windows-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: windows-latest
