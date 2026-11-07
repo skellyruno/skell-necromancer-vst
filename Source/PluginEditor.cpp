@@ -9,7 +9,13 @@ SkellNecromancerAudioProcessorEditor::Panel::Panel(){
 void SkellNecromancerAudioProcessorEditor::Panel::paint(Graphics&g){
  g.fillAll(Theme::black);g.drawImage(bg,getLocalBounds().toFloat());
  g.setColour(Theme::panelRaised);g.fillRect(0,35,Theme::width,44);
+ g.setColour(Theme::greenDim.withAlpha(.55f));g.fillRect(0,35,Theme::width,1);
  g.setColour(Theme::border);g.drawLine(0.f,80.f,1157.f,80.f,1.f);
+ g.setColour(Theme::border.withAlpha(.45f));g.drawLine(0.f,577.f,1157.f,577.f,1.f);
+ g.drawRoundedRectangle(156.f,151.f,159.f,327.f,7.f,1.f);
+ g.drawRoundedRectangle(832.f,151.f,159.f,327.f,7.f,1.f);
+ g.drawRoundedRectangle(53.f,92.f,107.f,343.f,6.f,1.f);
+ g.drawRoundedRectangle(987.f,92.f,107.f,343.f,6.f,1.f);
  // Original Skell skull-and-wings mark, deliberately not a copy of the reference WM logo.
  Path skull;skull.addEllipse(24.f,45.f,22.f,21.f);skull.addRectangle(30.f,62.f,10.f,8.f);
  g.setColour(Theme::bone);g.strokePath(skull,PathStrokeType(1.7f));
@@ -17,15 +23,18 @@ void SkellNecromancerAudioProcessorEditor::Panel::paint(Graphics&g){
  Path wing;wing.startNewSubPath(22,51);wing.lineTo(10,47);wing.lineTo(16,57);wing.lineTo(7,60);wing.lineTo(22,61);
  wing.startNewSubPath(47,51);wing.lineTo(60,47);wing.lineTo(54,57);wing.lineTo(63,60);wing.lineTo(47,61);
  g.strokePath(wing,PathStrokeType(2.f));
- g.setFont(Theme::display(24));g.setColour(Theme::bone);
+ g.setFont(Theme::display(26));g.setColour(Theme::bone);
  g.drawFittedText("SKELL  -  NECROMANCER",257,40,516,29,Justification::centred,1);
- g.setColour(Theme::greenLight);g.setFont(Theme::mono(9));
+ g.setColour(Theme::greenLight);g.setFont(Theme::mono(11));
  g.drawText("R A I S E   T H E   D E A D   M I X",360,68,310,12,Justification::centred);
- g.setFont(Theme::mono(9));g.setColour(Theme::faint.brighter(.7f));g.drawText("SKELL AUDIO",27,586,160,16,Justification::centredLeft);
- g.setFont(Theme::mono(8));g.setColour(Theme::greenDim.brighter(.8f));
+ g.setFont(Theme::mono(12));g.setColour(Theme::faint.brighter(1.1f));g.drawText("SKELL AUDIO",27,586,160,16,Justification::centredLeft);
+ g.setFont(Theme::mono(11));g.setColour(Theme::greenLight.withAlpha(.73f));
  g.drawFittedText("REVIVE / TONE / LOUDNESS",440,558,264,10,Justification::centred,1);
- g.setFont(Theme::mono(9));g.setColour(Theme::faint.brighter(.6f));
+ g.setFont(Theme::mono(11));g.setColour(Theme::faint.brighter(1.15f));
  g.drawText("RANGE",165,338,54,14,Justification::centred);
+ g.setFont(Theme::mono(12));g.setColour(Theme::faint.brighter(1.1f));
+ g.drawFittedText("IN",65,92,70,17,Justification::centred,1);
+ g.drawFittedText("OUT",1018,92,70,17,Justification::centred,1);
 }
 SkellNecromancerAudioProcessorEditor::SkellNecromancerAudioProcessorEditor(SkellNecromancerAudioProcessor&p):
  AudioProcessorEditor(&p),processor(p),top(p),inMeter(p.inputL,p.inputR),outMeter(p.outputL,p.outputR,true),autopsy(p){
@@ -71,7 +80,9 @@ SkellNecromancerAudioProcessorEditor::SkellNecromancerAudioProcessorEditor(Skell
  if(auto* c=getConstrainer())c->setFixedAspectRatio((double)Theme::width/Theme::height);
  // One-time upgrade: existing saved M-size windows open at the new compact default.
  if (!(bool)processor.uiState.getProperty("compactV2", false)) {
-    processor.uiState.setProperty("window", "S", nullptr);
+    const auto oldSize = processor.uiState.getProperty("window", "M").toString();
+    if (oldSize == "M" || oldSize.isEmpty())
+      processor.uiState.setProperty("window", "S", nullptr);
     processor.uiState.setProperty("compactV2", true, nullptr);
  }
  auto size=processor.uiState.getProperty("window","S").toString();
