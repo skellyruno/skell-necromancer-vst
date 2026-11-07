@@ -29,4 +29,4 @@ Do not market this build as production-mastering certified without these checks.
 - Tightened the limiter safety margin after 8x independent reconstruction found ceiling misses with the former 4x-only test.
 - Switched LUFS gating to 400ms blocks with 100ms hops, adjusted K-weighting to the independent reference, and added 0.1 LU histogram bins.
 - Added standalone CTest phase/latency/alias checks and a cross-check against pyloudnorm and SciPy.
-- FL Studio host PDC and commercial audio-quality certification remain unverified. See docs/FL_STUDIO_PDC_TEST.md.
+- GitHub Actions #42409204081 (commit 4a60df5) PASSED: Windows VST3/Standalone build, FIR PDC/phase tests, source integrity, 24 pyloudnorm integrated-LUFS comparisons, 108 independent SciPy 8x true-peak comparisons, and VST3 artifact upload. FL Studio host PDC and commercial audio-quality certification remain unverified. See docs/FL_STUDIO_PDC_TEST.md.

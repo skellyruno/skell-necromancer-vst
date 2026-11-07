@@ -4,7 +4,7 @@
 
 This is a complete, self-contained **source package** for a VST3 + Standalone target, starting from the structure of the `skellyruno/skell-vst-template` JUCE/CMake project. The WAV Monopoly screenshots were used as **layout and material references only**. No reference artwork, rune sprite, trademark, or DSP code has been copied.
 
-> **Status:** Latest Windows JUCE VST3/Standalone compilation, DSP regression test, and VST3 packaging **passed** ([GitHub Actions #42403563396](https://github.com/skellyruno/skell-necromancer-vst/actions/runs/42403563396)). FL Studio host-load testing, reference listening, metering conformity, and CPU benchmarks remain outstanding. A green build is not mastering-grade certification.
+> **Status:** Latest Windows JUCE VST3/Standalone compilation, FIR/latency DSP regression test, independent LUFS/true-peak references, and VST3 packaging **passed** ([GitHub Actions #42409204081](https://github.com/skellyruno/skell-necromancer-vst/actions/runs/42409204081), commit 4a60df5). FL Studio host-load testing, reference listening, metering conformity, and CPU benchmarks remain outstanding. A green build is not mastering-grade certification.
 
 ## Functional architecture
 
@@ -117,3 +117,7 @@ Create 10–20 rights-cleared clips representing dull/thin/harsh voices, muddy/n
 - Tests: `NecromancerFIR_LatencyAndNull` validates impulse timing, dry/wet nulling, response and alias rejection. `tests/test_reference_metering.py` compares LUFS with `pyloudnorm` and reconstructed 8x peaks with `scipy.signal.resample_poly`.
 - Manual FL Studio check procedure and expected per-rate latency values: [docs/FL_STUDIO_PDC_TEST.md](docs/FL_STUDIO_PDC_TEST.md).
 - Reference tests are synthetic; real project sound, long-term CPU and FL Studio host compensation remain unverified until independently checked.
+
+### Verified Windows FIR / metering build
+
+[GitHub Actions run #42409204081](https://github.com/skellyruno/skell-necromancer-vst/actions/runs/42409204081) passed CMake, native VST3/Standalone compilation, FIR delay/null/alias tests, 24 independent LUFS reference cases, 108 independent 8x inter-sample peak cases, source integrity and artifact packaging. Retrieve `Skell-Necromancer-Windows-VST3` from the run's Artifacts section. Host PDC verification in FL Studio is **not** included; use `docs/FL_STUDIO_PDC_TEST.md` for that acceptance procedure.
