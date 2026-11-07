@@ -18,12 +18,14 @@ void SkellNecromancerAudioProcessorEditor::Panel::paint(Graphics&g){
  wing.startNewSubPath(47,51);wing.lineTo(60,47);wing.lineTo(54,57);wing.lineTo(63,60);wing.lineTo(47,61);
  g.strokePath(wing,PathStrokeType(2.f));
  g.setFont(Theme::display(24));g.setColour(Theme::bone);
- g.drawFittedText("S K E L L  -  N E C R O M A N C E R",257,40,516,29,Justification::centred,1);
+ g.drawFittedText("SKELL  -  NECROMANCER",257,40,516,29,Justification::centred,1);
  g.setColour(Theme::greenLight);g.setFont(Theme::mono(9));
  g.drawText("R A I S E   T H E   D E A D   M I X",360,68,310,12,Justification::centred);
  g.setFont(Theme::mono(9));g.setColour(Theme::faint.brighter(.7f));g.drawText("SKELL AUDIO",27,586,160,16,Justification::centredLeft);
  g.setFont(Theme::mono(8));g.setColour(Theme::greenDim.brighter(.8f));
  g.drawFittedText("REVIVE / TONE / LOUDNESS",440,558,264,10,Justification::centred,1);
+ g.setFont(Theme::mono(9));g.setColour(Theme::faint.brighter(.6f));
+ g.drawText("RANGE",165,338,54,14,Justification::centred);
 }
 SkellNecromancerAudioProcessorEditor::SkellNecromancerAudioProcessorEditor(SkellNecromancerAudioProcessor&p):
  AudioProcessorEditor(&p),processor(p),top(p),inMeter(p.inputL,p.inputR),outMeter(p.outputL,p.outputR,true),autopsy(p){
@@ -38,7 +40,7 @@ SkellNecromancerAudioProcessorEditor::SkellNecromancerAudioProcessorEditor(Skell
  high.setRange(-6,6,.1);high.setDefault(2);hf.setRange(-6,6,.1);hf.setDefault(1);
  input.setRange(-12,12,.1);output.setRange(-12,12,.1);
  attachSlider(low,"low");attachSlider(mid,"mid");attachSlider(high,"high");attachSlider(hf,"hfAdjust");attachSlider(input,"input");attachSlider(output,"output");
- add(range);range.setBounds(303,351,50,24);attachChoice(range,"midRange");
+ add(range);range.setBounds(168,356,47,25);attachChoice(range,"midRange");
  add(inMeter);add(outMeter);inMeter.setBounds(65,96,84,325);outMeter.setBounds(998,96,84,325);
  setTextButton(autoButton,"AUTO",791,47,111,26,"Analyze 12 s, then replay the loudest section for the second pass.");
  setTextButton(onButton,"ON",917,47,100,26,"Toggle just the REVIVE engine; EQ, trim and limiter remain active.",true);
