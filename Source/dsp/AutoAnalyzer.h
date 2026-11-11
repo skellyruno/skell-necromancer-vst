@@ -26,12 +26,13 @@ public:
   const int st=state.load(std::memory_order_relaxed);if(st!=listening&&st!=verifying)return;
   const double center=.5*(l+r);const double side=.5*(l-r);
   if(st==verifying) {verifyLoudness.process(l,r,2);++verifyN;if(++totalFrames>=sr*3.0)state.store(complete,std::memory_order_release);return;}
-  const double x=center;double prior=0;double e[8]{};
+  const double x=center;double e[8]{};
   for(int i=0;i<4;++i){onePole[(size_t)i]+=onePoleAlpha[(size_t)i]*(x-onePole[(size_t)i]);}
   e[0]=onePole[0]*onePole[0];e[1]=(onePole[1]-onePole[0])*(onePole[1]-onePole[0]);
   e[2]=(onePole[2]-onePole[1])*(onePole[2]-onePole[1]);e[3]=(onePole[3]-onePole[2])*(onePole[3]-onePole[2]);e[4]=(x-onePole[3])*(x-onePole[3]);
   e[5]=center*center+side*side;e[6]=side*side;e[7]=std::max(std::abs(l),std::abs(r));
-  for(int i=0;i<7;++i)current[(size_t)i]+=e[i];current[7]=std::max(current[7],e[7]);
+  for(int i=0;i<7;++i)current[(size_t)i]+=e[i];
+  current[7]=std::max(current[7],e[7]);
   if(++sampleInBucket<framesPerBucket)return;
   sampleInBucket=0;std::array<double,8> previous=windows[(size_t)bucket];
   for(int i=0;i<7;++i){const double v=current[(size_t)i]/framesPerBucket;sum[(size_t)i]+=v-previous[(size_t)i];windows[(size_t)bucket][(size_t)i]=v;}

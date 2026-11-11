@@ -9,7 +9,8 @@ class LufsMeter {
 public:
  void prepare(double sampleRate) noexcept {sr=sampleRate;blockSamples=juce::jmax(1,(int)std::round(sr*.1));
    for(auto& f:shelf)f.design(Biquad::Kind::highShelf,sr,1500.0,4.0,.7071067811865475);
-   for(auto& f:hpf)f.design(Biquad::Kind::highpass,sr,38.0,0,.5);reset();}
+   for(auto& f:hpf)f.design(Biquad::Kind::highpass,sr,38.0,0,.5);
+   reset();}
  void reset() noexcept {for(auto& f:shelf)f.reset();for(auto& f:hpf)f.reset();window.fill(0);histCount.fill(0);histEnergy.fill(0);head=count=sampleCount=integratedTick=0;sampleEnergy=0;momentary=shortTerm=integrated=-100;}
  void process(float l,float r,int channels=2) noexcept {
     double a=hpf[0].process(0,shelf[0].process(0,l));double b=hpf[1].process(1,shelf[1].process(1,r));

@@ -9,14 +9,14 @@ public:
   atlas=juce::ImageCache::getFromMemory(BinaryData::rune_atlas_png,BinaryData::rune_atlas_pngSize);
   juce::Random random(142857);for(auto& p:placements){p.angle=random.nextFloat()*juce::MathConstants<float>::twoPi;
       p.radius=151.f+random.nextFloat()*55.f;p.index=random.nextInt(40);p.size=4.0f+random.nextFloat()*8.5f;}
-  for(int j=0;j<3;++j){cached[j]=juce::Image(juce::Image::ARGB,440,440,true);juce::Graphics g(cached[j]);
+  for(int j=0;j<3;++j){cached[j]=juce::Image(juce::Image::ARGB,440,440,true);juce::Graphics g(cached[j]);g.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
      for(int i=0;i<400;++i){const auto&p=placements[(size_t)i];
        if(i%3!=j)continue;
        const float x=220+std::cos(p.angle)*p.radius-p.size/2,y=220+std::sin(p.angle)*p.radius-p.size/2;
-       juce::Rectangle<int>src((p.index%8)*32,(p.index/8)*32,32,32);
+       const auto glyph=atlas.getClippedImage({(p.index%8)*32,(p.index/8)*32,32,32});
        g.setOpacity(juce::jmap((float)(i%9),0.f,8.f,.18f,.65f));
        g.setColour(Theme::spectral((float)j/2.f));
-       g.drawImage(atlas,(int)x,(int)y,(int)p.size,(int)p.size,src.getX(),src.getY(),32,32,true);
+       g.drawImageTransformed(glyph,juce::AffineTransform::scale(p.size/32.f).translated(x,y),true);
      }
    }
  }

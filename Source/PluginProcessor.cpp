@@ -73,6 +73,12 @@ void SkellNecromancerAudioProcessor::ensureLatency(int quality){
 void SkellNecromancerAudioProcessor::processBlock(AudioBuffer<float>& buffer,MidiBuffer& midi){
  ScopedNoDenormals noDenormals;midi.clear();const int n=buffer.getNumSamples();if(n==0)return;
  for(int i=getTotalNumInputChannels();i<buffer.getNumChannels();++i) buffer.clear(i,0,n);
+ // A single NaN/Inf from the host would permanently poison every IIR/limiter/meter state,
+ // so non-finite samples become silence and absurd levels (> +120 dBFS) are bounded.
+ for(int c=0;c<juce::jmin(2,getTotalNumInputChannels(),buffer.getNumChannels());++c){
+   auto*x=buffer.getWritePointer(c);
+   for(int i=0;i<n;++i)x[i]=std::isfinite(x[i])?juce::jlimit(-1.0e6f,1.0e6f,x[i]):0.f;
+ }
  if(autoCancelRequested.exchange(false)){
    analyzer.reset();autoNotice.store(2);triggerAsyncUpdate();
  }

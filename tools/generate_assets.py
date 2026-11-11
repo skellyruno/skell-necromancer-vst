@@ -20,8 +20,9 @@ for yy in (35,79,580): d.line([(0,yy),(W,yy)],fill=(105,118,122,85),width=1);d.l
 for k in range(8):d.rounded_rectangle((8+k/2,84+k/2,W-8-k/2,574-k/2),radius=12,outline=(80,94,98,max(5,25-k*3)),width=1)
 im.save(OUT/'bg_brushed.png')
 
-def circle_asset(sz,outer,inner,small=False):
-    zz=sz; a=np.zeros((zz,zz,4),dtype=np.uint8)
+def circle_asset(sz,outer,inner,small=False,ss=1):
+    # ss>1 renders at ss-times resolution and box-downsamples for anti-aliased edges.
+    zz=sz*ss; a=np.zeros((zz,zz,4),dtype=np.uint8)
     yy,xx=np.indices((zz,zz));dx=xx-(zz-1)/2;dy=yy-(zz-1)/2;r=np.sqrt(dx*dx+dy*dy)/(zz/2);ang=np.arctan2(dy,dx)
     shadow=np.clip(1-r,0,1)
     if outer:
@@ -43,8 +44,8 @@ def circle_asset(sz,outer,inner,small=False):
     out=Image.fromarray(a,'RGBA'); dr=ImageDraw.Draw(out,'RGBA')
     if outer:
         for frac,c in ((.97,(190,205,205,95)),(.92,(3,5,5,240)),(.80,(44,55,58,180)),(.76,(0,0,0,215))):
-            dr.ellipse((zz*(1-frac)/2,zz*(1-frac)/2,zz*(1+frac)/2,zz*(1+frac)/2),outline=c,width=3)
-        dr.arc((sz*.05,sz*.05,sz*.95,sz*.95),194,330,fill=(205,227,226,100),width=4)
+            dr.ellipse((zz*(1-frac)/2,zz*(1-frac)/2,zz*(1+frac)/2,zz*(1+frac)/2),outline=c,width=3*ss)
+        dr.arc((zz*.05,zz*.05,zz*.95,zz*.95),194,330,fill=(205,227,226,100),width=4*ss)
     else:
         for frac,c,wd in ((.97,(228,235,231,185),4),(.92,(5,8,9,200),4),(.875,(160,166,164,155),2)):
             dr.ellipse((zz*(1-frac)/2,zz*(1-frac)/2,zz*(1+frac)/2,zz*(1+frac)/2),outline=c,width=wd)
@@ -60,8 +61,9 @@ def circle_asset(sz,outer,inner,small=False):
             for ax in (-.24,.24):dr.ellipse((cx+ax*s-s*.14,cy-s*.03,cx+ax*s+s*.14,cy+s*.17),fill=(22,29,28,31))
             dr.polygon([(cx,cy+s*.13),(cx-s*.12,cy+s*.32),(cx+s*.12,cy+s*.32)],fill=(30,35,33,28))
             for sign in (-1,1):dr.line((cx-s*.55,cy+s*.65*sign,cx+s*.55,cy-s*.65*sign),fill=(15,22,21,40),width=4)
+    if ss>1:out=out.convert('RGBa').resize((sz,sz),Image.BOX).convert('RGBA')
     return out
-circle_asset(440,True,False).save(OUT/'dial_well.png')
+circle_asset(440,True,False,ss=4).save(OUT/'dial_well.png')
 circle_asset(256,False,False).save(OUT/'knob_cap_big.png')
 circle_asset(96,False,False,True).save(OUT/'knob_cap_small.png')
 # Glyph atlas: exactly 40 original geometric glyphs in 8x5 32-pixel transparent cells.

@@ -10,6 +10,7 @@ public:
  void setLive(float v){live=juce::jlimit(0.f,1.f,v);}
  void advance(){++frame;repaint();}
  void paint(juce::Graphics&g)override {
+  g.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
   g.drawImage(well,getLocalBounds().toFloat());
   ring.paint(g,(float)getValue()*.01f,live,frame);
   auto cx=220.f,cy=220.f;const float p=(float)(getValue()/100.0);
@@ -28,7 +29,7 @@ public:
    g.addTransform(juce::AffineTransform::rotation(angle-start-1.18f,cx,cy));
    g.drawImage(cap,{cx-104.f,cy-104.f,208.f,208.f});}
   g.setColour(Theme::bone);g.drawLine(cx+std::cos(angle)*109.f,cy+std::sin(angle)*109.f,cx+std::cos(angle)*127.f,cy+std::sin(angle)*127.f,5.f);
-  g.setColour(Theme::bone);g.setFont(Theme::display(13));g.drawFittedText("R E A N I M A T E",juce::Rectangle<int>(120,86,200,24),juce::Justification::centred,1);
+  g.setColour(Theme::bone);g.setFont(Theme::display(13));g.drawFittedText("R E A N I M A T E",juce::Rectangle<int>(130,330,180,18),juce::Justification::centred,1);
   g.setFont(Theme::display(36));g.drawFittedText(juce::String((int)std::lround(getValue()))+"%",juce::Rectangle<int>(130,377,180,47),juce::Justification::centred,1);
   if(isMouseOverOrDragging()){g.setColour(Theme::green.withAlpha(.5f));g.drawEllipse(90,90,260,260,1.4f);}
  }

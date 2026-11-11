@@ -3,7 +3,7 @@
 #include <atomic>
 class PeakMeter:public juce::Component{
 public:
- PeakMeter(std::atomic<float>&left,std::atomic<float>&right,bool reversed=false):l(left),r(right),rightScale(reversed){}
+ PeakMeter(const juce::String&title,std::atomic<float>&left,std::atomic<float>&right,bool reversed=false):label(title),l(left),r(right),rightScale(reversed){}
  void setHoldMilliseconds(int millis) noexcept {holdFrames=juce::jmax(1,millis/17);}
  void tick() noexcept {
     const float values[]={l.load(),r.load()};
@@ -17,19 +17,21 @@ public:
  }
  void paint(juce::Graphics&g)override {
   const auto value=[&](float d){return juce::jlimit(0.f,1.f,(d+60.f)/60.f);};
-  g.setColour(Theme::panelRaised);g.fillRoundedRectangle(21.f,0.f,33.f,(float)getHeight()-24,3.f);
+  g.setColour(Theme::panelRaised);g.fillRoundedRectangle(21.f,(float)headerH,33.f,(float)(getHeight()-24-headerH),3.f);
+  g.setColour(Theme::bone);g.setFont(Theme::mono(12));
+  g.drawFittedText(label,21,0,33,headerH,juce::Justification::centred,1);
   for(int c=0;c<2;++c){const float d=shown[c],v=value(d);
-    const int barX=22+c*17,barTop=1,barH=getHeight()-25;
+    const int barX=22+c*17,barTop=headerH+1,barH=getHeight()-25-headerH;
     for(int y=0;y<barH;y+=3){float h=(float)y/barH;if(h>v)continue;
       g.setColour(Theme::spectral(1.f-h).interpolatedWith(Theme::bone,.12f));
       g.fillRect(barX,barTop+barH-y-3,13,2);
     }
     g.setColour(Theme::bone.withAlpha(.75f));g.drawRect(barX,barTop,13,barH,1);
-    const float heldPos=(float)barH*(1.f-value(held[c]));
+    const float heldPos=(float)barTop+(float)barH*(1.f-value(held[c]));
     g.setColour(Theme::greenLight);g.fillRect((float)barX,heldPos,13.f,1.5f);
   }
-  for(int d:{0,-6,-12,-24,-48}){const float f=value((float)d);int y=juce::jlimit(6,getHeight()-33,(int)((getHeight()-25)*(1-f)));
-   g.setFont(Theme::mono(8));g.setColour(Theme::faint.brighter(.4f));
+  for(int d:{0,-6,-12,-24,-48}){const float f=value((float)d);const int y=juce::jlimit(headerH+6,getHeight()-33,(int)((float)(headerH+1)+(float)(getHeight()-25-headerH)*(1-f)));
+   g.setFont(Theme::mono(9));g.setColour(Theme::faint.brighter(.4f));
    if(rightScale)g.drawText(juce::String(d),55,y-6,21,13,juce::Justification::centredLeft);
    else g.drawText(juce::String(d),0,y-6,20,13,juce::Justification::centredRight);
    g.drawLine(rightScale?53.f:18.f,(float)y,rightScale?57.f:22.f,(float)y,1.f);
@@ -39,6 +41,7 @@ public:
   g.setColour(Theme::bone);g.setFont(Theme::mono(11));
   g.drawFittedText(juce::String(juce::jmax(held[0],held[1]),1),9,getHeight()-21,64,18,juce::Justification::centred,1);
  }
-private:std::atomic<float>&l,&r;bool rightScale;
+private:static constexpr int headerH=16;
+ juce::String label;std::atomic<float>&l,&r;bool rightScale;
  float shown[2]{-100.f,-100.f},held[2]{-100.f,-100.f};int counter[2]{},holdFrames=60;
 };

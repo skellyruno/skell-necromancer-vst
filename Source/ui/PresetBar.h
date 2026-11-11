@@ -21,8 +21,8 @@ public:
  }
  void resized()override {
   name.setBounds(0,0,233,27);drop.setBounds(234,0,25,27);
-  undo.setBounds(267,0,38,27);redo.setBounds(308,0,38,27);save.setBounds(349,0,46,27);
-  abA.setBounds(400,0,23,27);abB.setBounds(426,0,23,27);copy.setBounds(452,0,50,27);
+  undo.setBounds(267,0,46,27);redo.setBounds(316,0,46,27);save.setBounds(365,0,48,27);
+  abA.setBounds(418,0,23,27);abB.setBounds(444,0,23,27);copy.setBounds(470,0,50,27);
  }
  void paint(juce::Graphics&g)override{if(processor.presetDirty.load()){g.setColour(Theme::green);g.fillEllipse(226.f,8.f,6.f,6.f);}}
  void sync(){repaint();juce::String p=processor.uiState.getProperty("preset","INIT").toString();if(!name.isBeingEdited()&&name.getText()!=p)name.setText(p,juce::dontSendNotification);

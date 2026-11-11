@@ -12,45 +12,46 @@ void SkellNecromancerAudioProcessorEditor::Panel::paint(Graphics&g){
  g.setColour(Theme::greenDim.withAlpha(.55f));g.fillRect(0,35,Theme::width,1);
  g.setColour(Theme::border);g.drawLine(0.f,80.f,1157.f,80.f,1.f);
  g.setColour(Theme::border.withAlpha(.45f));g.drawLine(0.f,577.f,1157.f,577.f,1.f);
- g.drawRoundedRectangle(156.f,151.f,159.f,327.f,7.f,1.f);
- g.drawRoundedRectangle(832.f,151.f,159.f,327.f,7.f,1.f);
- g.drawRoundedRectangle(53.f,92.f,107.f,343.f,6.f,1.f);
- g.drawRoundedRectangle(987.f,92.f,107.f,343.f,6.f,1.f);
+ // Layout is mirrored about the dial axis (x=568); frames keep an 8 px gutter.
+ g.drawRoundedRectangle(162.f,151.f,153.f,297.f,7.f,1.f);
+ g.drawRoundedRectangle(821.f,151.f,153.f,297.f,7.f,1.f);
+ g.drawRoundedRectangle(58.f,92.f,96.f,343.f,6.f,1.f);
+ g.drawRoundedRectangle(982.f,92.f,96.f,343.f,6.f,1.f);
  // Original Skell skull-and-wings mark, deliberately not a copy of the reference WM logo.
+ {
+ Graphics::ScopedSaveState logoState(g);g.addTransform(AffineTransform::translation(12.f,0.f));
  Path skull;skull.addEllipse(24.f,45.f,22.f,21.f);skull.addRectangle(30.f,62.f,10.f,8.f);
  g.setColour(Theme::bone);g.strokePath(skull,PathStrokeType(1.7f));
  g.fillEllipse(29,54,3,3);g.fillEllipse(38,54,3,3);
  Path wing;wing.startNewSubPath(22,51);wing.lineTo(10,47);wing.lineTo(16,57);wing.lineTo(7,60);wing.lineTo(22,61);
  wing.startNewSubPath(47,51);wing.lineTo(60,47);wing.lineTo(54,57);wing.lineTo(63,60);wing.lineTo(47,61);
  g.strokePath(wing,PathStrokeType(2.f));
+ }
  g.setFont(Theme::display(26));g.setColour(Theme::bone);
- g.drawFittedText("SKELL  -  NECROMANCER",257,40,516,29,Justification::centred,1);
+ g.drawFittedText("SKELL  -  NECROMANCER",310,38,516,29,Justification::centred,1);
  g.setColour(Theme::greenLight);g.setFont(Theme::mono(11));
- g.drawText("R A I S E   T H E   D E A D   M I X",360,68,310,12,Justification::centred);
- g.setFont(Theme::mono(12));g.setColour(Theme::faint.brighter(1.1f));g.drawText("SKELL AUDIO",27,586,160,16,Justification::centredLeft);
+ g.drawText("R A I S E   T H E   D E A D   M I X",413,65,310,12,Justification::centred);
+ g.setFont(Theme::mono(12));g.setColour(Theme::faint.brighter(1.1f));g.drawText("SKELL AUDIO",27,588,160,16,Justification::centredLeft);
  g.setFont(Theme::mono(11));g.setColour(Theme::greenLight.withAlpha(.73f));
  g.drawFittedText("REVIVE / TONE / LOUDNESS",440,558,264,10,Justification::centred,1);
  g.setFont(Theme::mono(11));g.setColour(Theme::faint.brighter(1.15f));
- g.drawText("RANGE",165,338,54,14,Justification::centred);
- g.setFont(Theme::mono(12));g.setColour(Theme::faint.brighter(1.1f));
- g.drawFittedText("IN",65,92,70,17,Justification::centred,1);
- g.drawFittedText("OUT",1018,92,70,17,Justification::centred,1);
+ g.drawText("RANGE",169,338,54,14,Justification::centred);
 }
 SkellNecromancerAudioProcessorEditor::SkellNecromancerAudioProcessorEditor(SkellNecromancerAudioProcessor&p):
- AudioProcessorEditor(&p),processor(p),top(p),inMeter(p.inputL,p.inputR),outMeter(p.outputL,p.outputR,true),autopsy(p){
+ AudioProcessorEditor(&p),processor(p),top(p),inMeter("IN",p.inputL,p.inputR),outMeter("OUT",p.outputL,p.outputR,true),autopsy(p){
  setLookAndFeel(&look);addAndMakeVisible(panel);panel.setBounds(0,0,Theme::width,Theme::height);
  auto add=[this](Component&c){panel.addAndMakeVisible(c);};
  add(top);top.setBounds(0,0,Theme::width,36);
  add(dial);dial.setBounds(Theme::dial);attachSlider(dial,"reanimate");
  for(auto*knob:{&low,&mid,&high,&hf,&input,&output})add(*knob);
- low.setBounds(225,166,74,118);mid.setBounds(225,320,74,118);high.setBounds(845,166,74,118);hf.setBounds(845,320,74,118);
- input.setBounds(63,438,86,116);output.setBounds(991,438,86,116);
+ low.setBounds(225,166,74,118);mid.setBounds(225,320,74,118);high.setBounds(837,166,74,118);hf.setBounds(837,320,74,118);
+ input.setBounds(63,446,86,116);output.setBounds(987,446,86,116);
  low.setRange(-6,6,.1);low.setDefault(1.5);mid.setRange(-6,6,.1);mid.setDefault(-1);
  high.setRange(-6,6,.1);high.setDefault(2);hf.setRange(-6,6,.1);hf.setDefault(1);
  input.setRange(-12,12,.1);output.setRange(-12,12,.1);
  attachSlider(low,"low");attachSlider(mid,"mid");attachSlider(high,"high");attachSlider(hf,"hfAdjust");attachSlider(input,"input");attachSlider(output,"output");
- add(range);range.setBounds(168,356,47,25);attachChoice(range,"midRange");
- add(inMeter);add(outMeter);inMeter.setBounds(65,96,84,325);outMeter.setBounds(998,96,84,325);
+ add(range);range.setBounds(172,356,47,25);attachChoice(range,"midRange");
+ add(inMeter);add(outMeter);inMeter.setBounds(65,96,84,325);outMeter.setBounds(987,96,84,325);
  setTextButton(autoButton,"AUTO",791,47,111,26,"Analyze 12 s, then replay the loudest section for the second pass.");
  setTextButton(onButton,"ON",917,47,100,26,"Toggle just the REVIVE engine; EQ, trim and limiter remain active.",true);
  setTextButton(bypassButton,"BYPASS",1030,47,116,26,"Latency-aligned, optional gain-matched bypass.",true);
@@ -67,10 +68,10 @@ SkellNecromancerAudioProcessorEditor::SkellNecromancerAudioProcessorEditor(Skell
  mix.setBounds(510,542,138,15);mix.setRange(0,100,.1);attachSlider(mix,"mix");
  add(mixValue);mixValue.setBounds(648,536,92,22);mixValue.setFont(Theme::mono(10));mixValue.setColour(Label::textColourId,Theme::bone);
  add(push);push.setBounds(942,587,103,18);push.setRange(0,24,.1);attachSlider(push,"push");
- add(pushValue);pushValue.setBounds(1053,583,90,22);pushValue.setColour(Label::textColourId,Theme::bone);pushValue.setFont(Theme::mono(13));
+ add(pushValue);pushValue.setBounds(1053,585,90,22);pushValue.setColour(Label::textColourId,Theme::bone);pushValue.setFont(Theme::mono(13));
  add(autopsy);autopsy.setBounds(221,580,268,31);
- add(lufs);lufs.setBounds(501,583,244,25);lufs.setFont(Theme::mono(10));lufs.setColour(Label::textColourId,Theme::greenLight);
- add(gr);gr.setBounds(749,583,69,23);gr.setFont(Theme::mono(10));gr.setColour(Label::textColourId,Theme::bone);
+ add(lufs);lufs.setBounds(501,584,244,24);lufs.setFont(Theme::mono(10));lufs.setColour(Label::textColourId,Theme::greenLight);
+ add(gr);gr.setBounds(749,584,69,24);gr.setFont(Theme::mono(10));gr.setColour(Label::textColourId,Theme::bone);
  add(status);status.setBounds(10,546,325,24);status.setFont(Theme::mono(10));status.setColour(Label::textColourId,Theme::greenLight);
  add(hints);hints.setBounds(0,0,Theme::width,Theme::height);hints.toFront(false);
  top.settings.onClick=[this]{openSettings();};top.help.onClick=[this]{showTour();};
