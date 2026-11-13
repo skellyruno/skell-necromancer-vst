@@ -56,3 +56,23 @@ DSP / processor (tests/processor_stress.cpp, optional target `-DSKELL_BUILD_PROC
 - CPU (Linux g++ -O3, one core, 48 kHz/512, includes test-signal generation): Off ~1.9 %, 2x ~3.0 %, 4x ~4.5 %.
 - Fixed all -Wall -Wextra warnings in dsp headers (LufsMeter, AutoAnalyzer).
 Not verified: the new CMake option itself on Windows (the same sources build and pass in a Linux harness), Windows CI, FL Studio PDC, real-material voicing.
+
+## 2026-11-12 Reference-driven UI pass + switch de-clicking
+UI (verified by headless render at 810/1157/1736 px, dial filmstrip, scripted knob tests; layout/motion follow the reference video, artwork/glyphs/branding stay original):
+- Dial: rune field rebuilt as 640 original glyphs in 5 cached layers that shimmer independently, plus a travelling highlight cone (speed/brightness follow live level). Field fades in/out (~150 ms) with REVIVE on/off and BYPASS; a bypassed, settled dial repaints nothing. Animation repaints at 30 Hz (~3.6 ms per frame in the software renderer). Glyphs are confined inside the bezel and the lower arc is kept quiet for the % readout.
+- Arc/ticks dim to grey when inactive (empty well like a bypassed unit); knob cap stays bright.
+- Fixed a latent alpha bug: `drawImage` takes its alpha from the current colour, which left the metal knob caps drawn at 50% (and would have faded the dial cap in bypass). Opacity is now reset before each cap.
+- Meters: dim ghost segments show the full LED strip; heavy outline removed.
+- One main rounded instrument panel replaces the four boxed groups. Vector icons (undo, redo, save, settings, help) and power-icon pill buttons (AUTO/ON/BYPASS/LIMITER); letter-spaced title; MID range is now a vertical I/II/III dot selector (still a ComboBox, same parameter attachment); mode dropdown moved inside the panel; lighter knob halos.
+DSP:
+- Oversampling change no longer clicks: output fades to silence (5 ms) with the old configuration, then resets/switches latency, holds one latency period while the fresh delay lines fill, then fades in (25 ms). Previously a hard cut (0.28 step on a 0.3 sine).
+- DELTA listen now crossfades over 15 ms (previously a hard switch, 0.29 step).
+- New stress check T10: max sample-to-sample step on a steady 1 kHz tone while toggling BYPASS, REVIVE, LIMITER, MODE, OVERSAMPLING, DELTA, GAIN MATCH is <= 1.5x the tone's own max step in every case.
+- Stress test remains: 135/135 configs, latency exact at Off/2x/4x, NaN/Inf survival, ceiling, silence/denormals, mono, alias, CPU (this run on a busier machine: ~2.7 / 4.1 / 5.5 % of one core at Off/2x/4x, includes test-signal generation).
+Not verified: Windows CI, FL Studio host behaviour (PDC with the new fade-out/in on oversampling changes, animation smoothness at the host's frame rate), Windows font rendering, the optional CMake stress target on Windows.
+
+## 2026-11-12 Bottom-area cleanup
+- DELTA, MIX slider and GAIN MATCH now form one symmetric row under the dial (centred on x=568, inside the panel border; previously GAIN MATCH sat on the panel edge next to OUTPUT).
+- Removed the redundant "REVIVE / TONE / LOUDNESS" caption.
+- Status message moved from the panel's bottom-left (collided with the INPUT label on long messages) into a two-line footer block: status above, dimmed LUFS / GR readouts below.
+- Verified: headless render at 810/1157/1736 px, 7/7 knob tests, stress test passes, project/asset tests pass. Not verified in a real host or on Windows.

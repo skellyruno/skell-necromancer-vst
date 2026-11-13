@@ -21,13 +21,14 @@ public:
   const auto b=getLocalBounds().toFloat();
   const float cx=b.getCentreX();
   const float r=radius(),cy=r+7;
-  g.setColour(Theme::greenDim.withAlpha(.32f));g.fillEllipse(cx-r-7,cy-r-7,2*(r+7),2*(r+7));
+  g.setColour(Theme::greenDim.withAlpha(.12f));g.fillEllipse(cx-r-7,cy-r-7,2*(r+7),2*(r+7));
   for(int k=0;k<=25;++k){float angle=juce::MathConstants<float>::pi*(.75f+1.5f*k/25.f);
     auto rr=r+5;auto xx=cx+std::cos(angle)*rr,yy=cy+std::sin(angle)*rr;
     g.setColour(k<(int)(25*(float)valueToProportionOfLength(getValue()))?Theme::green:Theme::faint.withAlpha(.5f));
     g.drawLine(xx,yy,cx+std::cos(angle)*(rr+3.f),cy+std::sin(angle)*(rr+3.f),1.f);
   }
-  if(!small.isNull()){juce::Graphics::ScopedSaveState save(g);const float a=(float)(valueToProportionOfLength(getValue())*4.712389-2.35619);
+  if(!small.isNull()){juce::Graphics::ScopedSaveState save(g);g.setOpacity(1.f); // drawImage takes its alpha from the current colour
+      const float a=(float)(valueToProportionOfLength(getValue())*4.712389-2.35619);
       g.addTransform(juce::AffineTransform::rotation(a,cx,cy));g.drawImage(small,juce::Rectangle<float>(cx-r,cy-r,r*2,r*2));}
   else{g.setColour(Theme::border);g.fillEllipse(cx-r,cy-r,2*r,2*r);}
   if(isMouseOverOrDragging()){g.setColour(Theme::green.withAlpha(.8f));g.drawEllipse(cx-r-2,cy-r-2,2*r+4,2*r+4,1.f);}

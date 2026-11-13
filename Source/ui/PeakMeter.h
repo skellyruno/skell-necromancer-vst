@@ -22,11 +22,11 @@ public:
   g.drawFittedText(label,21,0,33,headerH,juce::Justification::centred,1);
   for(int c=0;c<2;++c){const float d=shown[c],v=value(d);
     const int barX=22+c*17,barTop=headerH+1,barH=getHeight()-25-headerH;
-    for(int y=0;y<barH;y+=3){float h=(float)y/barH;if(h>v)continue;
-      g.setColour(Theme::spectral(1.f-h).interpolatedWith(Theme::bone,.12f));
+    for(int y=0;y<barH;y+=3){const float h=(float)y/(float)barH;
+      const auto colour=Theme::spectral(1.f-h).interpolatedWith(Theme::bone,.12f);
+      g.setColour(h<=v?colour:colour.withAlpha(.12f)); // unlit segments stay faintly visible
       g.fillRect(barX,barTop+barH-y-3,13,2);
     }
-    g.setColour(Theme::bone.withAlpha(.75f));g.drawRect(barX,barTop,13,barH,1);
     const float heldPos=(float)barTop+(float)barH*(1.f-value(held[c]));
     g.setColour(Theme::greenLight);g.fillRect((float)barX,heldPos,13.f,1.5f);
   }

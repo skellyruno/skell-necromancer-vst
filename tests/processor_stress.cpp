@@ -109,6 +109,19 @@ int main(int,char**){
     std::cout<<"    top residual bins:";for(int q=0;q<6;++q)std::cout<<" "<<(int)(top[(size_t)q].second*sr/N)<<"Hz("<<(int)(10*std::log10(top[(size_t)q].first/fund))<<"dB)";std::cout<<"\n";}
    std::cout<<"  alias (non-harmonic) level os="<<os<<": "<<aliasDb[os]<<" dB rel fundamental\n";}
   check(aliasDb[2]<aliasDb[0]-6.0&&aliasDb[1]<aliasDb[0]-3.0,"T9 oversampling reduces aliasing vs off (4x by >6 dB, 2x by >3 dB)");}
+
+ // ---- T10: no clicks when switching bypass / revive / limiter / mode / oversampling on a steady tone ----
+ {const double sr=48000;const float A=.3f,f=1000.f;const float maxStep=A*MathConstants<float>::twoPi*f/(float)sr; // largest |dx| of the tone itself
+  struct Sw{const char*id;float a,b;};
+  for(const Sw sw:{Sw{"bypass",0,1},Sw{"reanimateOn",1,0},Sw{"limiterOn",0,1},Sw{"mode",0,2},Sw{"oversampling",0,2},Sw{"deltaListen",0,1},Sw{"levelMatch",0,1}}){
+   SkellNecromancerAudioProcessor p;p.setPlayConfigDetails(2,2,sr,512);p.prepareToPlay(sr,512);setP(p,"push",3);
+   AudioBuffer<float> b(2,512);MidiBuffer m;int pos=0;float prev=0,worst=0;bool have=false;
+   for(int blk=0;blk<(int)(sr*2)/512;++blk){
+    if(blk%20==10)setP(p,sw.id,(blk/20)%2?sw.a:sw.b);
+    for(int n=0;n<512;++n){float v=A*std::sin(MathConstants<float>::twoPi*f*(float)(pos+n)/(float)sr);b.setSample(0,n,v);b.setSample(1,n,v);}
+    pos+=512;p.processBlock(b,m);MessageManager::getInstance()->runDispatchLoopUntil(1);
+    if(blk>=20)for(int n=0;n<512;++n){float v=b.getSample(0,n);if(have)worst=std::max(worst,std::abs(v-prev));prev=v;have=true;}}
+   check(worst<maxStep*4.f,String("T10 no click on ")+sw.id+" toggle: max step "+String(worst,4)+" vs tone max "+String(maxStep,4));}}
  // ---- T8: CPU (single thread, 48 kHz, 512-sample blocks, 10 s of audio) ----
  for(int os=0;os<3;++os){
    SkellNecromancerAudioProcessor p;p.setPlayConfigDetails(2,2,48000,512);p.prepareToPlay(48000,512);setP(p,"oversampling",(float)os);setP(p,"reanimate",70);

@@ -45,11 +45,12 @@ private:
  NecroDSP::LufsMeter lufs;NecroDSP::AutoAnalyzer analyzer;
  std::atomic<bool>autoRequested{false},autoCancelRequested{false},latencyChanged{false},softClipActive{false};
  std::atomic<int>autoNotice{0};
- int osQuality=0,muteSamples=0,previousAutoState=0;
+ int osQuality=0,osPhase=0,osHold=0,previousAutoState=0; // osPhase: 0 idle, 1 fading out before an oversampling change, 2 fading back in
+ float osGain=1.f;
  std::atomic<int>osRequested{0},currentLatency{0};
  bool autoPass1Applied=false;
  double sampleRateHz=44100;int maxBlockSize=512;
- juce::SmoothedValue<float,juce::ValueSmoothingTypes::Linear> reviveSm,mixSm,inputSm,outputSm,widthSm,fadeSm,bypassSm,pushSm,guardSm;
+ juce::SmoothedValue<float,juce::ValueSmoothingTypes::Linear> reviveSm,mixSm,inputSm,outputSm,widthSm,fadeSm,bypassSm,deltaSm,pushSm,guardSm;
  std::array<juce::SmoothedValue<float,juce::ValueSmoothingTypes::Linear>,4> toneSm;
  float sideLow[2]{},wetPower=1.e-6f,dryPower=1.e-6f;int sampleCounter=0;
  std::array<float,64>monoHistory{};int monoHead=0;

@@ -54,13 +54,13 @@ void SkellNecromancerAudioProcessor::prepareToPlay(double sr,int block){
  const int maxReviveDelay=2*NecroDSP::Oversampler::latencyForFactor(4);
  bypassDelay.prepare(limiter.latencySamples()+maxReviveDelay+64);
  reviveDryDelay.prepare(maxReviveDelay+64);
- for(auto*s:{&reviveSm,&mixSm,&inputSm,&outputSm,&widthSm,&pushSm,&guardSm})s->reset(sr,.02);fadeSm.reset(sr,.010);bypassSm.reset(sr,.015);
+ for(auto*s:{&reviveSm,&mixSm,&inputSm,&outputSm,&widthSm,&pushSm,&guardSm})s->reset(sr,.02);fadeSm.reset(sr,.010);bypassSm.reset(sr,.015);deltaSm.reset(sr,.015);
  reviveSm.setCurrentAndTargetValue(param("reanimate")*.01f);mixSm.setCurrentAndTargetValue(param("mix")*.01f);
  inputSm.setCurrentAndTargetValue((float)NecroDSP::dbToGain(param("input")));outputSm.setCurrentAndTargetValue((float)NecroDSP::dbToGain(param("output")));widthSm.setCurrentAndTargetValue(param("width")*.01f);
- fadeSm.setCurrentAndTargetValue(param("reanimateOn")>.5f?1.f:0.f);bypassSm.setCurrentAndTargetValue(param("bypass")>.5f?1.f:0.f);pushSm.setCurrentAndTargetValue(param("push"));guardSm.setCurrentAndTargetValue(param("deEssGuard")*.01f);
+ fadeSm.setCurrentAndTargetValue(param("reanimateOn")>.5f?1.f:0.f);bypassSm.setCurrentAndTargetValue(param("bypass")>.5f?1.f:0.f);deltaSm.setCurrentAndTargetValue(param("deltaListen")>.5f?1.f:0.f);pushSm.setCurrentAndTargetValue(param("push"));guardSm.setCurrentAndTargetValue(param("deEssGuard")*.01f);
  for(size_t i=0;i<toneSm.size();++i){toneSm[i].reset(sr,.03);toneSm[i].setCurrentAndTargetValue(param(toneIds[i]));}
  osQuality=juce::jlimit(0,2,(int)param("oversampling"));osRequested=osQuality;
- ensureLatency(osQuality);muteSamples=0;sampleCounter=0;sideLow[0]=sideLow[1]=0;monoHistory.fill(0);monoHead=0;softClipActive.store((bool)uiState.getProperty("softClip",false));
+ ensureLatency(osQuality);osPhase=0;osHold=0;osGain=1.f;sampleCounter=0;sideLow[0]=sideLow[1]=0;monoHistory.fill(0);monoHead=0;softClipActive.store((bool)uiState.getProperty("softClip",false));
  wetPower=dryPower=1e-6f;inputL=inputR=outputL=outputR=-100;gainReduction=0;momentary=shortTerm=integrated=-100;
 }
 void SkellNecromancerAudioProcessor::releaseResources(){}
@@ -92,23 +92,29 @@ void SkellNecromancerAudioProcessor::processBlock(AudioBuffer<float>& buffer,Mid
    }
    else {analyzer.reset();autoNotice.store(1);triggerAsyncUpdate();}
  }
- int quality=juce::jlimit(0,2,(int)param("oversampling"));
- if(quality!=osQuality){
-    osQuality=quality;osRequested=quality;
+ // An oversampling change resets the engine and its latency. To avoid a click the output is first
+ // faded to silence with the current configuration, then switched, then faded back in.
+ const int requested=juce::jlimit(0,2,(int)param("oversampling"));
+ if(osPhase==0&&requested!=osQuality)osPhase=1;
+ if(osPhase==1&&osGain<=0.f){
+    const int quality=requested;
+    osQuality=quality;osRequested=quality;osPhase=2;
     const int factor=quality==0?1:quality==1?2:4;
     currentLatency.store(limiter.latencySamples()+2*NecroDSP::Oversampler::latencyForFactor(factor));
-    muteSamples=(int)(sampleRateHz*.025);
+    osHold=currentLatency.load(); // reset delay lines emit their first signal after one latency period
     bypassDelay.reset();reviveDryDelay.reset();limiter.reset();revive.reset();
     latencyChanged.store(true);triggerAsyncUpdate();
  }
+ const int quality=osQuality;
  const int factor=quality==0?1:quality==1?2:4;
+ const float osFadeOutStep=1.f/(float)std::max(1.0,sampleRateHz*.005),osFadeInStep=1.f/(float)std::max(1.0,sampleRateHz*.025);
  const int mode=juce::jlimit(0,2,(int)param("mode"));
  reviveSm.setTargetValue(param("reanimate")*.01f);mixSm.setTargetValue(param("mix")*.01f);
  inputSm.setTargetValue((float)NecroDSP::dbToGain(param("input")));outputSm.setTargetValue((float)NecroDSP::dbToGain(param("output")));widthSm.setTargetValue(param("width")*.01f);
- fadeSm.setTargetValue(param("reanimateOn")>.5f?1.f:0.f);bypassSm.setTargetValue(param("bypass")>.5f?1.f:0.f);pushSm.setTargetValue(param("push"));guardSm.setTargetValue(param("deEssGuard")*.01f);
+ fadeSm.setTargetValue(param("reanimateOn")>.5f?1.f:0.f);bypassSm.setTargetValue(param("bypass")>.5f?1.f:0.f);deltaSm.setTargetValue(param("deltaListen")>.5f?1.f:0.f);pushSm.setTargetValue(param("push"));guardSm.setTargetValue(param("deEssGuard")*.01f);
  for(size_t i=0;i<toneSm.size();++i)toneSm[i].setTargetValue(param(toneIds[i]));
  static constexpr float ceilings[]={-.1f,-.3f,-1.f};
- const bool delta=param("deltaListen")>.5f,matching=param("levelMatch")>.5f,monoStereo=param("monoToStereo")>.5f;
+ const bool matching=param("levelMatch")>.5f,monoStereo=param("monoToStereo")>.5f;
  const bool limiterEnabled=param("limiterOn")>.5f;
  const int inputChannels=getTotalNumInputChannels(),outputChannels=getTotalNumOutputChannels();
  auto*left=buffer.getWritePointer(0);auto*right=buffer.getNumChannels()>1?buffer.getWritePointer(1):nullptr;
@@ -161,14 +167,15 @@ void SkellNecromancerAudioProcessor::processBlock(AudioBuffer<float>& buffer,Mid
    dryPower=rmsSmooth*dryPower+(1.f-rmsSmooth)*drySquare;
    const float match=matching?juce::jlimit(.25f,4.f,std::sqrt(wetPower/std::max(dryPower,1e-9f))):1.f;
    const float matchedDryL=dryL*match,matchedDryR=dryR*match;
-   if(delta){l-=matchedDryL;r-=matchedDryR;(void)bypassSm.getNextValue();}
-   else {
-      // ON/BYPASS are level-aligned and now transition across 15 ms, not a hard sample switch.
-      const float crossfade=bypassSm.getNextValue();
-      l+=(matchedDryL-l)*crossfade;
-      r+=(matchedDryR-r)*crossfade;
-   }
-   if(muteSamples>0){const float m=1.f-(float)muteSamples/std::max(1.f,(float)(sampleRateHz*.025));l*=m;r*=m;--muteSamples;}
+   // ON/BYPASS and DELTA are level-aligned and each crossfades over 15 ms rather than switching hard.
+   const float crossfade=bypassSm.getNextValue(),deltaMix=deltaSm.getNextValue();
+   const float deltaL=l-matchedDryL,deltaR=r-matchedDryR;
+   l+=(matchedDryL-l)*crossfade;
+   r+=(matchedDryR-r)*crossfade;
+   if(deltaMix>0.f){l+=(deltaL-l)*deltaMix;r+=(deltaR-r)*deltaMix;}
+   if(osPhase==1)osGain=std::max(0.f,osGain-osFadeOutStep);
+   else if(osPhase==2){if(osHold>0)--osHold;else{osGain=std::min(1.f,osGain+osFadeInStep);if(osGain>=1.f)osPhase=0;}}
+   l*=osGain;r*=osGain;
    lufs.process(l,r,outputChannels);
    // Pass 1 diagnoses the original signal; pass 2 measures the *processed* output.
    if(analyzer.getState()==NecroDSP::AutoAnalyzer::verifying)analyzer.push(l,r);
