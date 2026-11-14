@@ -23,7 +23,8 @@ public:
   g.drawFittedText(label,21,0,44,headerH,juce::Justification::centred,1);
   for(int c=0;c<2;++c){const float d=shown[c],v=value(d);
     const int barX=22+c*27,barTop=headerH+1;
-    for(int y=0;y<barH;y+=3){const float h=(float)y/(float)barH;
+    // A partial last step previously drew two pixels above the LED area.
+    for(int y=0;y+2<barH;y+=3){const float h=(float)y/(float)barH;
       // Reference-inspired LED palette: pale cyan low, lavender middle, pink high.
       const auto cyan=juce::Colour(0xff86efff),purple=juce::Colour(0xffc49ae9),pink=juce::Colour(0xffff87a8);
       const auto colour=(h<.53f?cyan.interpolatedWith(purple,h/.53f):purple.interpolatedWith(pink,(h-.53f)/.47f)).interpolatedWith(Theme::bone,.06f);
