@@ -61,7 +61,7 @@ void SkellNecromancerAudioProcessorEditor::Panel::paint(Graphics&g){
  }
  g.setFont(Theme::display(22).withExtraKerningFactor(.41f));
  g.setColour(Theme::bone);
- g.drawFittedText("SKELL  NECROMANCER",268,41,600,33,Justification::centred,1);
+ g.drawFittedText("SKELL  NECROMANCER",278,37,600,33,Justification::centred,1);
  g.setFont(Theme::mono(12));g.setColour(Theme::faint.brighter(1.1f));g.drawText("SKELL AUDIO",27,588,160,16,Justification::centredLeft);
  g.setFont(Theme::mono(11));g.setColour(Theme::faint.brighter(1.15f));
 }
@@ -79,24 +79,24 @@ SkellNecromancerAudioProcessorEditor::SkellNecromancerAudioProcessorEditor(Skell
  high.setRange(-6,6,.1);high.setDefault(2);hf.setRange(-6,6,.1);hf.setDefault(1);
  input.setRange(-12,12,.1);output.setRange(-12,12,.1);
  attachSlider(low,"low");attachSlider(mid,"mid");attachSlider(high,"high");attachSlider(hf,"hfAdjust");attachSlider(input,"input");attachSlider(output,"output");
- add(range);range.setBounds(317,310,42,84);attachChoice(range,"midRange");
+ add(range);range.setBounds(313,310,36,84);attachChoice(range,"midRange");
  add(inMeter);add(outMeter);
  inMeter.setBounds(78,84,84,325);outMeter.setBounds(994,84,84,325);
  setTextButton(autoButton,"AUTO",795,41,114,26,"Analyze 12 s, then replay the loudest section for the second pass.");
  setTextButton(onButton,"ON",926,41,97,26,"Toggle just the REVIVE engine; EQ, trim and limiter remain active.",true);
  setTextButton(bypassButton,"BYPASS",1037,41,107,26,"Latency-aligned, optional gain-matched bypass.",true);
  setTextButton(limiterButton,"LIMITER",820,584,105,24,"True-peak detection limiter; configure the ceiling in Settings.",true);
- setTextButton(deltaButton,"DELTA",366,543,104,24,"Listen to level-matched difference between processed and dry signal.",true);
- setTextButton(matchButton,"GAIN MATCH",666,543,104,24,"Loudness-compensated compare; uses a smoothed RMS estimate.",true);
+ setTextButton(deltaButton,"DELTA",376,543,104,24,"Listen to level-matched difference between processed and dry signal.",true);
+ setTextButton(matchButton,"GAIN MATCH",676,543,104,24,"Loudness-compensated compare; uses a smoothed RMS estimate.",true);
  attachButton(onButton,"reanimateOn");attachButton(bypassButton,"bypass");attachButton(limiterButton,"limiterOn");
  attachButton(deltaButton,"deltaListen");attachButton(matchButton,"levelMatch");
  autoButton.onClick=[this]{processor.requestAuto();};
- mode.addItemList({"VOCAL","MASTER","BUS"},1);add(mode);mode.setBounds(510,93,117,20);attachChoice(mode,"mode");
+ mode.addItemList({"VOCAL","MASTER","BUS"},1);add(mode);mode.setBounds(520,93,117,20);attachChoice(mode,"mode");
  mode.setTooltip("Select vocal-specific de-ess, mastering weight/width, or bus/transient voicing.");
  add(mix);mix.setSliderStyle(Slider::LinearHorizontal);mix.setTextBoxStyle(Slider::NoTextBox,false,0,0);
  mix.setColour(Slider::trackColourId,Theme::greenDim);mix.setColour(Slider::thumbColourId,Theme::green);
- mix.setBounds(484,548,118,15);mix.setRange(0,100,.1);attachSlider(mix,"mix");
- add(mixValue);mixValue.setBounds(604,543,60,24);mixValue.setFont(Theme::mono(10));mixValue.setColour(Label::textColourId,Theme::bone);
+ mix.setBounds(494,548,118,15);mix.setRange(0,100,.1);attachSlider(mix,"mix");
+ add(mixValue);mixValue.setBounds(614,543,60,24);mixValue.setFont(Theme::mono(10));mixValue.setColour(Label::textColourId,Theme::bone);
  add(push);push.setBounds(942,587,103,18);push.setRange(0,24,.1);attachSlider(push,"push");
  add(pushValue);pushValue.setBounds(1053,585,90,22);pushValue.setColour(Label::textColourId,Theme::bone);pushValue.setFont(Theme::mono(13));
  add(autopsy);autopsy.setBounds(221,580,268,31);
