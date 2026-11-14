@@ -23,7 +23,7 @@ public:
    p.x=220.f+std::cos(p.angle)*p.radius;p.y=220.f+std::sin(p.angle)*p.radius;
    p.index=random.nextInt(40);p.size=8.f+random.nextFloat()*6.f;p.weight=.64f+.36f*random.nextFloat();
    // The lower arc stays quiet so the percentage readout remains legible.
-   p.fade=skell::necromancer::runes::quietFade(p.angle);
+   p.fade=skell::necromancer::runes::quietFade(p.angle)*skell::necromancer::runes::headingFade(p.angle);
    p.band=p.radius<162.f?0:p.radius<175.f?1:2;
    p.mobile=(glyphNumber++%4)!=0; // 480 actual moving glyphs, 160 static
   }
@@ -91,7 +91,7 @@ public:
    const auto pos=skell::necromancer::runes::position(p.angle,p.radius,phase[(size_t)p.band]);
    animatedPositions[i]={pos.x,pos.y};
    // Fade the bottom of the orbit so moving runes cannot cover the percent label.
-   animatedFade[i]=skell::necromancer::runes::quietFade(a);
+   animatedFade[i]=skell::necromancer::runes::quietFade(a)*skell::necromancer::runes::headingFade(a);
   }
   for(auto&c:clusters){
    c.age+=(float)dt;

@@ -16,12 +16,13 @@ public:
   const bool active=b.getToggleState();
   const bool isBypass=b.getButtonText().equalsIgnoreCase("BYPASS");
   const auto accent=isBypass?juce::Colour(0xffefb271):Theme::green;
+  const bool abSlot=b.getButtonText()=="A"||b.getButtonText()=="B";
   const bool isHardwareSwitch=b.getButtonText()=="AUTO"||b.getButtonText()=="ON"||
                                isBypass||b.getButtonText()=="LIMITER";
   // The reference ON state is a satin steel switch, not an all-green pill.
   // Leave Skell's green for the active controls and subtle hover feedback.
   const auto base=active?(isBypass?juce::Colour(0xff35271b):
-                         (isHardwareSwitch?juce::Colour(0xff45464b):Theme::greenDim.brighter(.12f)))
+                         ((isHardwareSwitch||abSlot)?juce::Colour(0xff45464b):Theme::greenDim.brighter(.12f)))
                          :juce::Colour(0xff1d2225);
   g.setGradientFill(juce::ColourGradient(base.brighter(.08f),r.getX(),r.getY(),
                                         base.darker(.18f),r.getRight(),r.getBottom(),false));
@@ -30,7 +31,7 @@ public:
    g.setColour(accent.withAlpha(active?.075f:.035f));
    g.fillRoundedRectangle(r.reduced(2.0f),4.0f);
   }
-  const auto edge=active?(isBypass?accent:(isHardwareSwitch?juce::Colour(0xffb4b3b9):accent)):
+  const auto edge=active?(isBypass?accent:((isHardwareSwitch||abSlot)?juce::Colour(0xffb4b3b9):accent)):
                          (hover?Theme::greenLight:Theme::border.brighter(.22f));
   g.setColour(edge);
   g.drawRoundedRectangle(r,5.0f,active||hover?1.5f:1.0f);
@@ -39,7 +40,8 @@ public:
  void drawButtonText(juce::Graphics&g,juce::TextButton&b,bool hover,bool)override{
   const auto text=b.getButtonText();
   const bool bypass=b.getToggleState()&&text.equalsIgnoreCase("BYPASS");
-  const auto colour=bypass?juce::Colour(0xffffd8ae):(hover?Theme::greenLight:Theme::bone);
+  const bool selectedAB=b.getToggleState()&&(text=="A"||text=="B");
+  const auto colour=bypass?juce::Colour(0xffffd8ae):(selectedAB?Theme::greenLight:(hover?Theme::greenLight:Theme::bone));
   g.setColour(colour);
   if(drawIcon(g,text,b.getLocalBounds().toFloat().withSizeKeepingCentre(15.f,15.f)))return;
   const bool power=text=="AUTO"||text=="ON"||text=="BYPASS"||text=="LIMITER";

@@ -33,5 +33,12 @@ int main() {
  }
  if(!(phaseStep(1,.1f,0.f)<0.f && phaseStep(0,.1f,0.f)>0.f))return 6;
  if(!(std::abs(quietFade(1.5707963f)-.15f)<.001f && quietFade(-1.5707963f)>.999f))return 7;
+ const float pi=3.14159265358979323846f;
+ if(!(headingFade(-pi*.5f)>.34f && headingFade(-pi*.5f)<.38f))return 8;
+ if(!(headingFade(0.f)>.999f && headingFade(pi*.5f)>.999f))return 9;
+ for(int i=0;i<=360;++i){
+  const float a=(float)i*pi/180.f-pi;
+  if(!std::isfinite(headingFade(a))||headingFade(a)<.35f||headingFade(a)>1.001f)return 10;
+ }
  std::cout<<"PASS: 480 movable glyphs, real motion at silence, continuous frames, no radial escape\n";
 }

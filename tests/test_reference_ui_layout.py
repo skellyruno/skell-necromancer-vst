@@ -83,3 +83,9 @@ assert "dial_well_pngSize).createCopy()" in dial_source
 assert "rim.strokePath(quietZone,juce::PathStrokeType(38.f))" in dial_source
 assert "g.drawImage(cap," in dial_source and "polishedFace" not in dial_source
 assert dial_source.index("rim.strokePath(quietZone") < dial_source.index("void paint(")
+
+# The original engraved skull cap is visible, resized to match the reference.
+assert "g.drawImage(cap,{cx-97.f,cy-97.f,194.f,194.f})" in dial_source
+assert "headingFade(a)" in runes_source and "headingFade(p.angle)" in runes_source
+laf=(root / "Source/ui/LookAndFeel.h").read_text(encoding="utf-8")
+assert 'const bool abSlot=b.getButtonText()=="A"||b.getButtonText()=="B"' in laf

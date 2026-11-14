@@ -178,3 +178,11 @@ Not verified: Windows CI, FL Studio host behaviour (PDC with the new fade-out/in
 - No DSP, stored presets, parameter values, control layout, or original assets modified.
 - Added code regression guard verifying private copy, one-time bezel stroke, and restored center cap remain intact.
 - Fresh Windows CMake/CTest/actual 70/100/150% screenshot review is required before replacing prior verified VST3.
+
+## 2026-11-13 reference proportion + readability refinement
+- Genuine JUCE screenshot review found the engraved 208px centre cap larger than the reference's relative proportions. Kept the exact approved original cap asset, reduced its painted size to 194px, and adjusted the white index mark to 103–125px at a thinner 4.2px stroke. The user-approved skull artwork and knob parameters remain untouched.
+- Added JUCE-independent headingFade() applied to both stationary cached glyph layers and moving glyph opacity, gently dimming only the upper sector behind the REANIMATE title. The three orbital bands/480 moving rune glyphs still move with no audio input; top and bottom text receive more contrast, and the header backing was slightly deepened.
+- Active A/B preset slot now uses a satin gray hardware tab with a green text accent, rather than an eye-catching solid neon-green active block. All A/B preset functions, click behavior and JUCE component bounds remain unchanged.
+- Tightened the dial hover ring to a fine highlight around the actual metal cap rather than the outer arc.
+- Added heading-mask tests to the independent rune-motion CTest and static source guards for original-cap visibility and new satin A/B styling.
+- UI-only change; no DSP, processor source, preset state or binary assets modified. Fresh Windows CTest, genuine screenshot and FL Studio validation still required.
