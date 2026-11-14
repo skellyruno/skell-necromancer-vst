@@ -21,7 +21,7 @@ public:
    p.angle=random.nextFloat()*2.f*pi;
    p.radius=std::sqrt(juce::jmap(random.nextFloat(),150.f*150.f,187.f*187.f)); // even area density
    p.x=220.f+std::cos(p.angle)*p.radius;p.y=220.f+std::sin(p.angle)*p.radius;
-   p.index=random.nextInt(40);p.size=7.f+random.nextFloat()*7.f;p.weight=.55f+.45f*random.nextFloat();
+   p.index=random.nextInt(40);p.size=8.f+random.nextFloat()*6.f;p.weight=.64f+.36f*random.nextFloat();
    // The lower arc stays quiet so the percentage readout remains legible.
    p.fade=skell::necromancer::runes::quietFade(p.angle);
    p.band=p.radius<162.f?0:p.radius<175.f?1:2;

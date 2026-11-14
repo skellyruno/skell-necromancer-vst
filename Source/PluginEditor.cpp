@@ -131,6 +131,9 @@ SkellNecromancerAudioProcessorEditor::SkellNecromancerAudioProcessorEditor(Skell
      auto hold=(int)processor.uiState.getProperty("meterHold",1000);inMeter.setHoldMilliseconds(hold);outMeter.setHoldMilliseconds(hold);inMeter.tick();outMeter.tick();
  });
  startTimerHz(10);
+ // Populate MIX, PUSH, LUFS and status on the *first frame*. Previously the
+ // readouts stayed blank until the first 100 ms timer event, including capture.
+ timerCallback();
  // The help tour is opt-in; automatically opening it covered the title/header.
 }
 SkellNecromancerAudioProcessorEditor::~SkellNecromancerAudioProcessorEditor(){stopTimer();vblank.reset();setLookAndFeel(nullptr);}

@@ -24,9 +24,9 @@ public:
   g.setColour(juce::Colours::black.withAlpha(.34f));g.fillEllipse(cx-r-7,cy-r-5,2*(r+7),2*(r+7));
   g.setColour(juce::Colour(0xffa4a8a9).withAlpha(.19f));
   g.drawEllipse(cx-r-5.f,cy-r-5.f,2.f*(r+5.f),2.f*(r+5.f),.9f);
+  const int lit=(int)std::round(25.f*(float)valueToProportionOfLength(getValue()));
   for(int k=0;k<=25;++k){float angle=juce::MathConstants<float>::pi*(.75f+1.5f*k/25.f);
     auto rr=r+5;auto xx=cx+std::cos(angle)*rr,yy=cy+std::sin(angle)*rr;
-    const int lit=(int)std::round(25.f*(float)valueToProportionOfLength(getValue()));
     const auto on=k<lit;
     g.setColour(on?(k>=lit-2?Theme::greenLight.withAlpha(.78f):Theme::bone.withAlpha(.63f))
                   :Theme::bone.withAlpha(.23f));
@@ -37,7 +37,8 @@ public:
       g.addTransform(juce::AffineTransform::rotation(a,cx,cy));g.drawImage(small,juce::Rectangle<float>(cx-r,cy-r,r*2,r*2));}
   else{g.setColour(Theme::border);g.fillEllipse(cx-r,cy-r,2*r,2*r);}
   if(isMouseOverOrDragging()){g.setColour(Theme::greenLight.withAlpha(.46f));g.drawEllipse(cx-r-2,cy-r-2,2*r+4,2*r+4,1.f);}
-  g.setFont(Theme::mono(15));g.setColour(Theme::bone);
+  // Slightly larger high-contrast readout holds up better at the 70% editor size.
+  g.setFont(Theme::mono(16));g.setColour(Theme::bone);
   g.drawFittedText(juce::String(getValue(),1)+(caption=="MIX"||caption=="WIDTH"?" %":" dB"),
      valueArea(),juce::Justification::centred,1);
   g.setFont(Theme::mono(12).withExtraKerningFactor(.08f));g.setColour(Theme::bone.withAlpha(.88f));

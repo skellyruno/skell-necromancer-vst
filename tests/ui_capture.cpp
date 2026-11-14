@@ -6,6 +6,7 @@
 #include <cmath>
 #include <iostream>
 #include <memory>
+#include <vector>
 
 static ReanimateDial* findDial(juce::Component& root) {
  if(auto* d=dynamic_cast<ReanimateDial*>(&root))return d;
@@ -13,6 +14,12 @@ static ReanimateDial* findDial(juce::Component& root) {
   if(auto* child=root.getChildComponent(i))
    if(auto* found=findDial(*child))return found;
  return nullptr;
+}
+
+static void findMeters(juce::Component& root,std::vector<PeakMeter*>& meters) {
+ if(auto* m=dynamic_cast<PeakMeter*>(&root))meters.push_back(m);
+ for(int i=0;i<root.getNumChildComponents();++i)
+  if(auto* child=root.getChildComponent(i))findMeters(*child,meters);
 }
 
 static bool saveImage(const juce::Image& image,const juce::File& path) {
@@ -33,6 +40,15 @@ int main(int argc,char** argv) {
  processor.prepareToPlay(48000.,512);
  auto editor=std::make_unique<SkellNecromancerAudioProcessorEditor>(processor);
  editor->setVisible(true);
+ // VISUAL TEST SIGNAL, NOT PROCESSED AUDIO: match the reference meter levels
+ // while leaving the real processor, meter math and production defaults intact.
+ processor.inputL.store(-.4f);processor.inputR.store(-.7f);
+ processor.outputL.store(-.1f);processor.outputR.store(-.3f);
+ std::vector<PeakMeter*>meters;
+ findMeters(*editor,meters);
+ if(meters.size()!=2){std::cerr<<"Expected both real meter components\\n";return 8;}
+ for(auto* meter:meters)meter->tick();
+ std::cout<<"UI test levels: IN -0.4/-0.7 dB, OUT -0.1/-0.3 dB (synthetic preview only)\\n";
 
  auto snapshot=[&](int width,int height,const juce::String& name) {
   editor->setSize(width,height);
@@ -74,6 +90,20 @@ int main(int argc,char** argv) {
  }
  std::cout<<"Moving rune pixels: "<<changed<<" / "<<considered<<" annulus probes\n";
  if(changed<80){std::cerr<<"Rune artwork did not visibly move\n";return 7;}
+ // Measure screenshot rendering work separately from audio/DSP processing.
+ // Informational only: snapshot time includes allocation/OS rasterization and
+ // is NOT a host CPU benchmark.
+ double totalMs=0.,maximumMs=0.;
+ for(int n=0;n<6;++n){
+  dial->advance();
+  const double t0=juce::Time::getMillisecondCounterHiRes();
+  auto image=editor->createComponentSnapshot(editor->getLocalBounds());
+  const double elapsed=juce::Time::getMillisecondCounterHiRes()-t0;
+  if(image.isNull())return 9;
+  totalMs+=elapsed;maximumMs=juce::jmax(maximumMs,elapsed);
+ }
+ std::cout<<"UI screenshot render mean "<<totalMs/6.<<" ms, worst "<<maximumMs
+          <<" ms (headless capture; NOT host CPU)\\n";
  processor.releaseResources();
  return 0;
 }

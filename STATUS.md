@@ -119,3 +119,12 @@ Not verified: Windows CI, FL Studio host behaviour (PDC with the new fade-out/in
 - Restored slightly more base brightness to the 480 moving glyphs (without re-introducing the large white flare hotspots).
 - Moved REANIMATE into the top-of-dial heading position seen in the reference, with a translucent dark readability strip; retained the percent readout at the bottom.
 - Windows rebuild / capture review pending. No DSP source changes.
+
+## 2026-11-13 UI review: reference-level meter screenshots and first-frame polish
+- Fixed empty MIX, PUSH, LUFS, GR and status labels on initial open by calling the editor's existing update method at construction. No DSP/parameter-value changes.
+- Increased minimum mobile glyph size and weight while retaining 480 physically orbiting runes, the tuned dimming and all existing cached sprites.
+- Slightly improved small knob text readability at 70%; hoisted a per-paint repeated tick computation outside the tick loop.
+- `tests/ui_capture.cpp` now activates **only the visual screenshot's** meter levels at IN -0.4/-0.7 dB and OUT -0.1/-0.3 dB. Audio is not processed and these synthetic levels never appear in the shipping plugin.
+- Screenshot target additionally reports six actual editor snapshot times as informational UI rasterization numbers, NOT an audio-thread/FL Studio CPU benchmark.
+- Changes isolated to UI and capture harness. DSP source unaffected.
+- Windows CI, visual inspection, 70% legibility, FL Studio interaction, and frame-time review remain release gates.
