@@ -4,6 +4,7 @@ param(
   [string]$JucePath = "",
   [string]$BuildDir = "build-ui-preview",
   [string]$OutputDir = "ui-preview",
+  [string]$ReferenceFile = "",
   [switch]$SkipBuild
 )
 $ErrorActionPreference = "Stop"
@@ -47,3 +48,8 @@ foreach ($name in $scenes) {
 }
 Write-Host "Done. Four review images in: $output"
 Write-Host "Other test artifact: rune_before.png (used for image-difference regression)"
+if ($ReferenceFile) {
+  $referencePath = (Resolve-Path $ReferenceFile).Path
+  & python (Join-Path $PSScriptRoot "compare-ui.py") --reference $referencePath --actual (Join-Path $output "ui_1157.png") --output (Join-Path $output "reference-vs-necromancer.png")
+  if ($LASTEXITCODE -ne 0) { throw "Reference comparison failed. Install Pillow: python -m pip install pillow" }
+}
