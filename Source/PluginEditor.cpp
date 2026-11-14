@@ -91,7 +91,9 @@ SkellNecromancerAudioProcessorEditor::SkellNecromancerAudioProcessorEditor(Skell
  attachButton(onButton,"reanimateOn");attachButton(bypassButton,"bypass");attachButton(limiterButton,"limiterOn");
  attachButton(deltaButton,"deltaListen");attachButton(matchButton,"levelMatch");
  autoButton.onClick=[this]{processor.requestAuto();};
- mode.addItemList({"VOCAL","MASTER","BUS"},1);add(mode);mode.setBounds(520,93,117,20);attachChoice(mode,"mode");
+ mode.addItemList({"VOCAL","MASTER","BUS"},1);add(mode);
+ // Keep voicing accessible, but clear of the hero dial and its upper bezel.
+ mode.setBounds(227,112,119,22);attachChoice(mode,"mode");
  mode.setTooltip("Select vocal-specific de-ess, mastering weight/width, or bus/transient voicing.");
  add(mix);mix.setSliderStyle(Slider::LinearHorizontal);mix.setTextBoxStyle(Slider::NoTextBox,false,0,0);
  mix.setColour(Slider::trackColourId,Theme::greenDim);mix.setColour(Slider::thumbColourId,Theme::green);
