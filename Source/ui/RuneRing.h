@@ -3,9 +3,9 @@
 #include "BinaryData.h"
 #include <array>
 #include <cmath>
-// Dense field of original rune glyphs around the REANIMATE dial. The glyphs themselves stay put (as on
-// hardware-style displays); life comes from small clusters of glyphs that flare bright and drift along
-// the ring, plus individual glyphs that flash, all driven by `advance` (busier with live level).
+// Dense field of original rune glyphs around the REANIMATE dial. Glyphs stay anchored; moving
+// illumination bands, not glyph rotation or random cluster teleportation, animate the field.
+// Brief independent flares add the intermittent sparkle seen in the supplied reference video.
 // Static glyphs are baked into a few cached layers that breathe slowly. `active` fades the field in/out.
 class RuneRing {
 public:
@@ -23,7 +23,15 @@ public:
    const float s=juce::jlimit(0.f,1.f,(std::sin(p.angle)-.45f)/.5f);
    p.fade=1.f-.85f*s*s*(3.f-2.f*s);
   }
-  for(size_t i=0;i<clusters.size();++i){clusters[i].age=(float)i*.2f;clusters[i].life=.5f+(float)i*.1f;}
+  // Distinct, persistent orbital sweeps. They never respawn at a random angle: abrupt
+  // jumps read as flicker, whereas the reference has highlights travelling across runes.
+  constexpr std::array<float,3> initialAngles{-2.3f,.75f,2.85f};
+  constexpr std::array<float,3> sweepSpeeds{.86f,.62f,1.06f};
+  for(size_t i=0;i<clusters.size();++i){
+   auto& c=clusters[i];c.angle=initialAngles[i];c.spin=sweepSpeeds[i];
+   c.radius=163.f+6.f*(float)i;c.size=47.f+6.f*(float)i;
+   c.life=3.8f+.8f*(float)i;c.age=.75f*(float)i;
+  }
   for(size_t i=0;i<flashes.size();++i){flashes[i].age=(float)i*.03f;flashes[i].life=.2f+(float)i*.02f;flashes[i].glyph=random.nextInt(glyphCount);}
   for(auto& img:layers)img=juce::Image(juce::Image::ARGB,440,440,true);
   for(int j=0;j<layerCount;++j){
@@ -47,11 +55,10 @@ public:
   const double dt=juce::jlimit(0.0,.1,t-lastT);lastT=t;
   for(auto&c:clusters){
    c.age+=(float)dt;
-   if(c.age>=c.life){ // respawn somewhere new on the ring
-    c.angle=animRandom.nextFloat()*2.f*juce::MathConstants<float>::pi;c.radius=155.f+animRandom.nextFloat()*30.f;
-    c.life=.45f+animRandom.nextFloat()*.55f;c.age=0.f;c.spin=(animRandom.nextFloat()-.5f)*1.1f;c.size=15.f+animRandom.nextFloat()*12.f;
-   }
-   c.angle+=c.spin*(float)dt*(1.f+live);
+   if(c.age>=c.life)c.age=std::fmod(c.age,c.life);
+   c.angle+=c.spin*(float)dt*(.8f+.35f*live);
+   // Wrapping the phase changes no rendered position; it only prevents precision drift.
+   if(c.angle>juce::MathConstants<float>::twoPi)c.angle-=juce::MathConstants<float>::twoPi;
   }
   for(auto&f:flashes){
    f.age+=(float)dt;
@@ -70,12 +77,12 @@ public:
   g.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
   const float gain=active*(.75f+.25f*live);
   for(const auto&c:clusters){
-   const float env=std::sin(juce::MathConstants<float>::pi*c.age/c.life);
+   const float env=.62f+.38f*std::sin(juce::MathConstants<float>::twoPi*c.age/c.life);
    const float cx=220.f+std::cos(c.angle)*c.radius,cy=220.f+std::sin(c.angle)*c.radius;
    for(const auto&p:placements){
     const float dx=p.x-cx,dy=p.y-cy,d2=dx*dx+dy*dy;if(d2>c.size*c.size)continue;
     const float fall=1.f-std::sqrt(d2)/c.size;
-    drawBright(g,p,gain*env*env*fall*p.fade*1.4f);
+    drawBright(g,p,gain*env*fall*p.fade*1.7f);
    }
   }
   for(const auto&f:flashes){
@@ -102,5 +109,5 @@ private:
   g.setOpacity(juce::jlimit(0.f,1.f,alpha));
   g.drawImageAt(sprite,(int)std::lround(p.x)-sprite.getWidth()/2,(int)std::lround(p.y)-sprite.getHeight()/2);
  }
- std::array<Placement,glyphCount>placements{};std::array<Cluster,5>clusters{};std::array<Flash,16>flashes{};juce::Random animRandom{20260101};double lastT=0;juce::Image atlas;std::array<juce::Image,glyphCount>sprites;std::array<juce::Image,layerCount>layers;
+ std::array<Placement,glyphCount>placements{};std::array<Cluster,3>clusters{};std::array<Flash,16>flashes{};juce::Random animRandom{20260101};double lastT=0;juce::Image atlas;std::array<juce::Image,glyphCount>sprites;std::array<juce::Image,layerCount>layers;
 };
