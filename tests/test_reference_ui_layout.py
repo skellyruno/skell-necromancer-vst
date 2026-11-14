@@ -76,3 +76,10 @@ assert "juce::Colour(0xff83b8ff)" in (root / "Source/ui/RangeSelector.h").read_t
 
 assert "framePacer.shouldRender(dt,fallback)" in dial_source, "frame cadence must not halve on 30Hz hosts"
 assert "UiFramePacer.h" in dial_source
+
+# A private image copy is mandatory: the original Skell art cannot be
+# recoloured in ImageCache or masked per animation frame.
+assert "dial_well_pngSize).createCopy()" in dial_source
+assert "rim.strokePath(quietZone,juce::PathStrokeType(38.f))" in dial_source
+assert "g.drawImage(cap," in dial_source and "polishedFace" not in dial_source
+assert dial_source.index("rim.strokePath(quietZone") < dial_source.index("void paint(")

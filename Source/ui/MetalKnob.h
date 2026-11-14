@@ -33,8 +33,10 @@ public:
   for(int k=0;k<=25;++k){float angle=juce::MathConstants<float>::pi*(.75f+1.5f*k/25.f);
     auto rr=r+5;auto xx=cx+std::cos(angle)*rr,yy=cy+std::sin(angle)*rr;
     const auto on=k<lit;
-    g.setColour(on?(k>=lit-2?Theme::greenLight.withAlpha(.78f):Theme::bone.withAlpha(.63f))
-                  :Theme::bone.withAlpha(.23f));
+    // Fine etched marks, one pale highlight near the current value.
+    // More restrained than a fully illuminated ring of green ticks.
+    g.setColour(on?(k>=lit-2?Theme::greenLight.withAlpha(.70f):Theme::bone.withAlpha(.53f))
+                  :Theme::bone.withAlpha(.17f));
     g.drawLine(xx,yy,cx+std::cos(angle)*(rr+3.f),cy+std::sin(angle)*(rr+3.f),1.f);
   }
   if(!small.isNull()){juce::Graphics::ScopedSaveState save(g);g.setOpacity(1.f); // drawImage takes its alpha from the current colour

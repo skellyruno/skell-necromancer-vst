@@ -6,14 +6,20 @@ public:
  ReanimateDial() {setRange(0.0,100.0,0.1);setValue(65.0,juce::dontSendNotification);setSliderStyle(juce::Slider::RotaryVerticalDrag);setTextBoxStyle(juce::Slider::NoTextBox,false,0,0);
  setDoubleClickReturnValue(true,65);setPopupMenuEnabled(true);setPopupDisplayEnabled(true,false,nullptr);setMouseCursor(juce::MouseCursor::PointingHandCursor);
  well=juce::ImageCache::getFromMemory(BinaryData::dial_well_png,BinaryData::dial_well_pngSize).createCopy();
- // Keep the original chrome outer edge but quiet its two excessive inner
- // concentric rings. This is baked ONCE into a private copy, never per frame.
+ // Simplify the over-layered chrome bezel toward the reference's single
+ // restrained hardware edge. The quieting stroke replaces the old inner rings,
+ // rather than merely darkening their bright crests. This touches a private
+ // copy of the dial well ONCE and leaves the outer rim and skull asset intact.
  if(!well.isNull()){
   juce::Graphics rim(well);
-  rim.setColour(juce::Colour(0xff07090a).withAlpha(.42f));
-  rim.drawEllipse(17.f,17.f,406.f,406.f,8.f);
-  rim.setColour(juce::Colour(0xff07090a).withAlpha(.34f));
-  rim.drawEllipse(31.f,31.f,378.f,378.f,6.f);
+  rim.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
+  juce::Path quietZone;
+  quietZone.addEllipse(32.f,32.f,376.f,376.f);
+  rim.setColour(juce::Colour(0xff101418).withAlpha(.94f));
+  rim.strokePath(quietZone,juce::PathStrokeType(38.f));
+  // Retain a single fine steel highlight close to the original outside rim.
+  rim.setColour(juce::Colour(0xff9ba4aa).withAlpha(.28f));
+  rim.drawEllipse(11.5f,11.5f,417.f,417.f,1.0f);
  }
  cap=juce::ImageCache::getFromMemory(BinaryData::knob_cap_big_png,BinaryData::knob_cap_big_pngSize);
  setTooltip("REANIMATE blends tape weight, gentle compression, harmonic life and restored transients. Double-click returns to 65%.");

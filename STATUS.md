@@ -171,3 +171,10 @@ Not verified: Windows CI, FL Studio host behaviour (PDC with the new fade-out/in
 - Added a small independent CTest `NecromancerUI_FramePacer` for each host refresh rate and forced fallback; initial identical-logic local g++ -std=c++17 -Wall -Wextra -Werror simulation passed 60/61 displayed frames over two seconds at all tested rates.
 - Brighter pink/lavender/cyan meter LEDs via 2.5 px illuminated segment height rather than 2 px, to narrow dark gaps and approach the supplied reference's much more luminous bars. No meter signal/DSP changes.
 - No audio processing or parameter changes. Windows build and screenshot QA still required.
+
+## 2026-11-13 bezel simplification and engraved hardware detail
+- Latest Windows-tested screenshot showed layered inner black/chrome rings on REANIMATE that remain thicker than the 8th Wonder reference, especially at 70%. Replaced the previous two transparent darkening ellipse strokes with a **single 38 px dark quieting band**, drawn just once into a private copy of `dial_well.png`, preserving the original outer steel highlight and approved skull/rune cap. The moving 480 glyphs still draw over that band on every visible frame.
+- Balanced small-knob engraved ticks: lower dormant mark opacity .23→.17 and lit silver .63→.53, with only the two near-current-value markers retaining a subtle green .70 highlight.
+- No DSP, stored presets, parameter values, control layout, or original assets modified.
+- Added code regression guard verifying private copy, one-time bezel stroke, and restored center cap remain intact.
+- Fresh Windows CMake/CTest/actual 70/100/150% screenshot review is required before replacing prior verified VST3.
