@@ -82,3 +82,13 @@ Not verified: Windows CI, FL Studio host behaviour (PDC with the new fade-out/in
 - Rune glyph roaming clusters/flashes (sprite blits, ~3.4 ms/frame).
 - Meter unlit segments brighter (.22), dial arc 4px.
 - Verified: harness render at 3 sizes, knob-edit tests pass. Not verified: Windows CI, FL Studio.
+
+## 2026-11-13 Reference-video motion + visual refinement (draft PR #1)
+- Inspected the user-provided 10.9 s video as a full 2 fps overview, plus a 10 fps crop from the active interval. The artwork remains aligned while bright rune highlights travel; bypass clears the field.
+- RuneRing: changed short-lived randomly respawning illuminated clusters into three continuous orbiting sweeps; kept 640 original glyph placements, 5 cached layers, 16 short flashes, original sprites, bypass fade and repaint throttling.
+- PeakMeter: 15 px LED columns, brighter ghost segments, pink/lavender/cyan scale.
+- REANIMATE dial: thinner 2.7 px gradient arc; metal cap and dial geometry unchanged.
+- Main panel title: slightly smaller with wider tracking.
+- **Local validation:** verified the 10 fps extraction and continuity of the mathematical sweep model; inspected the exact changes as a Git patch; no real JUCE UI render is claimed.
+- **Still required:** Windows compilation/CTest and reference DSP tests from PR CI; screenshot comparisons at 810, 1157 and 1736 px; run-time paint budget comparison vs the ~3.4 ms prior harness result; FL Studio bypass/PDC/resize and audio checks. Brushed-metal texture still needs reference review.
+- Work isolated to `feat/reference-rune-sweep-20261113`; `main` untouched.
