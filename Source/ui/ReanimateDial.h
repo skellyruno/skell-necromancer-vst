@@ -1,15 +1,19 @@
 #pragma once
 #include "RuneRing.h"
-class ReanimateDial:public juce::Slider {
+class ReanimateDial:public juce::Slider,private juce::Timer {
 public:
  ReanimateDial() {setRange(0.0,100.0,0.1);setValue(65.0,juce::dontSendNotification);setSliderStyle(juce::Slider::RotaryVerticalDrag);setTextBoxStyle(juce::Slider::NoTextBox,false,0,0);
  setDoubleClickReturnValue(true,65);setPopupMenuEnabled(true);setPopupDisplayEnabled(true,false,nullptr);setMouseCursor(juce::MouseCursor::PointingHandCursor);
  well=juce::ImageCache::getFromMemory(BinaryData::dial_well_png,BinaryData::dial_well_pngSize);
  cap=juce::ImageCache::getFromMemory(BinaryData::knob_cap_big_png,BinaryData::knob_cap_big_pngSize);
- setTooltip("REANIMATE blends tape weight, gentle compression, harmonic life and restored transients. Double-click returns to 65%.");}
+ setTooltip("REANIMATE blends tape weight, gentle compression, harmonic life and restored transients. Double-click returns to 65%.");
+ // Some VST hosts do not deliver VBlank callbacks consistently. The JUCE
+ // message-thread timer advances the runes at 30 Hz only when VBlank stalls.
+ startTimerHz(30);}
  void setLive(float v){live=juce::jlimit(0.f,1.f,v);}
  // REVIVE on and not bypassed: the rune field fades in; otherwise the well empties (as in a bypassed unit).
  void setActive(bool on){target=on?1.f:0.f;}
+ void tickFromVBlank(){lastVBlankMs=juce::Time::getMillisecondCounterHiRes();advance();}
  void advance(){
   const double now=juce::Time::getMillisecondCounterHiRes()*.001,dt=juce::jlimit(0.0,.1,now-lastTime);lastTime=now;
   const bool fading=std::abs(target-act)>.002f;
@@ -49,5 +53,10 @@ public:
   g.setFont(Theme::display(36));g.drawFittedText(juce::String((int)std::lround(getValue()))+"%",juce::Rectangle<int>(130,377,180,47),juce::Justification::centred,1);
   if(isMouseOverOrDragging()){g.setColour(Theme::green.withAlpha(.5f));g.drawEllipse(90,90,260,260,1.4f);}
  }
-private:juce::Image well,cap;RuneRing ring;float live=0,act=1.f,target=1.f;int frame=0;double seconds=0,lastTime=0;
+private:
+ void timerCallback() override {
+  if(juce::Time::getMillisecondCounterHiRes()-lastVBlankMs>75.0)advance();
+ }
+ juce::Image well,cap;RuneRing ring;float live=0,act=1.f,target=1.f;
+ int frame=0;double seconds=0,lastTime=0,lastVBlankMs=0;
 };
