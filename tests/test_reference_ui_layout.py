@@ -1,0 +1,61 @@
+#!/usr/bin/env python3
+"""Static JUCE layout assertions derived from the supplied 1512x798 reference.
+Actual screenshots are separately checked by NecromancerUICapture.
+"""
+from pathlib import Path
+import re
+
+root = Path(__file__).resolve().parents[1]
+editor = (root / "Source/PluginEditor.cpp").read_text(encoding="utf-8")
+theme = (root / "Source/Theme.h").read_text(encoding="utf-8")
+meters = (root / "Source/ui/PeakMeter.h").read_text(encoding="utf-8")
+top = (root / "Source/ui/TopBar.h").read_text(encoding="utf-8")
+preset = (root / "Source/ui/PresetBar.h").read_text(encoding="utf-8")
+
+def find(content, pattern, label):
+    matches = re.findall(pattern, content)
+    assert len(matches) == 1, f"{label}: expected one definition, found {len(matches)}"
+    return tuple(map(int, matches[0]))
+
+def rect(name, source=editor):
+    return find(source, rf"\b{re.escape(name)}\.setBounds\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)", name)
+
+def button(name):
+    return find(editor, rf"setTextButton\(\s*{name}\s*,\s*\"[^\"]+\"\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)", name)
+
+def overlaps(a, b):
+    return max(a[0],b[0])<min(a[0]+a[2],b[0]+b[2]) and max(a[1],b[1])<min(a[1]+a[3],b[1]+b[3])
+
+dial=find(theme, r"\bdial\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)", "dial")
+controls={n:rect(n) for n in ("low","mid","high","hf","input","output","range","inMeter","outMeter","mode","mix","mixValue","push","pushValue","autopsy","lufs","gr","status")}
+buttons={n:button(n) for n in ("autoButton","onButton","bypassButton","limiterButton","deltaButton","matchButton")}
+for name,(x,y,w,h) in {"dial":dial,**controls,**buttons}.items():
+    assert x>=0 and y>=0 and w>0 and h>0 and x+w<=1157 and y+h<=612, f"{name} outside panel"
+assert dial==(358,99,440,440)
+assert abs((dial[0]+dial[2]/2)-578.5)<1
+for name in ("low","mid","high","hf","input","output","range","inMeter","outMeter","mode"):
+    assert not overlaps(dial,controls[name]), f"{name} overlaps REANIMATE"
+for a,b in (("low","mid"),("high","hf"),("inMeter","input"),("outMeter","output"),("mode","low")):
+    assert not overlaps(controls[a],controls[b]), f"{a}/{b} overlap"
+for a,b in (("autoButton","onButton"),("onButton","bypassButton")):
+    assert not overlaps(buttons[a],buttons[b]), f"{a}/{b} overlap"
+for name in ("autoButton","onButton","bypassButton"):
+    assert buttons[name][1]+buttons[name][3]<=80, f"{name} enters main panel"
+assert controls["mode"][0]+controls["mode"][2]<dial[0]
+for name in ("deltaButton","matchButton"):
+    assert buttons[name][1]>=dial[1]+dial[3],f"{name} overlaps dial"
+assert controls["mix"][1]>=dial[1]+dial[3]
+assert re.search(r"barX\s*=\s*22\s*\+\s*c\s*\*\s*27",meters)
+assert re.search(r"headerH\s*=\s*13",meters)
+assert re.search(r"barH\s*=\s*getHeight\(\)\s*-\s*35\s*-\s*headerH",meters)
+for name,xref in (("inMeter",78),("outMeter",994)):
+    x,y,w,h=controls[name]
+    assert x==xref and y+13+1==98 and y+13+1+(h-35-13)==375 and 22+27+15<=w
+assert rect("presets",top)==(72,5,610,27)
+for name in ("name","drop","undo","redo","save","abA","abB","copy"):
+    x,y,w,h=rect(name,preset)
+    assert x>=0 and y>=0 and x+w<=610 and y+h<=27
+for factor in (.70,1.0,1.25,1.50):
+    W,H=round(1157*factor),round(612*factor)
+    assert W>=809 and H>=428 and (dial[0]+dial[2])*factor<=W+1 and (dial[1]+dial[3])*factor<=H+1
+print("PASS: reference alignment, no component intersections, meter scale, 70-150% bounds")
