@@ -85,7 +85,7 @@ SkellNecromancerAudioProcessorEditor::SkellNecromancerAudioProcessorEditor(Skell
  changeSize(size=="S"?0:size=="L"?2:size=="XL"?3:1);
  // Align the moving rune, dial and meters with the display refresh.
  vblank=std::make_unique<VBlankAttachment>(this,[this](double){
-     dial.setLive(processor.liveLevel.load());dial.setActive(onButton.getToggleState()&&!bypassButton.getToggleState());dial.advance();
+     dial.setLive(processor.liveLevel.load());dial.setActive(onButton.getToggleState()&&!bypassButton.getToggleState());dial.tickFromVBlank();
      auto hold=(int)processor.uiState.getProperty("meterHold",1000);inMeter.setHoldMilliseconds(hold);outMeter.setHoldMilliseconds(hold);inMeter.tick();outMeter.tick();
  });
  startTimerHz(10);
@@ -114,6 +114,9 @@ void SkellNecromancerAudioProcessorEditor::showTour(){
  tourStep=(tourStep+1)%5;hints.showTour(tourStep);
 }
 void SkellNecromancerAudioProcessorEditor::timerCallback(){
+ // Maintain rune state even when the host does not provide VBlank callbacks.
+ dial.setLive(processor.liveLevel.load());
+ dial.setActive(onButton.getToggleState()&&!bypassButton.getToggleState());
  autopsy.repaint();top.presets.sync();
  const auto wf=processor.uiState.getProperty("lufsWindow","short").toString();
  float shown=wf=="momentary"?processor.momentary.load():processor.shortTerm.load();
