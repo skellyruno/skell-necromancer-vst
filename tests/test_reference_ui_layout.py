@@ -89,3 +89,8 @@ assert "g.drawImage(cap,{cx-97.f,cy-97.f,194.f,194.f})" in dial_source
 assert "headingFade(a)" in runes_source and "headingFade(p.angle)" in runes_source
 laf=(root / "Source/ui/LookAndFeel.h").read_text(encoding="utf-8")
 assert 'const bool abSlot=b.getButtonText()=="A"||b.getButtonText()=="B"' in laf
+
+preset_source=(root / "Source/ui/PresetBar.h").read_text(encoding="utf-8")
+assert "undo.setEnabled(processor.undoManager.canUndo())" in preset_source
+assert "redo.setEnabled(processor.undoManager.canRedo())" in preset_source
+assert "formatLufs(shown)" in editor and 'String("-INF")' in editor

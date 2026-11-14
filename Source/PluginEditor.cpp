@@ -172,7 +172,11 @@ void SkellNecromancerAudioProcessorEditor::timerCallback(){
  autopsy.repaint();top.presets.sync();
  const auto wf=processor.uiState.getProperty("lufsWindow","short").toString();
  float shown=wf=="momentary"?processor.momentary.load():processor.shortTerm.load();
- lufs.setText("LUFS "+String(shown,1)+" / I "+String(processor.integrated.load(),1)+"  T "+String((float)processor.uiState.getProperty("targetLUFS",-14.f),0),dontSendNotification);
+ const auto formatLufs=[](float v)->String {
+  return (!std::isfinite(v)||v<=-99.f)?String("-INF"):String(v,1);
+ };
+ lufs.setText("LUFS "+formatLufs(shown)+" / I "+formatLufs(processor.integrated.load())+"  T "+
+              String((float)processor.uiState.getProperty("targetLUFS",-14.f),0),dontSendNotification);
  gr.setText("GR "+String(processor.gainReduction.load(),1),dontSendNotification);
  pushValue.setText(String(push.getValue(),1)+" dB",dontSendNotification);
  mixValue.setText("MIX  "+String(mix.getValue(),0)+"%",dontSendNotification);

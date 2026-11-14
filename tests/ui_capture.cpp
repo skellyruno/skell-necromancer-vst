@@ -64,6 +64,20 @@ int main(int argc,char** argv) {
  if(snapshot(810,428,"ui_810.png").isNull())return 2;
  const auto full=snapshot(1157,612,"ui_1157.png");
  if(full.isNull())return 3;
+ // The approved black skull engraving must be visible against real silver
+ // metal in the central disk; also catches accidental solid-silver overlays.
+ int centerDark=0,centerSilver=0;
+ for(int y=-10;y<=10;++y)for(int x=-10;x<=10;++x){
+  if(x*x+y*y>=100)continue;
+  const auto p=full.getPixelAt(578+x,319+y);
+  const int luma=((int)p.getRed()+(int)p.getGreen()+(int)p.getBlue())/3;
+  if(luma<80)++centerDark;
+  if(luma>130)++centerSilver;
+ }
+ std::cout<<"Center cap dark/silver detail: "<<centerDark<<" / "<<centerSilver<<" pixels\\n";
+ if(centerDark<95||centerSilver<12){
+  std::cerr<<"Approved engraved center cap was hidden or blank\\n";return 11;
+ }
  // Detect real lit LED pixels, not just value updates. Reference checks use
  // synthetic levels ONLY in this non-shipping capture program.
  auto litCount=[&](int x0){

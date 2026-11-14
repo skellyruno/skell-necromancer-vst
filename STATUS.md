@@ -186,3 +186,11 @@ Not verified: Windows CI, FL Studio host behaviour (PDC with the new fade-out/in
 - Tightened the dial hover ring to a fine highlight around the actual metal cap rather than the outer arc.
 - Added heading-mask tests to the independent rune-motion CTest and static source guards for original-cap visibility and new satin A/B styling.
 - UI-only change; no DSP, processor source, preset state or binary assets modified. Fresh Windows CTest, genuine screenshot and FL Studio validation still required.
+
+## 2026-11-13 preset-bar and silent-readout UI polish
+- Added explicit tooltips for the seven small preset/A-B buttons; Undo/Redo now reflect undoManager availability, reducing misleading bright icons that cannot do anything. The underlying preset operations and A/B behavior are unchanged.
+- Disabled compact buttons render with subdued alpha in the shared LookAndFeel; active A/B selection retains satin-metal styling and green text.
+- Silent LUFS readouts now show -INF instead of raw -100.0 while preserving the true values, metering engine and saved settings; true measured LUFS values retain one decimal.
+- Strengthened real JUCE screenshot QA: the previously approved black engraved skull detail AND bright silver highlight must both be visible at the center of the real screenshot. This detects the accidental solid-silver cap overlay that previously hid the original artwork. Synthetic test meters remain screenshot-only.
+- No DSP, processing, plugin parameter or stored preset logic changed.
+- Latest Windows build and 810/1157/1736 screenshots still required before promoting this checkpoint over the verified baseline.

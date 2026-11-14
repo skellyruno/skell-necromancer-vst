@@ -12,6 +12,8 @@ public:
   setColour(juce::TextButton::textColourOffId,Theme::bone);
  }
  void drawButtonBackground(juce::Graphics& g,juce::Button& b,const juce::Colour&,bool hover,bool down)override{
+  juce::Graphics::ScopedSaveState state(g);
+  if(!b.isEnabled())g.setOpacity(.38f);
   const auto r=b.getLocalBounds().toFloat().reduced(1.0f);
   const bool active=b.getToggleState();
   const bool isBypass=b.getButtonText().equalsIgnoreCase("BYPASS");
@@ -42,7 +44,7 @@ public:
   const bool bypass=b.getToggleState()&&text.equalsIgnoreCase("BYPASS");
   const bool selectedAB=b.getToggleState()&&(text=="A"||text=="B");
   const auto colour=bypass?juce::Colour(0xffffd8ae):(selectedAB?Theme::greenLight:(hover?Theme::greenLight:Theme::bone));
-  g.setColour(colour);
+  g.setColour(colour.withMultipliedAlpha(b.isEnabled()?1.f:.38f));
   if(drawIcon(g,text,b.getLocalBounds().toFloat().withSizeKeepingCentre(15.f,15.f)))return;
   const bool power=text=="AUTO"||text=="ON"||text=="BYPASS"||text=="LIMITER";
   const auto font=Theme::mono(12).withExtraKerningFactor(power?.1f:0.f);

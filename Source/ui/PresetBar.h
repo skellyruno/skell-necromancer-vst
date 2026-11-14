@@ -17,6 +17,13 @@ public:
     save.onClick=[this]{juce::String error;if(!processor.writeUserPreset(name.getText(),error))juce::AlertWindow::showMessageBoxAsync(juce::MessageBoxIconType::WarningIcon,"Preset save",error);};
     abA.onClick=[this]{processor.selectAB(0);};abB.onClick=[this]{processor.selectAB(1);};
     copy.onClick=[this]{processor.copyAB(processor.selectedSlot,1-processor.selectedSlot);};
+    drop.setTooltip("Choose a factory or saved preset, import or export XML.");
+    undo.setTooltip("Undo the last parameter edit.");
+    redo.setTooltip("Redo the last undone edit.");
+    save.setTooltip("Save the current settings as a named user preset.");
+    abA.setTooltip("Recall comparison slot A.");
+    abB.setTooltip("Recall comparison slot B.");
+    copy.setTooltip("Copy the active A/B slot to the other slot.");
     // This panel is a plain Component, not a SettableTooltipClient.
  }
  void resized()override {
@@ -35,7 +42,10 @@ public:
   }
  }
  void sync(){repaint();juce::String p=processor.uiState.getProperty("preset","INIT").toString();if(!name.isBeingEdited()&&name.getText()!=p)name.setText(p,juce::dontSendNotification);
-   abA.setToggleState(processor.selectedSlot==0,juce::dontSendNotification);abB.setToggleState(processor.selectedSlot==1,juce::dontSendNotification);}
+   abA.setToggleState(processor.selectedSlot==0,juce::dontSendNotification);abB.setToggleState(processor.selectedSlot==1,juce::dontSendNotification);
+   undo.setEnabled(processor.undoManager.canUndo());
+   redo.setEnabled(processor.undoManager.canRedo());
+ }
 private:
  void openPresetMenu(){
   juce::PopupMenu m;int i=1;for(auto& p:processor.factoryPresetNames())m.addItem(i++,p);
