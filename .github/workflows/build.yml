@@ -49,7 +49,9 @@ jobs:
       - name: Capture real JUCE UI and verify silent rune motion
         shell: pwsh
         run: |
-          & "build/Release/NecromancerUICapture.exe" "build/ui-captures"
+          $uiExe = Get-ChildItem -Path build -Recurse -File -Filter 'NecromancerUICapture.exe' | Select-Object -First 1 -ExpandProperty FullName
+          if (-not $uiExe) { throw 'Compiled JUCE UI capture executable not found' }
+          & $uiExe "build/ui-captures"
           if ($LASTEXITCODE -ne 0) { throw "JUCE UI capture or rune motion verification failed" }
       - name: Package
         shell: pwsh
