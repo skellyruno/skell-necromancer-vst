@@ -112,3 +112,10 @@ Not verified: Windows CI, FL Studio host behaviour (PDC with the new fade-out/in
 - Meters: brighter unlit pink/lavender/cyan LEDs; no fake peak-hold line at negative-infinity; silence readout uses -INF.
 - Top settings icon replaced with toothed gear to distinguish it from a sun.
 - Pending review: real 810/1157/1736 screenshots, motion-frame differences, UI paint budget, Windows compilation and FL Studio manual interaction test. DSP processing code explicitly unchanged.
+
+## 2026-11-13 Real screenshot correction
+- Actual Windows JUCE screenshot revealed wavy moire on the first polygon-wedge cap face at the 100% size.
+- Replaced cap construction with continuous per-pixel angular luminance using juce::Image::BitmapData, still generated **only once** on editor initialization. No per-frame gradient/wedge painting, no audio-thread work.
+- Restored slightly more base brightness to the 480 moving glyphs (without re-introducing the large white flare hotspots).
+- Moved REANIMATE into the top-of-dial heading position seen in the reference, with a translucent dark readability strip; retained the percent readout at the bottom.
+- Windows rebuild / capture review pending. No DSP source changes.

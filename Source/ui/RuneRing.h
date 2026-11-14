@@ -104,7 +104,7 @@ public:
   juce::Graphics::ScopedSaveState state(g);
   for(int j=0;j<layerCount;++j){
    const float breathe=.5f+.5f*(float)std::sin(t*(.5+.21*j)+j*1.7);
-   g.setOpacity(active*(.43f+.23f*amount)*(.8f+.2f*breathe));
+   g.setOpacity(active*(.52f+.24f*amount)*(.8f+.2f*breathe));
    g.drawImageAt(layers[(size_t)j],0,0);
   }
   g.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
@@ -114,7 +114,7 @@ public:
   for(size_t i=0;i<placements.size();++i){
    const auto&p=placements[i];if(!p.mobile)continue;
    const auto&pt=animatedPositions[i];const auto&sprite=motionSprites[i];
-   g.setOpacity(active*(.46f+.17f*amount)*p.weight*animatedFade[i]);
+   g.setOpacity(active*(.56f+.18f*amount)*p.weight*animatedFade[i]);
    g.drawImageAt(sprite,(int)std::lround(pt.x)-sprite.getWidth()/2,(int)std::lround(pt.y)-sprite.getHeight()/2);
   }
   const float gain=active*(.57f+.2f*live);

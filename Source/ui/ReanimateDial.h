@@ -54,7 +54,13 @@ public:
    // Original outer hardware rim remains; the central face is now clean metal.
    g.drawImageAt(polishedFace,(int)cx-104,(int)cy-104);}
   g.setColour(Theme::bone);g.drawLine(cx+std::cos(angle)*109.f,cy+std::sin(angle)*109.f,cx+std::cos(angle)*127.f,cy+std::sin(angle)*127.f,5.f);
-  g.setColour(Theme::bone);g.setFont(Theme::display(13));g.drawFittedText("R E A N I M A T E",juce::Rectangle<int>(130,330,180,18),juce::Justification::centred,1);
+  // Reference-accurate heading above the metal face, protected by subtle dark
+  // glazing so moving symbols remain legible behind it.
+  g.setColour(juce::Colours::black.withAlpha(.36f));
+  g.fillRoundedRectangle(132.f,48.f,176.f,25.f,4.f);
+  g.setColour(Theme::bone.withAlpha(.94f));
+  g.setFont(Theme::display(12).withExtraKerningFactor(.28f));
+  g.drawFittedText("REANIMATE",juce::Rectangle<int>(132,50,176,21),juce::Justification::centred,1);
   g.setFont(Theme::display(36));g.drawFittedText(juce::String((int)std::lround(getValue()))+"%",juce::Rectangle<int>(130,377,180,47),juce::Justification::centred,1);
   if(isMouseOverOrDragging()){g.setColour(Theme::greenLight.withAlpha(.28f));g.drawEllipse(90,90,260,260,1.f);}
  }
