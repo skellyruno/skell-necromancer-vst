@@ -56,6 +56,15 @@ public:
    sg.setColour(tint(p).interpolatedWith(juce::Colours::white,.8f));
    const auto glyph=atlas.getClippedImage({(p.index%8)*32,(p.index/8)*32,32,32});
    sg.drawImageTransformed(glyph,juce::AffineTransform::scale(size/32.f).translated(((float)n-size)/2,((float)n-size)/2),true);
+   // Separate normal-sized sprites for moving runes: the existing 1.45x flare
+   // sprites are too large to use for the body of the animated glyph field.
+   if(p.mobile){
+    const int normalN=(int)std::ceil(p.size)+2;
+    motionSprites[i]=juce::Image(juce::Image::ARGB,normalN,normalN,true);
+    juce::Graphics mg(motionSprites[i]);
+    mg.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
+    mg.drawImageTransformed(glyph,juce::AffineTransform::scale(p.size/32.f).translated(((float)normalN-p.size)/2,((float)normalN-p.size)/2),true);
+   }
   }
  }
  // Advance the sparkle state to time `t` (seconds). Call once per animation frame.
@@ -105,7 +114,7 @@ public:
   // is visible instead of just a glow passing over stationary characters.
   for(size_t i=0;i<placements.size();++i){
    const auto&p=placements[i];if(!p.mobile)continue;
-   const auto&pt=animatedPositions[i];const auto&sprite=sprites[i];
+   const auto&pt=animatedPositions[i];const auto&sprite=motionSprites[i];
    g.setOpacity(active*(.43f+.22f*amount)*p.weight*animatedFade[i]);
    g.drawImageAt(sprite,(int)std::lround(pt.x)-sprite.getWidth()/2,(int)std::lround(pt.y)-sprite.getHeight()/2);
   }
@@ -150,5 +159,6 @@ private:
  std::array<float,3> phase{};
  std::array<Cluster,3>clusters{};std::array<Flash,16>flashes{};
  juce::Random animRandom{20260101};double lastT=0;juce::Image atlas;
- std::array<juce::Image,glyphCount>sprites;std::array<juce::Image,layerCount>layers;
+ std::array<juce::Image,glyphCount>sprites,motionSprites;
+ std::array<juce::Image,layerCount>layers;
 };
