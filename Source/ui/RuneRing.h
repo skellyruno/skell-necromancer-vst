@@ -63,6 +63,10 @@ public:
     motionSprites[i]=juce::Image(juce::Image::ARGB,normalN,normalN,true);
     juce::Graphics mg(motionSprites[i]);
     mg.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
+    // drawImageTransformed(..., true) fills the atlas alpha with the current
+    // brush. Without setColour here, 480 orbiting symbols were BLACK!
+    // Bake their colour once, not during the real-time paint loop.
+    mg.setColour(tint(p).interpolatedWith(juce::Colours::white,.16f));
     mg.drawImageTransformed(glyph,juce::AffineTransform::scale(p.size/32.f).translated(((float)normalN-p.size)/2,((float)normalN-p.size)/2),true);
    }
   }
@@ -141,7 +145,15 @@ private:
  struct Cluster {float angle=0,radius=160,age=1,life=1,spin=0,size=18;};
  struct Flash {int glyph=0;float age=1,life=1;};
  static juce::Colour tint(const Placement&p){
-  return Theme::spectral(.5f+.5f*std::cos(p.angle)).interpolatedWith(Theme::bone,.35f);
+  // The reference mixes lavender, cyan, pink and occasional warm highlights,
+  // rather than mostly the same green. Keep original rune silhouettes.
+  static const std::array<juce::Colour,7> palette{
+   juce::Colour(0xffa681f5), juce::Colour(0xff86e4ed),
+   juce::Colour(0xffeb8bae), juce::Colour(0xff8ec7ff),
+   juce::Colour(0xffffbb86), juce::Colour(0xffb6edba),
+   juce::Colour(0xffc5a4df)
+  };
+  return palette[(size_t)((p.index*5 + p.band*3)%7)].interpolatedWith(Theme::bone,.12f);
  }
  void draw(juce::Graphics&g,const Placement&p) const {
   const float x=p.x-p.size/2,y=p.y-p.size/2;

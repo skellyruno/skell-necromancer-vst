@@ -20,7 +20,7 @@ void SkellNecromancerAudioProcessorEditor::Panel::paint(Graphics&g){
  g.setColour(juce::Colours::black.withAlpha(.19f));
  g.fillRoundedRectangle(10.f,87.f,1137.f,484.f,10.f);
  // Lift the brushed centre enough for horizontal steel grain to be readable.
- g.setColour(juce::Colour(0xff3b4145).withAlpha(.21f));
+ g.setColour(juce::Colour(0xff3b4145).withAlpha(.30f));
  g.fillRoundedRectangle(12.f,89.f,1133.f,480.f,9.f);
  {
   juce::Graphics::ScopedSaveState textureState(g);
@@ -46,7 +46,7 @@ void SkellNecromancerAudioProcessorEditor::Panel::paint(Graphics&g){
   }
  }
  // Subtle bevel and edge lighting keep the hardware depth but avoid extra boxes.
- g.setColour(juce::Colour(0xff8a9298).withAlpha(.32f));
+ g.setColour(juce::Colour(0xff8a9298).withAlpha(.38f));
  g.drawLine(25.f,89.5f,1132.f,89.5f,1.f);
  g.setColour(juce::Colours::black.withAlpha(.65f));
  g.drawLine(24.f,568.5f,1133.f,568.5f,1.f);

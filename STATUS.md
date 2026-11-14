@@ -143,3 +143,11 @@ Not verified: Windows CI, FL Studio host behaviour (PDC with the new fade-out/in
 - Extended real-JUCE screenshot QA to fail when the synthetic preview signal does not create visibly lit **both** input and output LED banks (without affecting plugin audio).
 - No changes to DSP, audio calculations, plugin format, or plug-in parameter attachment.
 - Pending: Windows CI build, CTests, PNG inspection and FL Studio resize/control interaction.
+
+## 2026-11-13 Skull knob restoration and colorful moving-rune fix
+- **Restored the user's previously approved engraved center knob image** by removing the opaque smooth-silver `polishedFace` overlay. The original `Assets/knob_cap_big.png` was already bundled and preserved, so no artwork was regenerated; old outer rim and 208 px cap geometry remain.
+- Fixed a major visible-rune issue: `drawImageTransformed(..., true)` fills glyph atlas alpha using the current brush, but the 480 moving rune sprites lacked `mg.setColour()` and were baked black. Their colored sprites are now generated once and truly visible while orbiting.
+- Varied rune colours across lavender, cyan, rose, blue, warm amber, pale green and soft violet (original glyph artwork unchanged).
+- Subtly raised brushed steel faceplate brightness and top-edge specular light; retained Skell logos, all controls, sizes and animations.
+- Added UI regression guards against hiding the engraved cap or baking uncolored mobile glyphs.
+- UI-only changes; no DSP code or parameter changes. Windows CI and actual rendered image inspection are required before merge.

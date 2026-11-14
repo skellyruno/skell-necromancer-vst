@@ -59,3 +59,9 @@ for factor in (.70,1.0,1.25,1.50):
     W,H=round(1157*factor),round(612*factor)
     assert W>=809 and H>=428 and (dial[0]+dial[2])*factor<=W+1 and (dial[1]+dial[3])*factor<=H+1
 print("PASS: reference alignment, no component intersections, meter scale, 70-150% bounds")
+
+# Preserve the user-approved original engraved centre cap instead of hiding it.
+dial_source = (root / "Source/ui/ReanimateDial.h").read_text(encoding="utf-8")
+runes_source = (root / "Source/ui/RuneRing.h").read_text(encoding="utf-8")
+assert "g.drawImage(cap," in dial_source and "polishedFace" not in dial_source
+assert "mg.setColour(tint(p)" in runes_source, "moving rune glyphs must not be black"
