@@ -55,7 +55,9 @@ public:
   const juce::PathStrokeType pen(stroke,juce::PathStrokeType::curved,juce::PathStrokeType::rounded);
   juce::Path p;
   constexpr float pi=juce::MathConstants<float>::pi;
-  if(name=="POWER"){
+  if(name=="V"){
+   p.startNewSubPath(at(.23f,.39f));p.lineTo(at(.5f,.65f));p.lineTo(at(.77f,.39f));
+  } else if(name=="POWER"){
    p.addCentredArc(at(.5f,.56f).x,at(.5f,.56f).y,s*.38f,s*.38f,0.f,.62f,2.f*pi-.62f,true);
    p.startNewSubPath(at(.5f,.04f));p.lineTo(at(.5f,.5f));
   } else if(name=="UNDO"||name=="REDO"){
