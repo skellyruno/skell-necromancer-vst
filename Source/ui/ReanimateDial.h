@@ -14,13 +14,14 @@ public:
  // REVIVE on and not bypassed: the rune field fades in; otherwise the well empties (as in a bypassed unit).
  void setActive(bool on){target=on?1.f:0.f;}
  void tickFromVBlank(){lastVBlankMs=juce::Time::getMillisecondCounterHiRes();advance();}
- void advance(){
+ void advance(bool fallback=false){
   const double now=juce::Time::getMillisecondCounterHiRes()*.001,dt=juce::jlimit(0.0,.1,now-lastTime);lastTime=now;
   const bool fading=std::abs(target-act)>.002f;
   act=fading?act+(target-act)*(1.f-(float)std::exp(-dt*9.0)):target;
   seconds=now;ring.advance(now,live);
-  // 30 Hz is enough for the shimmer; a settled, bypassed dial needs no animation repaints at all.
-  if((++frame&1)==0&&(act>.002f||fading))repaint();
+  // VBlank usually calls at ~60 Hz: paint every other frame. The timer fallback
+  // runs at 30 Hz already, so paint *every* timer tick (not 15 Hz).
+  if(((++frame&1)==0||fallback)&&(act>.002f||fading))repaint();
  }
  void paint(juce::Graphics&g)override {
   g.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
@@ -55,7 +56,7 @@ public:
  }
 private:
  void timerCallback() override {
-  if(juce::Time::getMillisecondCounterHiRes()-lastVBlankMs>75.0)advance();
+  if(juce::Time::getMillisecondCounterHiRes()-lastVBlankMs>75.0)advance(true);
  }
  juce::Image well,cap;RuneRing ring;float live=0,act=1.f,target=1.f;
  int frame=0;double seconds=0,lastTime=0,lastVBlankMs=0;
