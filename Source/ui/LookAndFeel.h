@@ -16,14 +16,23 @@ public:
   const bool active=b.getToggleState();
   const bool isBypass=b.getButtonText().equalsIgnoreCase("BYPASS");
   const auto accent=isBypass?juce::Colour(0xffefb271):Theme::green;
-  g.setColour(active?(isBypass?juce::Colour(0xff35271b):Theme::greenDim.brighter(.12f))
-                    :Theme::panelRaised);
+  const bool isHardwareSwitch=b.getButtonText()=="AUTO"||b.getButtonText()=="ON"||
+                               isBypass||b.getButtonText()=="LIMITER";
+  // The reference ON state is a satin steel switch, not an all-green pill.
+  // Leave Skell's green for the active controls and subtle hover feedback.
+  const auto base=active?(isBypass?juce::Colour(0xff35271b):
+                         (isHardwareSwitch?juce::Colour(0xff45464b):Theme::greenDim.brighter(.12f)))
+                         :juce::Colour(0xff1d2225);
+  g.setGradientFill(juce::ColourGradient(base.brighter(.08f),r.getX(),r.getY(),
+                                        base.darker(.18f),r.getRight(),r.getBottom(),false));
   g.fillRoundedRectangle(r,5.0f);
   if(hover||active) {
-   g.setColour(accent.withAlpha(active?.10f:.035f));
+   g.setColour(accent.withAlpha(active?.075f:.035f));
    g.fillRoundedRectangle(r.reduced(2.0f),4.0f);
   }
-  g.setColour(active?accent:(hover?Theme::greenLight:Theme::border.brighter(.22f)));
+  const auto edge=active?(isBypass?accent:(isHardwareSwitch?juce::Colour(0xffb4b3b9):accent)):
+                         (hover?Theme::greenLight:Theme::border.brighter(.22f));
+  g.setColour(edge);
   g.drawRoundedRectangle(r,5.0f,active||hover?1.5f:1.0f);
   if(down){g.setColour(accent.withAlpha(.27f));g.drawRoundedRectangle(r.reduced(2.0f),4.0f,1.0f);}
  }
