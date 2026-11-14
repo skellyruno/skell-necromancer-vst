@@ -24,7 +24,7 @@ public:
     const int barX=22+c*17,barTop=headerH+1,barH=getHeight()-25-headerH;
     for(int y=0;y<barH;y+=3){const float h=(float)y/(float)barH;
       const auto colour=Theme::spectral(1.f-h).interpolatedWith(Theme::bone,.12f);
-      g.setColour(h<=v?colour:colour.withAlpha(.12f)); // unlit segments stay faintly visible
+      g.setColour(h<=v?colour:colour.withAlpha(.22f)); // unlit segments stay faintly visible
       g.fillRect(barX,barTop+barH-y-3,13,2);
     }
     const float heldPos=(float)barTop+(float)barH*(1.f-value(held[c]));

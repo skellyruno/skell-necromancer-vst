@@ -14,7 +14,7 @@ public:
   const double now=juce::Time::getMillisecondCounterHiRes()*.001,dt=juce::jlimit(0.0,.1,now-lastTime);lastTime=now;
   const bool fading=std::abs(target-act)>.002f;
   act=fading?act+(target-act)*(1.f-(float)std::exp(-dt*9.0)):target;
-  seconds=now;
+  seconds=now;ring.advance(now,live);
   // 30 Hz is enough for the shimmer; a settled, bypassed dial needs no animation repaints at all.
   if((++frame&1)==0&&(act>.002f||fading))repaint();
  }
@@ -32,7 +32,7 @@ public:
   juce::Path path;for(int s=0;s<=180;++s){float a=start+span*(s/180.f)*p;
     auto x=cx+std::cos(a)*133.f,y=cy+std::sin(a)*133.f;if(s==0)path.startNewSubPath(x,y);else path.lineTo(x,y);}
   juce::ColourGradient gradient(Theme::violet,96,338,Theme::cyan,355,115,false);gradient.addColour(.57,Theme::green);
-  const juce::PathStrokeType stroke(5.f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded);
+  const juce::PathStrokeType stroke(4.f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded);
   if(act<.999f){g.setColour(Theme::faint.withAlpha(.45f*(1.f-act)));g.strokePath(path,stroke);}
   {juce::Graphics::ScopedSaveState arcState(g);g.setGradientFill(gradient);g.setOpacity(act);g.strokePath(path,stroke);}
   const float angle=start+span*p;

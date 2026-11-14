@@ -76,3 +76,9 @@ Not verified: Windows CI, FL Studio host behaviour (PDC with the new fade-out/in
 - Removed the redundant "REVIVE / TONE / LOUDNESS" caption.
 - Status message moved from the panel's bottom-left (collided with the INPUT label on long messages) into a two-line footer block: status above, dimmed LUFS / GR readouts below.
 - Verified: headless render at 810/1157/1736 px, 7/7 knob tests, stress test passes, project/asset tests pass. Not verified in a real host or on Windows.
+
+## 2026-11-13 typography + polish
+- Bundled Montserrat SemiBold (SIL OFL, licence in Assets/fonts) as default display font; override via SKELL_DISPLAY_FONT.
+- Rune glyph roaming clusters/flashes (sprite blits, ~3.4 ms/frame).
+- Meter unlit segments brighter (.22), dial arc 4px.
+- Verified: harness render at 3 sizes, knob-edit tests pass. Not verified: Windows CI, FL Studio.

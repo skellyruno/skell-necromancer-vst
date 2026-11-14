@@ -23,8 +23,11 @@ juce_generate_juce_header(SkellNecromancer)
 set(NECRO_ASSETS
   Assets/bg_brushed.png Assets/dial_well.png
   Assets/knob_cap_big.png Assets/knob_cap_small.png Assets/rune_atlas.png)
-# Do not redistribute font files. A user may supply legally obtained fonts
-# at configure time. Their copies are embedded into the LOCAL compiled plugin.
+# Montserrat SemiBold (SIL OFL 1.1, licence in Assets/fonts) is bundled as the
+# default display font. -DSKELL_DISPLAY_FONT / -DSKELL_MONO_FONT override it.
+if(NOT DEFINED SKELL_DISPLAY_FONT)
+  set(SKELL_DISPLAY_FONT "${CMAKE_CURRENT_SOURCE_DIR}/Assets/fonts/Montserrat-SemiBold.ttf")
+endif()
 set(NECRO_FONT_FLAGS SKELL_HAS_DISPLAY_FONT=0 SKELL_HAS_MONO_FONT=0)
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/necro-fonts")
 if(DEFINED SKELL_DISPLAY_FONT AND EXISTS "${SKELL_DISPLAY_FONT}")

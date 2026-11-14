@@ -3,9 +3,10 @@
 #include "BinaryData.h"
 #include <array>
 #include <cmath>
-// Dense field of original rune glyphs around the REANIMATE dial. Glyphs are baked into a few
-// cached layers; per frame the layers shimmer independently and a soft highlight cone travels
-// around the ring (faster/brighter with live level). `active` fades the whole field in or out.
+// Dense field of original rune glyphs around the REANIMATE dial. The glyphs themselves stay put (as on
+// hardware-style displays); life comes from small clusters of glyphs that flare bright and drift along
+// the ring, plus individual glyphs that flash, all driven by `advance` (busier with live level).
+// Static glyphs are baked into a few cached layers that breathe slowly. `active` fades the field in/out.
 class RuneRing {
 public:
  static constexpr int glyphCount=640,layerCount=5;
@@ -16,54 +17,90 @@ public:
   for(auto& p:placements){
    p.angle=random.nextFloat()*2.f*pi;
    p.radius=std::sqrt(juce::jmap(random.nextFloat(),150.f*150.f,187.f*187.f)); // even area density
+   p.x=220.f+std::cos(p.angle)*p.radius;p.y=220.f+std::sin(p.angle)*p.radius;
    p.index=random.nextInt(40);p.size=7.f+random.nextFloat()*7.f;p.weight=.55f+.45f*random.nextFloat();
    // The lower arc stays quiet so the percentage readout remains legible.
    const float s=juce::jlimit(0.f,1.f,(std::sin(p.angle)-.45f)/.5f);
    p.fade=1.f-.85f*s*s*(3.f-2.f*s);
   }
+  for(size_t i=0;i<clusters.size();++i){clusters[i].age=(float)i*.2f;clusters[i].life=.5f+(float)i*.1f;}
+  for(size_t i=0;i<flashes.size();++i){flashes[i].age=(float)i*.03f;flashes[i].life=.2f+(float)i*.02f;flashes[i].glyph=random.nextInt(glyphCount);}
   for(auto& img:layers)img=juce::Image(juce::Image::ARGB,440,440,true);
-  bright=juce::Image(juce::Image::ARGB,440,440,true);
   for(int j=0;j<layerCount;++j){
    juce::Graphics g(layers[(size_t)j]);g.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
    for(int i=j;i<glyphCount;i+=layerCount){const auto&p=placements[(size_t)i];
     g.setOpacity(p.weight*p.fade);
     g.setColour(tint(p).withAlpha(p.weight*p.fade));draw(g,p);}
   }
-  juce::Graphics g(bright);g.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
-  for(const auto&p:placements){g.setColour(Theme::bone.withAlpha(p.fade));draw(g,p);}
+  // Per-glyph flare sprites: slightly enlarged, tinted toward white.
+  for(size_t i=0;i<placements.size();++i){
+   const auto&p=placements[i];const float size=p.size*1.45f;const int n=(int)std::ceil(size)+2;
+   sprites[i]=juce::Image(juce::Image::ARGB,n,n,true);
+   juce::Graphics sg(sprites[i]);sg.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
+   sg.setColour(tint(p).interpolatedWith(juce::Colours::white,.8f));
+   const auto glyph=atlas.getClippedImage({(p.index%8)*32,(p.index/8)*32,32,32});
+   sg.drawImageTransformed(glyph,juce::AffineTransform::scale(size/32.f).translated(((float)n-size)/2,((float)n-size)/2),true);
+  }
+ }
+ // Advance the sparkle state to time `t` (seconds). Call once per animation frame.
+ void advance(double t,float live){
+  const double dt=juce::jlimit(0.0,.1,t-lastT);lastT=t;
+  for(auto&c:clusters){
+   c.age+=(float)dt;
+   if(c.age>=c.life){ // respawn somewhere new on the ring
+    c.angle=animRandom.nextFloat()*2.f*juce::MathConstants<float>::pi;c.radius=155.f+animRandom.nextFloat()*30.f;
+    c.life=.45f+animRandom.nextFloat()*.55f;c.age=0.f;c.spin=(animRandom.nextFloat()-.5f)*1.1f;c.size=15.f+animRandom.nextFloat()*12.f;
+   }
+   c.angle+=c.spin*(float)dt*(1.f+live);
+  }
+  for(auto&f:flashes){
+   f.age+=(float)dt;
+   if(f.age>=f.life){f.glyph=animRandom.nextInt(glyphCount);f.life=.18f+animRandom.nextFloat()*.4f;f.age=0.f;}
+  }
  }
  // amount: REANIMATE 0..1, live: signal activity 0..1, active: fade 0..1, t: seconds
  void paint(juce::Graphics&g,float amount,float live,float active,double t) const {
   if(active<.004f)return;
   juce::Graphics::ScopedSaveState state(g);
   for(int j=0;j<layerCount;++j){
-   const float pulse=.5f+.5f*(float)std::sin(t*(.9+.37*j)+j*1.7);
-   g.setOpacity(active*(.55f+.35f*amount+.1f*live)*(.55f+.45f*pulse));
+   const float breathe=.5f+.5f*(float)std::sin(t*(.5+.21*j)+j*1.7);
+   g.setOpacity(active*(.5f+.3f*amount)*(.78f+.22f*breathe));
    g.drawImageAt(layers[(size_t)j],0,0);
   }
-  const float a0=(float)(t*(.42+.5*live)+.9*std::sin(t*.21));
-  spot(g,a0,.55f+.2f*live,active*(.7f+.3f*live));
-  spot(g,a0+2.6f,.4f,active*.45f);
+  g.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
+  const float gain=active*(.75f+.25f*live);
+  for(const auto&c:clusters){
+   const float env=std::sin(juce::MathConstants<float>::pi*c.age/c.life);
+   const float cx=220.f+std::cos(c.angle)*c.radius,cy=220.f+std::sin(c.angle)*c.radius;
+   for(const auto&p:placements){
+    const float dx=p.x-cx,dy=p.y-cy,d2=dx*dx+dy*dy;if(d2>c.size*c.size)continue;
+    const float fall=1.f-std::sqrt(d2)/c.size;
+    drawBright(g,p,gain*env*env*fall*p.fade*1.4f);
+   }
+  }
+  for(const auto&f:flashes){
+   const float env=std::sin(juce::MathConstants<float>::pi*f.age/f.life);
+   const auto&p=placements[(size_t)f.glyph];drawBright(g,p,gain*env*p.fade*1.4f);
+  }
  }
 private:
- struct Placement {float angle=0,radius=0,size=0,weight=1,fade=1;int index=0;};
+ struct Placement {float angle=0,radius=0,x=0,y=0,size=0,weight=1,fade=1;int index=0;};
+ struct Cluster {float angle=0,radius=160,age=1,life=1,spin=0,size=18;};
+ struct Flash {int glyph=0;float age=1,life=1;};
  static juce::Colour tint(const Placement&p){
   return Theme::spectral(.5f+.5f*std::cos(p.angle)).interpolatedWith(Theme::bone,.35f);
  }
  void draw(juce::Graphics&g,const Placement&p) const {
-  const float x=220+std::cos(p.angle)*p.radius-p.size/2,y=220+std::sin(p.angle)*p.radius-p.size/2;
+  const float x=p.x-p.size/2,y=p.y-p.size/2;
   const auto glyph=atlas.getClippedImage({(p.index%8)*32,(p.index/8)*32,32,32});
   g.drawImageTransformed(glyph,juce::AffineTransform::scale(p.size/32.f).translated(x,y),true);
  }
- // Soft cone: four nested wedges of the bright layer build a smooth angular falloff.
- void spot(juce::Graphics&g,float angle,float halfWidth,float gain) const {
-  constexpr float quarterTurn=juce::MathConstants<float>::halfPi;
-  for(int k=0;k<4;++k){
-   const float w=halfWidth*(1.f-.24f*(float)k);
-   juce::Path wedge;wedge.addPieSegment(juce::Rectangle<float>(0.f,0.f,440.f,440.f),angle-w+quarterTurn,angle+w+quarterTurn,0.f);
-   juce::Graphics::ScopedSaveState save(g);g.reduceClipRegion(wedge);
-   g.setOpacity(gain*(.16f+.06f*(float)k));g.drawImageAt(bright,0,0);
-  }
+ // Bright flares are plain blits of pre-baked per-glyph sprites (transform-filling glyphs every frame is far too slow).
+ void drawBright(juce::Graphics&g,const Placement&p,float alpha) const {
+  if(alpha<.01f)return;
+  const auto&sprite=sprites[(size_t)(&p-placements.data())];
+  g.setOpacity(juce::jlimit(0.f,1.f,alpha));
+  g.drawImageAt(sprite,(int)std::lround(p.x)-sprite.getWidth()/2,(int)std::lround(p.y)-sprite.getHeight()/2);
  }
- std::array<Placement,glyphCount>placements{};juce::Image atlas,bright;std::array<juce::Image,layerCount>layers;
+ std::array<Placement,glyphCount>placements{};std::array<Cluster,5>clusters{};std::array<Flash,16>flashes{};juce::Random animRandom{20260101};double lastT=0;juce::Image atlas;std::array<juce::Image,glyphCount>sprites;std::array<juce::Image,layerCount>layers;
 };
