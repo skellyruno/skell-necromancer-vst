@@ -7,14 +7,48 @@ SkellNecromancerAudioProcessorEditor::Panel::Panel(){
  setBufferedToImage(true);
 }
 void SkellNecromancerAudioProcessorEditor::Panel::paint(Graphics&g){
- g.fillAll(Theme::black);g.drawImage(bg,getLocalBounds().toFloat());
- g.setColour(Theme::panelRaised);g.fillRect(0,35,Theme::width,44);
- g.setColour(Theme::greenDim.withAlpha(.55f));g.fillRect(0,35,Theme::width,1);
- g.setColour(Theme::border);g.drawLine(0.f,80.f,1157.f,80.f,1.f);
- g.setColour(Theme::border.withAlpha(.45f));g.drawLine(0.f,577.f,1157.f,577.f,1.f);
- // One main instrument panel; the layout is mirrored about the dial axis (x=568).
- g.setColour(juce::Colours::black.withAlpha(.22f));g.fillRoundedRectangle(10.f,88.f,1137.f,483.f,10.f);
- g.setColour(Theme::border.withAlpha(.7f));g.drawRoundedRectangle(10.5f,88.5f,1136.f,482.f,10.f,1.f);
+ g.fillAll(Theme::black);
+ g.drawImage(bg,getLocalBounds().toFloat());
+ // The reference has a nearly black header and footer, NOT another bright metal
+ // panel. Keep the high-contrast information on the brushed central instrument.
+ g.setColour(juce::Colour(0xff090b0d));g.fillRect(0,35,Theme::width,45);
+ g.setColour(juce::Colour(0xff101416));g.fillRect(0,577,Theme::width,35);
+ g.setColour(juce::Colour(0xff31383d));g.drawLine(0.f,80.f,1157.f,80.f,1.f);
+ g.setColour(juce::Colour(0xff363c40));g.drawLine(0.f,577.f,1157.f,577.f,1.f);
+ // One continuous brushed steel panel: deterministic, clipped streaks add
+ // directional texture without regenerating or modifying the original assets.
+ g.setColour(juce::Colours::black.withAlpha(.19f));
+ g.fillRoundedRectangle(10.f,87.f,1137.f,484.f,10.f);
+ {
+  juce::Graphics::ScopedSaveState textureState(g);
+  g.reduceClipRegion(juce::Rectangle<int>(13,90,1131,478));
+  juce::ColourGradient shade(juce::Colour(0xffb2bec4).withAlpha(.034f),
+                             18.f,98.f,juce::Colours::black.withAlpha(.13f),
+                             1128.f,566.f,false);
+  g.setGradientFill(shade);
+  g.fillRect(13,90,1131,478);
+  juce::Random grain(0x51E110);
+  for(int i=0;i<160;++i){
+   const float y=91.f+grain.nextFloat()*473.f;
+   const float x=14.f+grain.nextFloat()*170.f;
+   const float len=610.f+grain.nextFloat()*850.f;
+   const float opacity=.026f+grain.nextFloat()*.055f;
+   g.setColour((i%5==0?juce::Colours::white:juce::Colours::black).withAlpha(opacity));
+   g.drawLine(x,y,juce::jmin(1143.f,x+len),y,.5f+(i%7==0?.55f:0.f));
+  }
+  for(int i=0;i<62;++i){
+   const float y=94.f+7.5f*i;
+   g.setColour(juce::Colours::black.withAlpha(i%4==0?.055f:.021f));
+   g.drawLine(13.f,y,1143.f,y,.5f);
+  }
+ }
+ // Subtle bevel and edge lighting keep the hardware depth but avoid extra boxes.
+ g.setColour(juce::Colour(0xff8a9298).withAlpha(.32f));
+ g.drawLine(25.f,89.5f,1132.f,89.5f,1.f);
+ g.setColour(juce::Colours::black.withAlpha(.65f));
+ g.drawLine(24.f,568.5f,1133.f,568.5f,1.f);
+ g.setColour(Theme::border.withAlpha(.82f));
+ g.drawRoundedRectangle(10.5f,87.5f,1136.f,483.f,10.f,1.2f);
  // Original Skell skull-and-wings mark, deliberately not a copy of the reference WM logo.
  {
  Graphics::ScopedSaveState logoState(g);g.addTransform(AffineTransform::translation(12.f,0.f));
@@ -25,10 +59,9 @@ void SkellNecromancerAudioProcessorEditor::Panel::paint(Graphics&g){
  wing.startNewSubPath(47,51);wing.lineTo(60,47);wing.lineTo(54,57);wing.lineTo(63,60);wing.lineTo(47,61);
  g.strokePath(wing,PathStrokeType(2.f));
  }
- g.setFont(Theme::display(23).withExtraKerningFactor(.32f));g.setColour(Theme::bone);
- g.drawFittedText("SKELL  -  NECROMANCER",290,38,556,29,Justification::centred,1);
- g.setColour(Theme::greenLight);g.setFont(Theme::mono(11));
- g.drawText("R A I S E   T H E   D E A D   M I X",413,65,310,12,Justification::centred);
+ g.setFont(Theme::display(22).withExtraKerningFactor(.41f));
+ g.setColour(Theme::bone);
+ g.drawFittedText("SKELL  NECROMANCER",268,41,600,33,Justification::centred,1);
  g.setFont(Theme::mono(12));g.setColour(Theme::faint.brighter(1.1f));g.drawText("SKELL AUDIO",27,588,160,16,Justification::centredLeft);
  g.setFont(Theme::mono(11));g.setColour(Theme::faint.brighter(1.15f));
 }
