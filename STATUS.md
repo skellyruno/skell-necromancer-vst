@@ -92,3 +92,13 @@ Not verified: Windows CI, FL Studio host behaviour (PDC with the new fade-out/in
 - **Local validation:** verified the 10 fps extraction and continuity of the mathematical sweep model; inspected the exact changes as a Git patch; no real JUCE UI render is claimed.
 - **Still required:** Windows compilation/CTest and reference DSP tests from PR CI; screenshot comparisons at 810, 1157 and 1736 px; run-time paint budget comparison vs the ~3.4 ms prior harness result; FL Studio bypass/PDC/resize and audio checks. Brushed-metal texture still needs reference review.
 - Work isolated to `feat/reference-rune-sweep-20261113`; `main` untouched.
+
+## 2026-11-13 Correction: physically moving runes (follow-up)
+- User correctly reported the earlier sweep-only update did not move the glyphs themselves.
+- Updated `RuneRing.h`: **480/640 original glyphs now travel on three circular orbits**, one band counter-rotating, even at zero live-audio level. The other 160 stay in dim cached layers for depth.
+- Each moving glyph is excluded from the static cached layer to prevent visible duplicates. Separate native-size cached sprites preserve rune geometry, while the existing enlarged sprites are retained only for glow flares.
+- Flare positions follow the current glyph positions; the bottom arc is dynamically dimmed as glyphs travel so the REANIMATE percentage remains readable.
+- No per-frame image transform or heap allocation was added; movement uses precomputed glyph sprites and per-frame position updates.
+- `ReanimateDial` now has a host-safe 30 Hz message-thread timer when VBlank stalls; fallback repaints on every fallback tick. The editor's 10 Hz timer also syncs active/live state when VBlank is missing.
+- Extracted JUCE-free `RuneMotion.h` geometry and added `NecromancerUI_RuneMovement` CTest. **Local g++ -std=c++17 -Wall -Wextra -Werror test PASSED**, including 30 frames of travel in silence, per-frame continuity, radius and direction, and 480 mobile glyph count. Measured one-second path displacement: 66.44 / 56.02 / 47.37 px at representative radii.
+- **Still unverified:** actual JUCE rendered frame sequence, animation CPU at three window sizes, latest Windows CI build, and FL Studio host callback/resize behavior. Source change is isolated to the draft PR branch, not main.
