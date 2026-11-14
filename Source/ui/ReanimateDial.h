@@ -1,5 +1,6 @@
 #pragma once
 #include "RuneRing.h"
+#include "UiFramePacer.h"
 class ReanimateDial:public juce::Slider,private juce::Timer {
 public:
  ReanimateDial() {setRange(0.0,100.0,0.1);setValue(65.0,juce::dontSendNotification);setSliderStyle(juce::Slider::RotaryVerticalDrag);setTextBoxStyle(juce::Slider::NoTextBox,false,0,0);
@@ -28,11 +29,11 @@ public:
   const bool fading=std::abs(target-act)>.002f;
   act=fading?act+(target-act)*(1.f-(float)std::exp(-dt*9.0)):target;
   seconds=now;
-  // The common 60 Hz VBlank path paints at 30 Hz. Only calculate new positions
-  // on those visible frames: intermediate 60 Hz orbit updates were discarded.
-  // Fallback already runs at 30 Hz, so it advances on every fallback tick.
+  // Schedule the actual rune calculation at the visible display cadence.
+  // 30 Hz hosts paint every VBlank; 60/120/144 Hz hosts remain near 30 FPS.
+  // The separate 30 Hz host-VBlank fallback forces its own repaint.
   const bool hasVisibleField=act>.002f||fading;
-  const bool renderFrame=((++frame&1)==0||fallback) && hasVisibleField;
+  const bool renderFrame=framePacer.shouldRender(dt,fallback) && hasVisibleField;
   if(renderFrame){ring.advance(now,live);repaint();}
   else if(!hasVisibleField)ring.pause(now); // steady bypass: no orbit work
  }
@@ -80,5 +81,6 @@ private:
   if(juce::Time::getMillisecondCounterHiRes()-lastVBlankMs>75.0)advance(true);
  }
  juce::Image well,cap;RuneRing ring;float live=0,act=1.f,target=1.f;
- int frame=0;double seconds=0,lastTime=0,lastVBlankMs=0;
+ skell::necromancer::ui::FramePacer framePacer;
+ double seconds=0,lastTime=0,lastVBlankMs=0;
 };

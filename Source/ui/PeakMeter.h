@@ -37,7 +37,8 @@ public:
       const auto cyan=juce::Colour(0xff86efff),purple=juce::Colour(0xffc49ae9),pink=juce::Colour(0xffff87a8);
       const auto colour=(h<.53f?cyan.interpolatedWith(purple,h/.53f):purple.interpolatedWith(pink,(h-.53f)/.47f)).interpolatedWith(Theme::bone,.06f);
       g.setColour(h<=v?colour:colour.withAlpha(.38f)); // unlit segments stay faintly visible
-      g.fillRect(barX,barTop+barH-y-3,15,2);
+      // Narrower dark gaps match the reference's brighter stacked LEDs.
+      g.fillRect((float)barX,(float)(barTop+barH-y-3),15.f,2.5f);
     }
     const float heldPos=(float)barTop+(float)barH*(1.f-value(held[c]));
     if(held[c]>-85.f){g.setColour(Theme::greenLight);g.fillRect((float)barX,heldPos,15.f,1.5f);}

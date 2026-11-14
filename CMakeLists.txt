@@ -51,7 +51,7 @@ target_sources(SkellNecromancer PRIVATE
   Source/dsp/Oversampler.h Source/dsp/TapeStage.h Source/dsp/GlueStage.h
   Source/dsp/HarmonicLife.h Source/dsp/TransientRestore.h Source/dsp/Glow.h Source/dsp/ReviveEngine.h
   Source/dsp/TruePeakLimiter.h Source/dsp/LufsMeter.h Source/dsp/AutoAnalyzer.h
-  Source/ui/ReanimateDial.h Source/ui/PolishedCap.h Source/ui/RuneRing.h Source/ui/RuneMotion.h Source/ui/MetalKnob.h
+  Source/ui/ReanimateDial.h Source/ui/PolishedCap.h Source/ui/UiFramePacer.h Source/ui/RuneRing.h Source/ui/RuneMotion.h Source/ui/MetalKnob.h
   Source/ui/RangeSelector.h Source/ui/PeakMeter.h Source/ui/PushSlider.h
   Source/ui/TopBar.h Source/ui/PresetBar.h Source/ui/HintOverlay.h
   Source/ui/AutopsyReadout.h Source/ui/LookAndFeel.h)
@@ -91,6 +91,10 @@ target_compile_features(NecromancerLimiterProbe PRIVATE cxx_std_17)
 add_executable(NecromancerRuneMotionTest tests/rune_motion_test.cpp)
 target_compile_features(NecromancerRuneMotionTest PRIVATE cxx_std_17)
 add_test(NAME NecromancerUI_RuneMovement COMMAND NecromancerRuneMotionTest)
+# Host-rate-independent editor redraw scheduling; no JUCE or audio dependency.
+add_executable(NecromancerUIFramePacerTest tests/ui_frame_pacer_test.cpp)
+target_compile_features(NecromancerUIFramePacerTest PRIVATE cxx_std_17)
+add_test(NAME NecromancerUI_FramePacer COMMAND NecromancerUIFramePacerTest)
 
 # Optional end-to-end processor stress test (NaN/Inf, latency, ceiling, aliasing, CPU). Off by default.
 option(SKELL_BUILD_PROCESSOR_TESTS "Build the JUCE processor stress test" OFF)

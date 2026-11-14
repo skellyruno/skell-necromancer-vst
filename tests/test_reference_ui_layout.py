@@ -73,3 +73,6 @@ assert "const bool renderFrame=" in dial_source
 assert "if(renderFrame){ring.advance(now,live);repaint();}" in dial_source
 # Reference-like blue range lamp and brushed-panel balance remain UI-only.
 assert "juce::Colour(0xff83b8ff)" in (root / "Source/ui/RangeSelector.h").read_text(encoding="utf-8")
+
+assert "framePacer.shouldRender(dt,fallback)" in dial_source, "frame cadence must not halve on 30Hz hosts"
+assert "UiFramePacer.h" in dial_source

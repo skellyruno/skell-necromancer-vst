@@ -165,3 +165,9 @@ Not verified: Windows CI, FL Studio host behaviour (PDC with the new fade-out/in
 - Mid-band I/II/III selector now uses a quiet blue active indicator closer to reference; all three existing automated choices preserved.
 - Added a fine chrome specular arc to all six small metal knob rims, keeping original textured caps, labels, ranges and inline editing.
 - Static source-layout guard verifies display-frame-gated rune updates and selected lamp styling. Pending Windows compile, all CTests and 70/100/150% real screenshot review; don't merge unverified work.
+
+## 2026-11-13 variable-rate VBlank motion + reference LEDs
+- Upgraded REANIMATE scheduling from every second VBlank to a JUCE-free, time-accumulated 30-FPS pacer (30, 60, 75, 90, 120, 144 Hz). This preserves true 30 FPS on hosts supplying only 30 Hz VBlank callbacks; the prior alternating frame rule could display at 15 FPS there. At high refresh rates it still avoids unnecessary 480-glyph position updates.
+- Added a small independent CTest `NecromancerUI_FramePacer` for each host refresh rate and forced fallback; initial identical-logic local g++ -std=c++17 -Wall -Wextra -Werror simulation passed 60/61 displayed frames over two seconds at all tested rates.
+- Brighter pink/lavender/cyan meter LEDs via 2.5 px illuminated segment height rather than 2 px, to narrow dark gaps and approach the supplied reference's much more luminous bars. No meter signal/DSP changes.
+- No audio processing or parameter changes. Windows build and screenshot QA still required.
