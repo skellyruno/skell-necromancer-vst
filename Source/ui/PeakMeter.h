@@ -17,18 +17,20 @@ public:
  }
  void paint(juce::Graphics&g)override {
   const auto value=[&](float d){return juce::jlimit(0.f,1.f,(d+60.f)/60.f);};
-  g.setColour(Theme::panelRaised);g.fillRoundedRectangle(21.f,(float)headerH,33.f,(float)(getHeight()-24-headerH),3.f);
+  g.setColour(Theme::panelRaised);g.fillRoundedRectangle(21.f,(float)headerH,34.f,(float)(getHeight()-24-headerH),3.f);
   g.setColour(Theme::bone);g.setFont(Theme::mono(12));
-  g.drawFittedText(label,21,0,33,headerH,juce::Justification::centred,1);
+  g.drawFittedText(label,21,0,34,headerH,juce::Justification::centred,1);
   for(int c=0;c<2;++c){const float d=shown[c],v=value(d);
     const int barX=22+c*17,barTop=headerH+1,barH=getHeight()-25-headerH;
     for(int y=0;y<barH;y+=3){const float h=(float)y/(float)barH;
-      const auto colour=Theme::spectral(1.f-h).interpolatedWith(Theme::bone,.12f);
-      g.setColour(h<=v?colour:colour.withAlpha(.22f)); // unlit segments stay faintly visible
-      g.fillRect(barX,barTop+barH-y-3,13,2);
+      // Reference-inspired LED palette: pale cyan low, lavender middle, pink high.
+      const auto cyan=juce::Colour(0xff86efff),purple=juce::Colour(0xffc49ae9),pink=juce::Colour(0xffff87a8);
+      const auto colour=(h<.53f?cyan.interpolatedWith(purple,h/.53f):purple.interpolatedWith(pink,(h-.53f)/.47f)).interpolatedWith(Theme::bone,.06f);
+      g.setColour(h<=v?colour:colour.withAlpha(.28f)); // unlit segments stay faintly visible
+      g.fillRect(barX,barTop+barH-y-3,15,2);
     }
     const float heldPos=(float)barTop+(float)barH*(1.f-value(held[c]));
-    g.setColour(Theme::greenLight);g.fillRect((float)barX,heldPos,13.f,1.5f);
+    g.setColour(Theme::greenLight);g.fillRect((float)barX,heldPos,15.f,1.5f);
   }
   for(int d:{0,-6,-12,-24,-48}){const float f=value((float)d);const int y=juce::jlimit(headerH+6,getHeight()-33,(int)((float)(headerH+1)+(float)(getHeight()-25-headerH)*(1-f)));
    g.setFont(Theme::mono(9));g.setColour(Theme::faint.brighter(.4f));
