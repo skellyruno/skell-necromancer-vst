@@ -25,7 +25,7 @@ static bool saveImage(const juce::Image& image,const juce::File& path) {
 
 int main(int argc,char** argv) {
  juce::ScopedJuceInitialiser_GUI init;
- const auto outputDir=argc>1?juce::File(argv[1]):
+ const auto outputDir=argc>1?juce::File::getCurrentWorkingDirectory().getChildFile(argv[1]):
                                 juce::File::getCurrentWorkingDirectory().getChildFile("ui-captures");
  if(outputDir.createDirectory().failed()){std::cerr<<"Could not create output directory\n";return 1;}
  SkellNecromancerAudioProcessor processor;
