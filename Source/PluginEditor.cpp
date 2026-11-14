@@ -79,7 +79,7 @@ SkellNecromancerAudioProcessorEditor::SkellNecromancerAudioProcessorEditor(Skell
  high.setRange(-6,6,.1);high.setDefault(2);hf.setRange(-6,6,.1);hf.setDefault(1);
  input.setRange(-12,12,.1);output.setRange(-12,12,.1);
  attachSlider(low,"low");attachSlider(mid,"mid");attachSlider(high,"high");attachSlider(hf,"hfAdjust");attachSlider(input,"input");attachSlider(output,"output");
- add(range);range.setBounds(313,310,36,84);attachChoice(range,"midRange");
+ add(range);range.setBounds(313,310,44,84);attachChoice(range,"midRange");
  add(inMeter);add(outMeter);
  inMeter.setBounds(78,84,84,325);outMeter.setBounds(994,84,84,325);
  setTextButton(autoButton,"AUTO",795,41,114,26,"Analyze 12 s, then replay the loudest section for the second pass.");
