@@ -20,11 +20,20 @@ public:
     // This panel is a plain Component, not a SettableTooltipClient.
  }
  void resized()override {
-  name.setBounds(0,0,233,27);drop.setBounds(234,0,25,27);
-  undo.setBounds(267,0,46,27);redo.setBounds(316,0,46,27);save.setBounds(365,0,48,27);
-  abA.setBounds(418,0,23,27);abB.setBounds(444,0,23,27);copy.setBounds(470,0,50,27);
+  // Long preset field and compact icon actions match the reference top-left.
+  // A/B and Copy are retained to the right rather than removed.
+  name.setBounds(0,0,281,27);drop.setBounds(283,0,23,27);
+  undo.setBounds(313,0,32,27);redo.setBounds(347,0,32,27);save.setBounds(381,0,32,27);
+  abA.setBounds(429,0,26,27);abB.setBounds(459,0,26,27);copy.setBounds(489,0,49,27);
  }
- void paint(juce::Graphics&g)override{if(processor.presetDirty.load()){g.setColour(Theme::green);g.fillEllipse(226.f,8.f,6.f,6.f);}}
+ void paint(juce::Graphics&)override{}
+ // Paint after the preset name child: before, the dirty-state LED was hidden
+ // beneath the opaque name label, making it appear broken in the UI.
+ void paintOverChildren(juce::Graphics&g)override{
+  if(processor.presetDirty.load()){
+   g.setColour(Theme::greenLight);g.fillEllipse(265.f,10.f,5.f,5.f);
+  }
+ }
  void sync(){repaint();juce::String p=processor.uiState.getProperty("preset","INIT").toString();if(!name.isBeingEdited()&&name.getText()!=p)name.setText(p,juce::dontSendNotification);
    abA.setToggleState(processor.selectedSlot==0,juce::dontSendNotification);abB.setToggleState(processor.selectedSlot==1,juce::dontSendNotification);}
 private:
