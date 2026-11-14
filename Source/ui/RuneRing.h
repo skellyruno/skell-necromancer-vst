@@ -121,7 +121,9 @@ public:
   for(size_t i=0;i<placements.size();++i){
    const auto&p=placements[i];if(!p.mobile)continue;
    const auto&pt=animatedPositions[i];const auto&sprite=motionSprites[i];
-   g.setOpacity(active*(.56f+.18f*amount)*p.weight*animatedFade[i]);
+   // Colored orbital sprites stay intentionally dim at rest: moving flashes
+   // travel across them instead of making the whole ring glow at once.
+   g.setOpacity(active*(.30f+.08f*amount)*p.weight*animatedFade[i]);
    g.drawImageAt(sprite,(int)std::lround(pt.x)-sprite.getWidth()/2,(int)std::lround(pt.y)-sprite.getHeight()/2);
   }
   const float gain=active*(.57f+.2f*live);

@@ -151,3 +151,10 @@ Not verified: Windows CI, FL Studio host behaviour (PDC with the new fade-out/in
 - Subtly raised brushed steel faceplate brightness and top-edge specular light; retained Skell logos, all controls, sizes and animations.
 - Added UI regression guards against hiding the engraved cap or baking uncolored mobile glyphs.
 - UI-only changes; no DSP code or parameter changes. Windows CI and actual rendered image inspection are required before merge.
+
+## 2026-11-13 reference-matched rune restraint and bezel depth
+- First real screenshot with restored original engraved cap and properly tinted 480 moving symbols passed Windows CI, 4 CTests, active meter and silent motion capture. Screenshot snapshot mean 9.48 ms and worst 19.19 ms (informational: not host CPU benchmark).
+- A/B examination showed the newly tinted rune field was roughly 3× more saturated/visible than the reference in the 155–192 px annulus. Lowered only the dim moving glyph base opacity to match the reference's calmer dark field; roaming brighter highlights and true physical motion remain.
+- Original dial well is copied before two subtle darkening strokes over its extra inner chrome rings, making the bezel closer to the reference without changing or regenerating original artwork. The inner bezel adjustment occurs once in the constructor, not in every animated frame.
+- Kept original engraved skull/rune center cap and 70/100/150% window geometry; no DSP, automation or parameter changes.
+- Second Windows screenshot verification required before merging; previous successful build retained.

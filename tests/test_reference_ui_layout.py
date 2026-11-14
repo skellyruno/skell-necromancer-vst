@@ -65,3 +65,5 @@ dial_source = (root / "Source/ui/ReanimateDial.h").read_text(encoding="utf-8")
 runes_source = (root / "Source/ui/RuneRing.h").read_text(encoding="utf-8")
 assert "g.drawImage(cap," in dial_source and "polishedFace" not in dial_source
 assert "mg.setColour(tint(p)" in runes_source, "moving rune glyphs must not be black"
+
+assert "dial_well_pngSize).createCopy()" in dial_source, "bezel edits must not mutate shared cached original asset"

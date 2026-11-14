@@ -4,7 +4,16 @@ class ReanimateDial:public juce::Slider,private juce::Timer {
 public:
  ReanimateDial() {setRange(0.0,100.0,0.1);setValue(65.0,juce::dontSendNotification);setSliderStyle(juce::Slider::RotaryVerticalDrag);setTextBoxStyle(juce::Slider::NoTextBox,false,0,0);
  setDoubleClickReturnValue(true,65);setPopupMenuEnabled(true);setPopupDisplayEnabled(true,false,nullptr);setMouseCursor(juce::MouseCursor::PointingHandCursor);
- well=juce::ImageCache::getFromMemory(BinaryData::dial_well_png,BinaryData::dial_well_pngSize);
+ well=juce::ImageCache::getFromMemory(BinaryData::dial_well_png,BinaryData::dial_well_pngSize).createCopy();
+ // Keep the original chrome outer edge but quiet its two excessive inner
+ // concentric rings. This is baked ONCE into a private copy, never per frame.
+ if(!well.isNull()){
+  juce::Graphics rim(well);
+  rim.setColour(juce::Colour(0xff07090a).withAlpha(.42f));
+  rim.drawEllipse(17.f,17.f,406.f,406.f,8.f);
+  rim.setColour(juce::Colour(0xff07090a).withAlpha(.34f));
+  rim.drawEllipse(31.f,31.f,378.f,378.f,6.f);
+ }
  cap=juce::ImageCache::getFromMemory(BinaryData::knob_cap_big_png,BinaryData::knob_cap_big_pngSize);
  setTooltip("REANIMATE blends tape weight, gentle compression, harmonic life and restored transients. Double-click returns to 65%.");
  // Some VST hosts do not deliver VBlank callbacks consistently. The JUCE
