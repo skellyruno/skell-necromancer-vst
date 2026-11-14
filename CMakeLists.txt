@@ -104,3 +104,20 @@ if(SKELL_BUILD_PROCESSOR_TESTS)
   target_link_libraries(NecromancerProcessorStress PRIVATE NecroAssets juce::juce_audio_utils juce::juce_audio_processors juce::juce_gui_extra juce::juce_dsp juce::juce_recommended_config_flags)
   add_test(NAME NecromancerProcessorStress COMMAND NecromancerProcessorStress)
 endif()
+
+# Optional real-editor PNG capture and pixel-based rune-motion regression.
+# This is enabled by Windows CI, not by default for ordinary VST3 builds.
+option(SKELL_BUILD_UI_CAPTURE "Build the JUCE editor screenshot checker" OFF)
+if(SKELL_BUILD_UI_CAPTURE)
+  juce_add_console_app(NecromancerUICapture PRODUCT_NAME NecromancerUICapture)
+  juce_generate_juce_header(NecromancerUICapture)
+  target_sources(NecromancerUICapture PRIVATE
+    tests/ui_capture.cpp Source/PluginProcessor.cpp Source/PluginEditor.cpp)
+  target_include_directories(NecromancerUICapture PRIVATE Source)
+  target_compile_features(NecromancerUICapture PRIVATE cxx_std_17)
+  target_compile_definitions(NecromancerUICapture PRIVATE
+    JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_STANDALONE_APPLICATION=0 ${NECRO_FONT_FLAGS})
+  target_link_libraries(NecromancerUICapture PRIVATE NecroAssets
+    juce::juce_audio_utils juce::juce_audio_processors
+    juce::juce_gui_extra juce::juce_dsp juce::juce_recommended_config_flags)
+endif()
