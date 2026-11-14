@@ -24,6 +24,11 @@ public:
   g.setColour(juce::Colours::black.withAlpha(.34f));g.fillEllipse(cx-r-7,cy-r-5,2*(r+7),2*(r+7));
   g.setColour(juce::Colour(0xffa4a8a9).withAlpha(.19f));
   g.drawEllipse(cx-r-5.f,cy-r-5.f,2.f*(r+5.f),2.f*(r+5.f),.9f);
+  // Fine machined rim highlight; cap artwork remains the original asset.
+  juce::Path specular;
+  specular.addCentredArc(cx,cy,r+3.f,r+3.f,0.f,4.0f,5.7f,true);
+  g.setColour(juce::Colours::white.withAlpha(.17f));
+  g.strokePath(specular,juce::PathStrokeType(.9f));
   const int lit=(int)std::round(25.f*(float)valueToProportionOfLength(getValue()));
   for(int k=0;k<=25;++k){float angle=juce::MathConstants<float>::pi*(.75f+1.5f*k/25.f);
     auto rr=r+5;auto xx=cx+std::cos(angle)*rr,yy=cy+std::sin(angle)*rr;

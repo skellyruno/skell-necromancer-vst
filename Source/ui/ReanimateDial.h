@@ -28,11 +28,13 @@ public:
   const bool fading=std::abs(target-act)>.002f;
   act=fading?act+(target-act)*(1.f-(float)std::exp(-dt*9.0)):target;
   seconds=now;
-  if(act>.003f||fading)ring.advance(now,live);
-  else ring.pause(now); // no expensive rune orbit/sparkle work during steady bypass
-  // VBlank usually calls at ~60 Hz: paint every other frame. The timer fallback
-  // runs at 30 Hz already, so paint *every* timer tick (not 15 Hz).
-  if(((++frame&1)==0||fallback)&&(act>.002f||fading))repaint();
+  // The common 60 Hz VBlank path paints at 30 Hz. Only calculate new positions
+  // on those visible frames: intermediate 60 Hz orbit updates were discarded.
+  // Fallback already runs at 30 Hz, so it advances on every fallback tick.
+  const bool hasVisibleField=act>.002f||fading;
+  const bool renderFrame=((++frame&1)==0||fallback) && hasVisibleField;
+  if(renderFrame){ring.advance(now,live);repaint();}
+  else if(!hasVisibleField)ring.pause(now); // steady bypass: no orbit work
  }
  void paint(juce::Graphics&g)override {
   g.setImageResamplingQuality(juce::Graphics::highResamplingQuality);

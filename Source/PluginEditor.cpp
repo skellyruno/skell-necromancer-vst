@@ -20,7 +20,7 @@ void SkellNecromancerAudioProcessorEditor::Panel::paint(Graphics&g){
  g.setColour(juce::Colours::black.withAlpha(.19f));
  g.fillRoundedRectangle(10.f,87.f,1137.f,484.f,10.f);
  // Lift the brushed centre enough for horizontal steel grain to be readable.
- g.setColour(juce::Colour(0xff3b4145).withAlpha(.30f));
+ g.setColour(juce::Colour(0xff545b60).withAlpha(.30f));
  g.fillRoundedRectangle(12.f,89.f,1133.f,480.f,9.f);
  {
   juce::Graphics::ScopedSaveState textureState(g);
@@ -35,7 +35,7 @@ void SkellNecromancerAudioProcessorEditor::Panel::paint(Graphics&g){
    const float y=91.f+grain.nextFloat()*473.f;
    const float x=14.f+grain.nextFloat()*170.f;
    const float len=610.f+grain.nextFloat()*850.f;
-   const float opacity=.026f+grain.nextFloat()*.055f;
+   const float opacity=.032f+grain.nextFloat()*.071f;
    g.setColour((i%5==0?juce::Colours::white:juce::Colours::black).withAlpha(opacity));
    g.drawLine(x,y,juce::jmin(1143.f,x+len),y,.5f+(i%7==0?.55f:0.f));
   }

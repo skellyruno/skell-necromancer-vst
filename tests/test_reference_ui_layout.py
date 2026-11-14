@@ -67,3 +67,9 @@ assert "g.drawImage(cap," in dial_source and "polishedFace" not in dial_source
 assert "mg.setColour(tint(p)" in runes_source, "moving rune glyphs must not be black"
 
 assert "dial_well_pngSize).createCopy()" in dial_source, "bezel edits must not mutate shared cached original asset"
+
+# Rune CPU work is scheduled at paint cadence, not thrown away on alternating VBlanks.
+assert "const bool renderFrame=" in dial_source
+assert "if(renderFrame){ring.advance(now,live);repaint();}" in dial_source
+# Reference-like blue range lamp and brushed-panel balance remain UI-only.
+assert "juce::Colour(0xff83b8ff)" in (root / "Source/ui/RangeSelector.h").read_text(encoding="utf-8")

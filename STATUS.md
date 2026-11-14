@@ -158,3 +158,10 @@ Not verified: Windows CI, FL Studio host behaviour (PDC with the new fade-out/in
 - Original dial well is copied before two subtle darkening strokes over its extra inner chrome rings, making the bezel closer to the reference without changing or regenerating original artwork. The inner bezel adjustment occurs once in the constructor, not in every animated frame.
 - Kept original engraved skull/rune center cap and 70/100/150% window geometry; no DSP, automation or parameter changes.
 - Second Windows screenshot verification required before merging; previous successful build retained.
+
+## 2026-11-13 full-panel metal/rune UI follow-up
+- Reference A/B measured quiet background metal at roughly 28–35/255 versus 37–43/255 in the supplied 8th Wonder screenshot. Lightened the steel-only faceplate from 0xff3b4145 to 0xff545b60 at the same .30 alpha and slightly strengthened deterministic horizontal streaks. Original asset preserved, header/footer unchanged.
+- Reduced UI-only animation computation: 60 Hz host VBlank updates previously advanced all 480 glyph positions on every callback but only repainted on alternating calls. Rune position/flash calculation now happens only on the repainted 30 Hz frames, while the 30 Hz timer fallback still advances every time. Bypass/fade and host audio/DSP are untouched.
+- Mid-band I/II/III selector now uses a quiet blue active indicator closer to reference; all three existing automated choices preserved.
+- Added a fine chrome specular arc to all six small metal knob rims, keeping original textured caps, labels, ranges and inline editing.
+- Static source-layout guard verifies display-frame-gated rune updates and selected lamp styling. Pending Windows compile, all CTests and 70/100/150% real screenshot review; don't merge unverified work.

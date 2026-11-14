@@ -10,9 +10,12 @@ public:
   for(int i=0;i<3;++i){
    const bool on=getSelectedItemIndex()==i;
    const float y=(float)getHeight()*((float)i+.5f)/3.f;
-   if(on){g.setColour(Theme::green.withAlpha(.25f));g.fillEllipse(1.f,y-7.f,14.f,14.f);}
-   g.setColour(on?Theme::green:Theme::black);g.fillEllipse(4.f,y-4.f,8.f,8.f);
-   g.setColour(on?Theme::greenLight:Theme::border);g.drawEllipse(4.f,y-4.f,8.f,8.f,1.f);
+   // Cool blue selected lamp matches the small illuminated range indicator in
+   // the reference; it does not alter the existing automated ComboBox choice.
+   const auto lamp=juce::Colour(0xff83b8ff);
+   if(on){g.setColour(lamp.withAlpha(.19f));g.fillEllipse(1.f,y-7.f,14.f,14.f);}
+   g.setColour(on?lamp:Theme::black);g.fillEllipse(4.f,y-4.f,8.f,8.f);
+   g.setColour(on?lamp.brighter(.2f):Theme::border);g.drawEllipse(4.f,y-4.f,8.f,8.f,1.f);
    g.setColour(on?Theme::bone:Theme::faint);g.setFont(Theme::mono(12).withExtraKerningFactor(.12f));
    g.drawText(names[i],20,(int)y-8,getWidth()-20,16,juce::Justification::centredLeft);
   }
