@@ -1,5 +1,6 @@
 #pragma once
 #include "../Theme.h"
+#include "RuneMotion.h"
 #include "BinaryData.h"
 #include <array>
 #include <cmath>
@@ -22,8 +23,7 @@ public:
    p.x=220.f+std::cos(p.angle)*p.radius;p.y=220.f+std::sin(p.angle)*p.radius;
    p.index=random.nextInt(40);p.size=7.f+random.nextFloat()*7.f;p.weight=.55f+.45f*random.nextFloat();
    // The lower arc stays quiet so the percentage readout remains legible.
-   const float s=juce::jlimit(0.f,1.f,(std::sin(p.angle)-.45f)/.5f);
-   p.fade=1.f-.85f*s*s*(3.f-2.f*s);
+   p.fade=skell::necromancer::runes::quietFade(p.angle);
    p.band=p.radius<162.f?0:p.radius<175.f?1:2;
    p.mobile=(glyphNumber++%4)!=0; // 480 actual moving glyphs, 160 static
   }
@@ -72,9 +72,8 @@ public:
   const double dt=juce::jlimit(0.0,.1,t-lastT);lastT=t;
   // Physical rune motion is independent of input level: it must still be visible
   // on silence. Audio activity gently accelerates the three counter-rotating bands.
-  constexpr std::array<float,3> speeds{.48f,-.37f,.29f};
   for(size_t b=0;b<phase.size();++b){
-   phase[b]+=speeds[b]*(float)dt*(.9f+.3f*live);
+   phase[b]+=skell::necromancer::runes::phaseStep(b,(float)dt,live);
    if(phase[b]>juce::MathConstants<float>::twoPi)phase[b]-=juce::MathConstants<float>::twoPi;
    if(phase[b]<-juce::MathConstants<float>::twoPi)phase[b]+=juce::MathConstants<float>::twoPi;
   }
@@ -82,10 +81,10 @@ public:
    const auto&p=placements[i];
    if(!p.mobile)continue;
    const float a=p.angle+phase[(size_t)p.band];
-   animatedPositions[i]={220.f+std::cos(a)*p.radius,220.f+std::sin(a)*p.radius};
+   const auto pos=skell::necromancer::runes::position(p.angle,p.radius,phase[(size_t)p.band]);
+   animatedPositions[i]={pos.x,pos.y};
    // Fade the bottom of the orbit so moving runes cannot cover the percent label.
-   const float s=juce::jlimit(0.f,1.f,(std::sin(a)-.45f)/.5f);
-   animatedFade[i]=1.f-.85f*s*s*(3.f-2.f*s);
+   animatedFade[i]=skell::necromancer::runes::quietFade(a);
   }
   for(auto&c:clusters){
    c.age+=(float)dt;
