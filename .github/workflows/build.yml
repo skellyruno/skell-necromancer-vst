@@ -32,18 +32,25 @@ jobs:
         with:
           python-version: '3.11'
       - name: Configure
-        run: cmake -S . -B build -A x64
+        run: cmake -S . -B build -A x64 -DSKELL_BUILD_UI_CAPTURE=ON
       - name: Build
         run: cmake --build build --config Release --parallel 2
       - name: DSP regression tests
         run: ctest --test-dir build --build-config Release --output-on-failure
       - name: Source integrity
         run: python tests/test_project_structure.py
+      - name: Reference UI geometry and resize checks
+        run: python tests/test_reference_ui_layout.py
       - name: Independent LUFS / 8x true-peak reference checks
         shell: pwsh
         run: |
           python -m pip install --disable-pip-version-check --quiet numpy scipy pyloudnorm
           python tests/test_reference_metering.py --lufs "build/Release/NecromancerLufsProbe.exe" --limiter "build/Release/NecromancerLimiterProbe.exe"
+      - name: Capture real JUCE UI and verify silent rune motion
+        shell: pwsh
+        run: |
+          & "build/Release/NecromancerUICapture.exe" "build/ui-captures"
+          if ($LASTEXITCODE -ne 0) { throw "JUCE UI capture or rune motion verification failed" }
       - name: Package
         shell: pwsh
         run: |
@@ -55,4 +62,10 @@ jobs:
           retention-days: 1
           name: Skell-Necromancer-Windows-VST3
           path: Skell-Necromancer-Windows-VST3.zip
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          retention-days: 1
+          name: Skell-Necromancer-UI-Review
+          path: build/ui-captures/*.png
           if-no-files-found: error
