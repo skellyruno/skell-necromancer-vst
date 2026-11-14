@@ -7,14 +7,51 @@ SkellNecromancerAudioProcessorEditor::Panel::Panel(){
  setBufferedToImage(true);
 }
 void SkellNecromancerAudioProcessorEditor::Panel::paint(Graphics&g){
- g.fillAll(Theme::black);g.drawImage(bg,getLocalBounds().toFloat());
- g.setColour(Theme::panelRaised);g.fillRect(0,35,Theme::width,44);
- g.setColour(Theme::greenDim.withAlpha(.55f));g.fillRect(0,35,Theme::width,1);
- g.setColour(Theme::border);g.drawLine(0.f,80.f,1157.f,80.f,1.f);
- g.setColour(Theme::border.withAlpha(.45f));g.drawLine(0.f,577.f,1157.f,577.f,1.f);
- // One main instrument panel; the layout is mirrored about the dial axis (x=568).
- g.setColour(juce::Colours::black.withAlpha(.22f));g.fillRoundedRectangle(10.f,88.f,1137.f,483.f,10.f);
- g.setColour(Theme::border.withAlpha(.7f));g.drawRoundedRectangle(10.5f,88.5f,1136.f,482.f,10.f,1.f);
+ g.fillAll(Theme::black);
+ g.drawImage(bg,getLocalBounds().toFloat());
+ // The reference has a nearly black header and footer, NOT another bright metal
+ // panel. Keep the high-contrast information on the brushed central instrument.
+ g.setColour(juce::Colour(0xff090b0d));g.fillRect(0,35,Theme::width,45);
+ g.setColour(juce::Colour(0xff101416));g.fillRect(0,577,Theme::width,35);
+ g.setColour(juce::Colour(0xff31383d));g.drawLine(0.f,80.f,1157.f,80.f,1.f);
+ g.setColour(juce::Colour(0xff363c40));g.drawLine(0.f,577.f,1157.f,577.f,1.f);
+ // One continuous brushed steel panel: deterministic, clipped streaks add
+ // directional texture without regenerating or modifying the original assets.
+ g.setColour(juce::Colours::black.withAlpha(.19f));
+ g.fillRoundedRectangle(10.f,87.f,1137.f,484.f,10.f);
+ // Lift the brushed centre enough for horizontal steel grain to be readable.
+ g.setColour(juce::Colour(0xff545b60).withAlpha(.30f));
+ g.fillRoundedRectangle(12.f,89.f,1133.f,480.f,9.f);
+ {
+  juce::Graphics::ScopedSaveState textureState(g);
+  g.reduceClipRegion(juce::Rectangle<int>(13,90,1131,478));
+  juce::ColourGradient shade(juce::Colour(0xffb2bec4).withAlpha(.034f),
+                             18.f,98.f,juce::Colours::black.withAlpha(.13f),
+                             1128.f,566.f,false);
+  g.setGradientFill(shade);
+  g.fillRect(13,90,1131,478);
+  juce::Random grain(0x51E110);
+  for(int i=0;i<160;++i){
+   const float y=91.f+grain.nextFloat()*473.f;
+   const float x=14.f+grain.nextFloat()*170.f;
+   const float len=610.f+grain.nextFloat()*850.f;
+   const float opacity=.032f+grain.nextFloat()*.071f;
+   g.setColour((i%5==0?juce::Colours::white:juce::Colours::black).withAlpha(opacity));
+   g.drawLine(x,y,juce::jmin(1143.f,x+len),y,.5f+(i%7==0?.55f:0.f));
+  }
+  for(int i=0;i<62;++i){
+   const float y=94.f+7.5f*i;
+   g.setColour(juce::Colours::black.withAlpha(i%4==0?.055f:.021f));
+   g.drawLine(13.f,y,1143.f,y,.5f);
+  }
+ }
+ // Subtle bevel and edge lighting keep the hardware depth but avoid extra boxes.
+ g.setColour(juce::Colour(0xff8a9298).withAlpha(.38f));
+ g.drawLine(25.f,89.5f,1132.f,89.5f,1.f);
+ g.setColour(juce::Colours::black.withAlpha(.65f));
+ g.drawLine(24.f,568.5f,1133.f,568.5f,1.f);
+ g.setColour(Theme::border.withAlpha(.82f));
+ g.drawRoundedRectangle(10.5f,87.5f,1136.f,483.f,10.f,1.2f);
  // Original Skell skull-and-wings mark, deliberately not a copy of the reference WM logo.
  {
  Graphics::ScopedSaveState logoState(g);g.addTransform(AffineTransform::translation(12.f,0.f));
@@ -25,10 +62,9 @@ void SkellNecromancerAudioProcessorEditor::Panel::paint(Graphics&g){
  wing.startNewSubPath(47,51);wing.lineTo(60,47);wing.lineTo(54,57);wing.lineTo(63,60);wing.lineTo(47,61);
  g.strokePath(wing,PathStrokeType(2.f));
  }
- g.setFont(Theme::display(24).withExtraKerningFactor(.22f));g.setColour(Theme::bone);
- g.drawFittedText("SKELL  -  NECROMANCER",290,38,556,29,Justification::centred,1);
- g.setColour(Theme::greenLight);g.setFont(Theme::mono(11));
- g.drawText("R A I S E   T H E   D E A D   M I X",413,65,310,12,Justification::centred);
+ g.setFont(Theme::display(22).withExtraKerningFactor(.41f));
+ g.setColour(Theme::bone);
+ g.drawFittedText("SKELL  NECROMANCER",278,37,600,33,Justification::centred,1);
  g.setFont(Theme::mono(12));g.setColour(Theme::faint.brighter(1.1f));g.drawText("SKELL AUDIO",27,588,160,16,Justification::centredLeft);
  g.setFont(Theme::mono(11));g.setColour(Theme::faint.brighter(1.15f));
 }
@@ -39,40 +75,49 @@ SkellNecromancerAudioProcessorEditor::SkellNecromancerAudioProcessorEditor(Skell
  add(top);top.setBounds(0,0,Theme::width,36);
  add(dial);dial.setBounds(Theme::dial);attachSlider(dial,"reanimate");
  for(auto*knob:{&low,&mid,&high,&hf,&input,&output})add(*knob);
- low.setBounds(225,166,74,118);mid.setBounds(225,320,74,118);high.setBounds(837,166,74,118);hf.setBounds(837,320,74,118);
- input.setBounds(63,446,86,116);output.setBounds(987,446,86,116);
+ low.setBounds(235,164,74,118);mid.setBounds(235,316,74,118);
+ high.setBounds(847,164,74,118);hf.setBounds(847,316,74,118);
+ input.setBounds(76,437,86,125);output.setBounds(995,437,86,125);
  low.setRange(-6,6,.1);low.setDefault(1.5);mid.setRange(-6,6,.1);mid.setDefault(-1);
  high.setRange(-6,6,.1);high.setDefault(2);hf.setRange(-6,6,.1);hf.setDefault(1);
  input.setRange(-12,12,.1);output.setRange(-12,12,.1);
  attachSlider(low,"low");attachSlider(mid,"mid");attachSlider(high,"high");attachSlider(hf,"hfAdjust");attachSlider(input,"input");attachSlider(output,"output");
- add(range);range.setBounds(306,331,40,50);attachChoice(range,"midRange");
- add(inMeter);add(outMeter);inMeter.setBounds(65,96,84,325);outMeter.setBounds(987,96,84,325);
- setTextButton(autoButton,"AUTO",791,47,111,26,"Analyze 12 s, then replay the loudest section for the second pass.");
- setTextButton(onButton,"ON",917,47,100,26,"Toggle just the REVIVE engine; EQ, trim and limiter remain active.",true);
- setTextButton(bypassButton,"BYPASS",1030,47,116,26,"Latency-aligned, optional gain-matched bypass.",true);
+ add(range);range.setBounds(313,310,44,84);attachChoice(range,"midRange");
+ add(inMeter);add(outMeter);
+ inMeter.setBounds(78,84,84,325);outMeter.setBounds(994,84,84,325);
+ setTextButton(autoButton,"AUTO",795,41,114,26,"Analyze 12 s, then replay the loudest section for the second pass.");
+ setTextButton(onButton,"ON",926,41,97,26,"Toggle just the REVIVE engine; EQ, trim and limiter remain active.",true);
+ setTextButton(bypassButton,"BYPASS",1037,41,107,26,"Latency-aligned, optional gain-matched bypass.",true);
  setTextButton(limiterButton,"LIMITER",820,584,105,24,"True-peak detection limiter; configure the ceiling in Settings.",true);
- setTextButton(deltaButton,"DELTA",366,543,104,24,"Listen to level-matched difference between processed and dry signal.",true);
- setTextButton(matchButton,"GAIN MATCH",666,543,104,24,"Loudness-compensated compare; uses a smoothed RMS estimate.",true);
+ setTextButton(deltaButton,"DELTA",376,543,104,24,"Listen to level-matched difference between processed and dry signal.",true);
+ setTextButton(matchButton,"GAIN MATCH",676,543,104,24,"Loudness-compensated compare; uses a smoothed RMS estimate.",true);
  attachButton(onButton,"reanimateOn");attachButton(bypassButton,"bypass");attachButton(limiterButton,"limiterOn");
  attachButton(deltaButton,"deltaListen");attachButton(matchButton,"levelMatch");
  autoButton.onClick=[this]{processor.requestAuto();};
- mode.addItemList({"VOCAL","MASTER","BUS"},1);add(mode);mode.setBounds(510,93,117,20);attachChoice(mode,"mode");
+ mode.addItemList({"VOCAL","MASTER","BUS"},1);add(mode);
+ // Keep voicing accessible, but clear of the hero dial and its upper bezel.
+ mode.setBounds(227,112,119,22);attachChoice(mode,"mode");
  mode.setTooltip("Select vocal-specific de-ess, mastering weight/width, or bus/transient voicing.");
  add(mix);mix.setSliderStyle(Slider::LinearHorizontal);mix.setTextBoxStyle(Slider::NoTextBox,false,0,0);
  mix.setColour(Slider::trackColourId,Theme::greenDim);mix.setColour(Slider::thumbColourId,Theme::green);
- mix.setBounds(484,548,118,15);mix.setRange(0,100,.1);attachSlider(mix,"mix");
- add(mixValue);mixValue.setBounds(604,543,60,24);mixValue.setFont(Theme::mono(10));mixValue.setColour(Label::textColourId,Theme::bone);
+ mix.setBounds(494,548,118,15);mix.setRange(0,100,.1);attachSlider(mix,"mix");
+ add(mixValue);mixValue.setBounds(614,543,64,24);mixValue.setFont(Theme::mono(12));mixValue.setColour(Label::textColourId,Theme::bone);
  add(push);push.setBounds(942,587,103,18);push.setRange(0,24,.1);attachSlider(push,"push");
  add(pushValue);pushValue.setBounds(1053,585,90,22);pushValue.setColour(Label::textColourId,Theme::bone);pushValue.setFont(Theme::mono(13));
  add(autopsy);autopsy.setBounds(221,580,268,31);
- add(lufs);lufs.setBounds(501,595,170,14);lufs.setFont(Theme::mono(9));lufs.setColour(Label::textColourId,Theme::faint.brighter(.9f));
- add(gr);gr.setBounds(680,595,70,14);gr.setFont(Theme::mono(9));gr.setColour(Label::textColourId,Theme::faint.brighter(.9f));
- add(status);status.setBounds(501,581,310,14);status.setFont(Theme::mono(9));status.setColour(Label::textColourId,Theme::greenLight);
+ add(lufs);lufs.setBounds(501,595,204,15);lufs.setFont(Theme::mono(11));
+ lufs.setColour(Label::textColourId,Theme::bone.withAlpha(.83f));
+ add(gr);gr.setBounds(709,595,95,15);gr.setFont(Theme::mono(11));
+ gr.setColour(Label::textColourId,Theme::bone.withAlpha(.82f));
+ add(status);status.setBounds(501,580,306,15);status.setFont(Theme::mono(11));
+ status.setColour(Label::textColourId,Theme::greenLight.withAlpha(.94f));
  add(hints);hints.setBounds(0,0,Theme::width,Theme::height);hints.toFront(false);
  top.settings.onClick=[this]{openSettings();};top.help.onClick=[this]{showTour();};
  hintsOn=(bool)processor.uiState.getProperty("hints",true);
  if(hintsOn)tooltips=std::make_unique<TooltipWindow>(this,500);
- setResizable(true,true);setResizeLimits(810,428,1736,918);
+ // Keep all resize sizes; remove the host-independent striped JUCE corner
+ // handle that visually cuts across the lower-right hardware bezel.
+ setResizable(true,false);setResizeLimits(810,428,1736,918);
  if(auto* c=getConstrainer())c->setFixedAspectRatio((double)Theme::width/Theme::height);
  // One-time upgrade: existing saved M-size windows open at the new compact default.
  if (!(bool)processor.uiState.getProperty("compactV2", false)) {
@@ -85,10 +130,13 @@ SkellNecromancerAudioProcessorEditor::SkellNecromancerAudioProcessorEditor(Skell
  changeSize(size=="S"?0:size=="L"?2:size=="XL"?3:1);
  // Align the moving rune, dial and meters with the display refresh.
  vblank=std::make_unique<VBlankAttachment>(this,[this](double){
-     dial.setLive(processor.liveLevel.load());dial.setActive(onButton.getToggleState()&&!bypassButton.getToggleState());dial.advance();
+     dial.setLive(processor.liveLevel.load());dial.setActive(onButton.getToggleState()&&!bypassButton.getToggleState());dial.tickFromVBlank();
      auto hold=(int)processor.uiState.getProperty("meterHold",1000);inMeter.setHoldMilliseconds(hold);outMeter.setHoldMilliseconds(hold);inMeter.tick();outMeter.tick();
  });
  startTimerHz(10);
+ // Populate MIX, PUSH, LUFS and status on the *first frame*. Previously the
+ // readouts stayed blank until the first 100 ms timer event, including capture.
+ timerCallback();
  // The help tour is opt-in; automatically opening it covered the title/header.
 }
 SkellNecromancerAudioProcessorEditor::~SkellNecromancerAudioProcessorEditor(){stopTimer();vblank.reset();setLookAndFeel(nullptr);}
@@ -114,10 +162,21 @@ void SkellNecromancerAudioProcessorEditor::showTour(){
  tourStep=(tourStep+1)%5;hints.showTour(tourStep);
 }
 void SkellNecromancerAudioProcessorEditor::timerCallback(){
+ // Maintain rune state even when the host does not provide VBlank callbacks.
+ dial.setLive(processor.liveLevel.load());
+ dial.setActive(onButton.getToggleState()&&!bypassButton.getToggleState());
+ // Meter hold is also applied here when VBlank is absent, so settings never
+ // silently depend on the host providing a display-refresh callback.
+ const auto hold=(int)processor.uiState.getProperty("meterHold",1000);
+ inMeter.setHoldMilliseconds(hold);outMeter.setHoldMilliseconds(hold);
  autopsy.repaint();top.presets.sync();
  const auto wf=processor.uiState.getProperty("lufsWindow","short").toString();
  float shown=wf=="momentary"?processor.momentary.load():processor.shortTerm.load();
- lufs.setText("LUFS "+String(shown,1)+" / I "+String(processor.integrated.load(),1)+"  T "+String((float)processor.uiState.getProperty("targetLUFS",-14.f),0),dontSendNotification);
+ const auto formatLufs=[](float v)->String {
+  return (!std::isfinite(v)||v<=-99.f)?String("-INF"):String(v,1);
+ };
+ lufs.setText("LUFS "+formatLufs(shown)+" / I "+formatLufs(processor.integrated.load())+"  T "+
+              String((float)processor.uiState.getProperty("targetLUFS",-14.f),0),dontSendNotification);
  gr.setText("GR "+String(processor.gainReduction.load(),1),dontSendNotification);
  pushValue.setText(String(push.getValue(),1)+" dB",dontSendNotification);
  mixValue.setText("MIX  "+String(mix.getValue(),0)+"%",dontSendNotification);

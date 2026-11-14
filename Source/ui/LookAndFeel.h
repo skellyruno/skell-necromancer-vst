@@ -12,26 +12,39 @@ public:
   setColour(juce::TextButton::textColourOffId,Theme::bone);
  }
  void drawButtonBackground(juce::Graphics& g,juce::Button& b,const juce::Colour&,bool hover,bool down)override{
+  juce::Graphics::ScopedSaveState state(g);
+  if(!b.isEnabled())g.setOpacity(.38f);
   const auto r=b.getLocalBounds().toFloat().reduced(1.0f);
   const bool active=b.getToggleState();
   const bool isBypass=b.getButtonText().equalsIgnoreCase("BYPASS");
   const auto accent=isBypass?juce::Colour(0xffefb271):Theme::green;
-  g.setColour(active?(isBypass?juce::Colour(0xff35271b):Theme::greenDim.brighter(.12f))
-                    :Theme::panelRaised);
+  const bool abSlot=b.getButtonText()=="A"||b.getButtonText()=="B";
+  const bool isHardwareSwitch=b.getButtonText()=="AUTO"||b.getButtonText()=="ON"||
+                               isBypass||b.getButtonText()=="LIMITER";
+  // The reference ON state is a satin steel switch, not an all-green pill.
+  // Leave Skell's green for the active controls and subtle hover feedback.
+  const auto base=active?(isBypass?juce::Colour(0xff35271b):
+                         ((isHardwareSwitch||abSlot)?juce::Colour(0xff45464b):Theme::greenDim.brighter(.12f)))
+                         :juce::Colour(0xff1d2225);
+  g.setGradientFill(juce::ColourGradient(base.brighter(.08f),r.getX(),r.getY(),
+                                        base.darker(.18f),r.getRight(),r.getBottom(),false));
   g.fillRoundedRectangle(r,5.0f);
   if(hover||active) {
-   g.setColour(accent.withAlpha(active?.10f:.035f));
+   g.setColour(accent.withAlpha(active?.075f:.035f));
    g.fillRoundedRectangle(r.reduced(2.0f),4.0f);
   }
-  g.setColour(active?accent:(hover?Theme::greenLight:Theme::border.brighter(.22f)));
+  const auto edge=active?(isBypass?accent:((isHardwareSwitch||abSlot)?juce::Colour(0xffb4b3b9):accent)):
+                         (hover?Theme::greenLight:Theme::border.brighter(.22f));
+  g.setColour(edge);
   g.drawRoundedRectangle(r,5.0f,active||hover?1.5f:1.0f);
   if(down){g.setColour(accent.withAlpha(.27f));g.drawRoundedRectangle(r.reduced(2.0f),4.0f,1.0f);}
  }
  void drawButtonText(juce::Graphics&g,juce::TextButton&b,bool hover,bool)override{
   const auto text=b.getButtonText();
   const bool bypass=b.getToggleState()&&text.equalsIgnoreCase("BYPASS");
-  const auto colour=bypass?juce::Colour(0xffffd8ae):(hover?Theme::greenLight:Theme::bone);
-  g.setColour(colour);
+  const bool selectedAB=b.getToggleState()&&(text=="A"||text=="B");
+  const auto colour=bypass?juce::Colour(0xffffd8ae):(selectedAB?Theme::greenLight:(hover?Theme::greenLight:Theme::bone));
+  g.setColour(colour.withMultipliedAlpha(b.isEnabled()?1.f:.38f));
   if(drawIcon(g,text,b.getLocalBounds().toFloat().withSizeKeepingCentre(15.f,15.f)))return;
   const bool power=text=="AUTO"||text=="ON"||text=="BYPASS"||text=="LIMITER";
   const auto font=Theme::mono(12).withExtraKerningFactor(power?.1f:0.f);
@@ -55,7 +68,9 @@ public:
   const juce::PathStrokeType pen(stroke,juce::PathStrokeType::curved,juce::PathStrokeType::rounded);
   juce::Path p;
   constexpr float pi=juce::MathConstants<float>::pi;
-  if(name=="POWER"){
+  if(name=="V"){
+   p.startNewSubPath(at(.23f,.39f));p.lineTo(at(.5f,.65f));p.lineTo(at(.77f,.39f));
+  } else if(name=="POWER"){
    p.addCentredArc(at(.5f,.56f).x,at(.5f,.56f).y,s*.38f,s*.38f,0.f,.62f,2.f*pi-.62f,true);
    p.startNewSubPath(at(.5f,.04f));p.lineTo(at(.5f,.5f));
   } else if(name=="UNDO"||name=="REDO"){
@@ -70,9 +85,16 @@ public:
    p.addRectangle(at(.26f,.58f).x,at(.26f,.58f).y,s*.48f,s*.32f);
   } else if(name=="SET"){
    const auto c=at(.5f,.5f);
-   p.addEllipse(c.x-s*.2f,c.y-s*.2f,s*.4f,s*.4f);
-   for(int k=0;k<8;++k){const float a=k*pi/4.f;
-    p.startNewSubPath(c.x+std::cos(a)*s*.3f,c.y+std::sin(a)*s*.3f);p.lineTo(c.x+std::cos(a)*s*.46f,c.y+std::sin(a)*s*.46f);}
+   // Closed gear silhouette (32-sided alternating teeth), rather than spokes
+   // that look like a sun at the compact default editor size.
+   for(int k=0;k<32;++k){
+    const float a=2.f*pi*(float)k/32.f-pi*.5f;
+    const float r=(k%4==0||k%4==3)?.43f:.33f;
+    const auto point=juce::Point<float>(c.x+std::cos(a)*s*r,c.y+std::sin(a)*s*r);
+    if(k==0)p.startNewSubPath(point);else p.lineTo(point);
+   }
+   p.closeSubPath();
+   p.addEllipse(c.x-s*.15f,c.y-s*.15f,s*.30f,s*.30f);
   } else if(name=="?"){
    g.setFont(Theme::mono(14).boldened());g.drawFittedText("?",r.toNearestInt().expanded(4),juce::Justification::centred,1);return true;
   } else return false;

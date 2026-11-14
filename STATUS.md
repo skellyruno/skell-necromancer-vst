@@ -82,3 +82,115 @@ Not verified: Windows CI, FL Studio host behaviour (PDC with the new fade-out/in
 - Rune glyph roaming clusters/flashes (sprite blits, ~3.4 ms/frame).
 - Meter unlit segments brighter (.22), dial arc 4px.
 - Verified: harness render at 3 sizes, knob-edit tests pass. Not verified: Windows CI, FL Studio.
+
+## 2026-11-13 Reference-video motion + visual refinement (draft PR #1)
+- Inspected the user-provided 10.9 s video as a full 2 fps overview, plus a 10 fps crop from the active interval. The artwork remains aligned while bright rune highlights travel; bypass clears the field.
+- RuneRing: changed short-lived randomly respawning illuminated clusters into three continuous orbiting sweeps; kept 640 original glyph placements, 5 cached layers, 16 short flashes, original sprites, bypass fade and repaint throttling.
+- PeakMeter: 15 px LED columns, brighter ghost segments, pink/lavender/cyan scale.
+- REANIMATE dial: thinner 2.7 px gradient arc; metal cap and dial geometry unchanged.
+- Main panel title: slightly smaller with wider tracking.
+- **Local validation:** verified the 10 fps extraction and continuity of the mathematical sweep model; inspected the exact changes as a Git patch; no real JUCE UI render is claimed.
+- **Still required:** Windows compilation/CTest and reference DSP tests from PR CI; screenshot comparisons at 810, 1157 and 1736 px; run-time paint budget comparison vs the ~3.4 ms prior harness result; FL Studio bypass/PDC/resize and audio checks. Brushed-metal texture still needs reference review.
+- Work isolated to `feat/reference-rune-sweep-20261113`; `main` untouched.
+
+## 2026-11-13 Correction: physically moving runes (follow-up)
+- User correctly reported the earlier sweep-only update did not move the glyphs themselves.
+- Updated `RuneRing.h`: **480/640 original glyphs now travel on three circular orbits**, one band counter-rotating, even at zero live-audio level. The other 160 stay in dim cached layers for depth.
+- Each moving glyph is excluded from the static cached layer to prevent visible duplicates. Separate native-size cached sprites preserve rune geometry, while the existing enlarged sprites are retained only for glow flares.
+- Flare positions follow the current glyph positions; the bottom arc is dynamically dimmed as glyphs travel so the REANIMATE percentage remains readable.
+- No per-frame image transform or heap allocation was added; movement uses precomputed glyph sprites and per-frame position updates.
+- `ReanimateDial` now has a host-safe 30 Hz message-thread timer when VBlank stalls; fallback repaints on every fallback tick. The editor's 10 Hz timer also syncs active/live state when VBlank is missing.
+- Extracted JUCE-free `RuneMotion.h` geometry and added `NecromancerUI_RuneMovement` CTest. **Local g++ -std=c++17 -Wall -Wextra -Werror test PASSED**, including 30 frames of travel in silence, per-frame continuity, radius and direction, and 480 mobile glyph count. Measured one-second path displacement: 66.44 / 56.02 / 47.37 px at representative radii.
+- **Still unverified:** actual JUCE rendered frame sequence, animation CPU at three window sizes, latest Windows CI build, and FL Studio host callback/resize behavior. Source change is isolated to the draft PR branch, not main.
+
+## 2026-11-13 UI-only chrome + motion refinement (no DSP changes)
+- Local Windows screenshot path added: `tools/render-ui-local.ps1` builds **only** NecromancerUICapture (incremental) and produces four review images without GitHub Actions after the first JUCE setup. Use `-JucePath` for offline local source; `-SkipBuild` to re-capture existing binary.
+- REANIMATE face: adds a **cached** machine-polished metal centre image over the existing big-cap rim; removes the busy centre graphic without deleting the original cap asset. Generation is once during editor creation, not per frame.
+- 480 genuinely moving glyphs preserved; flare clusters narrowed and de-intensified; the base field remains visible in silence. All ring changes are UI-only.
+- Small knobs: less neon-green tick glare, brighter chrome readouts, subtler hover, preserved original small cap.
+- Faceplate: modestly brighter brushed steel; no striped resize-corner overlay; no change to resize limits.
+- Meters: brighter unlit pink/lavender/cyan LEDs; no fake peak-hold line at negative-infinity; silence readout uses -INF.
+- Top settings icon replaced with toothed gear to distinguish it from a sun.
+- Pending review: real 810/1157/1736 screenshots, motion-frame differences, UI paint budget, Windows compilation and FL Studio manual interaction test. DSP processing code explicitly unchanged.
+
+## 2026-11-13 Real screenshot correction
+- Actual Windows JUCE screenshot revealed wavy moire on the first polygon-wedge cap face at the 100% size.
+- Replaced cap construction with continuous per-pixel angular luminance using juce::Image::BitmapData, still generated **only once** on editor initialization. No per-frame gradient/wedge painting, no audio-thread work.
+- Restored slightly more base brightness to the 480 moving glyphs (without re-introducing the large white flare hotspots).
+- Moved REANIMATE into the top-of-dial heading position seen in the reference, with a translucent dark readability strip; retained the percent readout at the bottom.
+- Windows rebuild / capture review pending. No DSP source changes.
+
+## 2026-11-13 UI review: reference-level meter screenshots and first-frame polish
+- Fixed empty MIX, PUSH, LUFS, GR and status labels on initial open by calling the editor's existing update method at construction. No DSP/parameter-value changes.
+- Increased minimum mobile glyph size and weight while retaining 480 physically orbiting runes, the tuned dimming and all existing cached sprites.
+- Slightly improved small knob text readability at 70%; hoisted a per-paint repeated tick computation outside the tick loop.
+- `tests/ui_capture.cpp` now activates **only the visual screenshot's** meter levels at IN -0.4/-0.7 dB and OUT -0.1/-0.3 dB. Audio is not processed and these synthetic levels never appear in the shipping plugin.
+- Screenshot target additionally reports six actual editor snapshot times as informational UI rasterization numbers, NOT an audio-thread/FL Studio CPU benchmark.
+- Changes isolated to UI and capture harness. DSP source unaffected.
+- Windows CI, visual inspection, 70% legibility, FL Studio interaction, and frame-time review remain release gates.
+
+## 2026-11-13 Meter UI fallback and time-correct ballistics
+- PeakMeter now has an independent **UI-only** 30 Hz fallback timer when hosts stop sending VBlank events. The existing host VBlank callback is still the preferred high-refresh update route.
+- Fixed hold timing: peak hold is now measured in real milliseconds rather than assumed 17 ms frames. Previous fallback decays could keep hold levels longer than the configured 0.5 / 1 / 2 s.
+- Meter decay scales with elapsed UI time rather than frame count; nonfinite level display is clamped to silence. This affects on-screen animation ONLY; metering calculations and audio processing are unchanged.
+- The editor 10 Hz status callback also applies meter-hold settings even without VBlank.
+- Latest capture visual QA and FL Studio no-VBlank host testing still need to confirm this fallback at runtime.
+
+## 2026-11-13 compact UI readability and bypass CPU pass
+- Updated MetalKnob to place caption below the readout using actual pixel bounds, avoiding collisions at 70%. Preserved all six knobs' look, inline value editing, and parameter handling.
+- Improved PeakMeter label, tick and hold-readout font sizes/contrast; autopsy and footer status / LUFS / GR / MIX readouts now target readable sizes in the 70% default editor.
+- Pauses the 480-rune orbital position calculations and flares during steady bypass, while updating the internal clock to avoid motion jumps on reactivation. It still smoothly finishes its fade-out.
+- Extended real-JUCE screenshot QA to fail when the synthetic preview signal does not create visibly lit **both** input and output LED banks (without affecting plugin audio).
+- No changes to DSP, audio calculations, plugin format, or plug-in parameter attachment.
+- Pending: Windows CI build, CTests, PNG inspection and FL Studio resize/control interaction.
+
+## 2026-11-13 Skull knob restoration and colorful moving-rune fix
+- **Restored the user's previously approved engraved center knob image** by removing the opaque smooth-silver `polishedFace` overlay. The original `Assets/knob_cap_big.png` was already bundled and preserved, so no artwork was regenerated; old outer rim and 208 px cap geometry remain.
+- Fixed a major visible-rune issue: `drawImageTransformed(..., true)` fills glyph atlas alpha using the current brush, but the 480 moving rune sprites lacked `mg.setColour()` and were baked black. Their colored sprites are now generated once and truly visible while orbiting.
+- Varied rune colours across lavender, cyan, rose, blue, warm amber, pale green and soft violet (original glyph artwork unchanged).
+- Subtly raised brushed steel faceplate brightness and top-edge specular light; retained Skell logos, all controls, sizes and animations.
+- Added UI regression guards against hiding the engraved cap or baking uncolored mobile glyphs.
+- UI-only changes; no DSP code or parameter changes. Windows CI and actual rendered image inspection are required before merge.
+
+## 2026-11-13 reference-matched rune restraint and bezel depth
+- First real screenshot with restored original engraved cap and properly tinted 480 moving symbols passed Windows CI, 4 CTests, active meter and silent motion capture. Screenshot snapshot mean 9.48 ms and worst 19.19 ms (informational: not host CPU benchmark).
+- A/B examination showed the newly tinted rune field was roughly 3× more saturated/visible than the reference in the 155–192 px annulus. Lowered only the dim moving glyph base opacity to match the reference's calmer dark field; roaming brighter highlights and true physical motion remain.
+- Original dial well is copied before two subtle darkening strokes over its extra inner chrome rings, making the bezel closer to the reference without changing or regenerating original artwork. The inner bezel adjustment occurs once in the constructor, not in every animated frame.
+- Kept original engraved skull/rune center cap and 70/100/150% window geometry; no DSP, automation or parameter changes.
+- Second Windows screenshot verification required before merging; previous successful build retained.
+
+## 2026-11-13 full-panel metal/rune UI follow-up
+- Reference A/B measured quiet background metal at roughly 28–35/255 versus 37–43/255 in the supplied 8th Wonder screenshot. Lightened the steel-only faceplate from 0xff3b4145 to 0xff545b60 at the same .30 alpha and slightly strengthened deterministic horizontal streaks. Original asset preserved, header/footer unchanged.
+- Reduced UI-only animation computation: 60 Hz host VBlank updates previously advanced all 480 glyph positions on every callback but only repainted on alternating calls. Rune position/flash calculation now happens only on the repainted 30 Hz frames, while the 30 Hz timer fallback still advances every time. Bypass/fade and host audio/DSP are untouched.
+- Mid-band I/II/III selector now uses a quiet blue active indicator closer to reference; all three existing automated choices preserved.
+- Added a fine chrome specular arc to all six small metal knob rims, keeping original textured caps, labels, ranges and inline editing.
+- Static source-layout guard verifies display-frame-gated rune updates and selected lamp styling. Pending Windows compile, all CTests and 70/100/150% real screenshot review; don't merge unverified work.
+
+## 2026-11-13 variable-rate VBlank motion + reference LEDs
+- Upgraded REANIMATE scheduling from every second VBlank to a JUCE-free, time-accumulated 30-FPS pacer (30, 60, 75, 90, 120, 144 Hz). This preserves true 30 FPS on hosts supplying only 30 Hz VBlank callbacks; the prior alternating frame rule could display at 15 FPS there. At high refresh rates it still avoids unnecessary 480-glyph position updates.
+- Added a small independent CTest `NecromancerUI_FramePacer` for each host refresh rate and forced fallback; initial identical-logic local g++ -std=c++17 -Wall -Wextra -Werror simulation passed 60/61 displayed frames over two seconds at all tested rates.
+- Brighter pink/lavender/cyan meter LEDs via 2.5 px illuminated segment height rather than 2 px, to narrow dark gaps and approach the supplied reference's much more luminous bars. No meter signal/DSP changes.
+- No audio processing or parameter changes. Windows build and screenshot QA still required.
+
+## 2026-11-13 bezel simplification and engraved hardware detail
+- Latest Windows-tested screenshot showed layered inner black/chrome rings on REANIMATE that remain thicker than the 8th Wonder reference, especially at 70%. Replaced the previous two transparent darkening ellipse strokes with a **single 38 px dark quieting band**, drawn just once into a private copy of `dial_well.png`, preserving the original outer steel highlight and approved skull/rune cap. The moving 480 glyphs still draw over that band on every visible frame.
+- Balanced small-knob engraved ticks: lower dormant mark opacity .23→.17 and lit silver .63→.53, with only the two near-current-value markers retaining a subtle green .70 highlight.
+- No DSP, stored presets, parameter values, control layout, or original assets modified.
+- Added code regression guard verifying private copy, one-time bezel stroke, and restored center cap remain intact.
+- Fresh Windows CMake/CTest/actual 70/100/150% screenshot review is required before replacing prior verified VST3.
+
+## 2026-11-13 reference proportion + readability refinement
+- Genuine JUCE screenshot review found the engraved 208px centre cap larger than the reference's relative proportions. Kept the exact approved original cap asset, reduced its painted size to 194px, and adjusted the white index mark to 103–125px at a thinner 4.2px stroke. The user-approved skull artwork and knob parameters remain untouched.
+- Added JUCE-independent headingFade() applied to both stationary cached glyph layers and moving glyph opacity, gently dimming only the upper sector behind the REANIMATE title. The three orbital bands/480 moving rune glyphs still move with no audio input; top and bottom text receive more contrast, and the header backing was slightly deepened.
+- Active A/B preset slot now uses a satin gray hardware tab with a green text accent, rather than an eye-catching solid neon-green active block. All A/B preset functions, click behavior and JUCE component bounds remain unchanged.
+- Tightened the dial hover ring to a fine highlight around the actual metal cap rather than the outer arc.
+- Added heading-mask tests to the independent rune-motion CTest and static source guards for original-cap visibility and new satin A/B styling.
+- UI-only change; no DSP, processor source, preset state or binary assets modified. Fresh Windows CTest, genuine screenshot and FL Studio validation still required.
+
+## 2026-11-13 preset-bar and silent-readout UI polish
+- Added explicit tooltips for the seven small preset/A-B buttons; Undo/Redo now reflect undoManager availability, reducing misleading bright icons that cannot do anything. The underlying preset operations and A/B behavior are unchanged.
+- Disabled compact buttons render with subdued alpha in the shared LookAndFeel; active A/B selection retains satin-metal styling and green text.
+- Silent LUFS readouts now show -INF instead of raw -100.0 while preserving the true values, metering engine and saved settings; true measured LUFS values retain one decimal.
+- Strengthened real JUCE screenshot QA: the previously approved black engraved skull detail AND bright silver highlight must both be visible at the center of the real screenshot. This detects the accidental solid-silver cap overlay that previously hid the original artwork. Synthetic test meters remain screenshot-only.
+- No DSP, processing, plugin parameter or stored preset logic changed.
+- Latest Windows build and 810/1157/1736 screenshots still required before promoting this checkpoint over the verified baseline.

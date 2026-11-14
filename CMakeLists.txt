@@ -51,7 +51,7 @@ target_sources(SkellNecromancer PRIVATE
   Source/dsp/Oversampler.h Source/dsp/TapeStage.h Source/dsp/GlueStage.h
   Source/dsp/HarmonicLife.h Source/dsp/TransientRestore.h Source/dsp/Glow.h Source/dsp/ReviveEngine.h
   Source/dsp/TruePeakLimiter.h Source/dsp/LufsMeter.h Source/dsp/AutoAnalyzer.h
-  Source/ui/ReanimateDial.h Source/ui/RuneRing.h Source/ui/MetalKnob.h
+  Source/ui/ReanimateDial.h Source/ui/PolishedCap.h Source/ui/UiFramePacer.h Source/ui/RuneRing.h Source/ui/RuneMotion.h Source/ui/MetalKnob.h
   Source/ui/RangeSelector.h Source/ui/PeakMeter.h Source/ui/PushSlider.h
   Source/ui/TopBar.h Source/ui/PresetBar.h Source/ui/HintOverlay.h
   Source/ui/AutopsyReadout.h Source/ui/LookAndFeel.h)
@@ -86,6 +86,16 @@ add_executable(NecromancerLimiterProbe tests/limiter_probe.cpp)
 target_include_directories(NecromancerLimiterProbe PRIVATE tests/stubs)
 target_compile_features(NecromancerLimiterProbe PRIVATE cxx_std_17)
 
+# Regression: rune glyphs must physically orbit even when live audio level is zero.
+# This test uses exactly the orbit geometry compiled into the JUCE widget.
+add_executable(NecromancerRuneMotionTest tests/rune_motion_test.cpp)
+target_compile_features(NecromancerRuneMotionTest PRIVATE cxx_std_17)
+add_test(NAME NecromancerUI_RuneMovement COMMAND NecromancerRuneMotionTest)
+# Host-rate-independent editor redraw scheduling; no JUCE or audio dependency.
+add_executable(NecromancerUIFramePacerTest tests/ui_frame_pacer_test.cpp)
+target_compile_features(NecromancerUIFramePacerTest PRIVATE cxx_std_17)
+add_test(NAME NecromancerUI_FramePacer COMMAND NecromancerUIFramePacerTest)
+
 # Optional end-to-end processor stress test (NaN/Inf, latency, ceiling, aliasing, CPU). Off by default.
 option(SKELL_BUILD_PROCESSOR_TESTS "Build the JUCE processor stress test" OFF)
 if(SKELL_BUILD_PROCESSOR_TESTS)
@@ -97,4 +107,21 @@ if(SKELL_BUILD_PROCESSOR_TESTS)
   target_compile_definitions(NecromancerProcessorStress PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_STANDALONE_APPLICATION=0 ${NECRO_FONT_FLAGS})
   target_link_libraries(NecromancerProcessorStress PRIVATE NecroAssets juce::juce_audio_utils juce::juce_audio_processors juce::juce_gui_extra juce::juce_dsp juce::juce_recommended_config_flags)
   add_test(NAME NecromancerProcessorStress COMMAND NecromancerProcessorStress)
+endif()
+
+# Optional real-editor PNG capture and pixel-based rune-motion regression.
+# This is enabled by Windows CI, not by default for ordinary VST3 builds.
+option(SKELL_BUILD_UI_CAPTURE "Build the JUCE editor screenshot checker" OFF)
+if(SKELL_BUILD_UI_CAPTURE)
+  juce_add_console_app(NecromancerUICapture PRODUCT_NAME NecromancerUICapture)
+  juce_generate_juce_header(NecromancerUICapture)
+  target_sources(NecromancerUICapture PRIVATE
+    tests/ui_capture.cpp Source/PluginProcessor.cpp Source/PluginEditor.cpp)
+  target_include_directories(NecromancerUICapture PRIVATE Source)
+  target_compile_features(NecromancerUICapture PRIVATE cxx_std_17)
+  target_compile_definitions(NecromancerUICapture PRIVATE
+    JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_STANDALONE_APPLICATION=0 ${NECRO_FONT_FLAGS})
+  target_link_libraries(NecromancerUICapture PRIVATE NecroAssets
+    juce::juce_audio_utils juce::juce_audio_processors
+    juce::juce_gui_extra juce::juce_dsp juce::juce_recommended_config_flags)
 endif()
