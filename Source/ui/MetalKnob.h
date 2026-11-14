@@ -42,7 +42,9 @@ public:
   g.drawFittedText(juce::String(getValue(),1)+(caption=="MIX"||caption=="WIDTH"?" %":" dB"),
      valueArea(),juce::Justification::centred,1);
   g.setFont(Theme::mono(12).withExtraKerningFactor(.08f));g.setColour(Theme::bone.withAlpha(.88f));
-  g.drawFittedText(caption,juce::Rectangle<int>(0,(int)(cy+r+26),getWidth(),18),juce::Justification::centred,1);
+  // The caption starts *below* the numeric readout at compact sizes.
+  g.drawFittedText(caption,juce::Rectangle<int>(0,valueArea().getBottom()+3,getWidth(),17),
+                   juce::Justification::centred,1);
  }
 private:
  float radius()const{return std::min((float)getWidth(),(float)getHeight()-31.f)*.39f;}

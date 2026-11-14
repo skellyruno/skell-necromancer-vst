@@ -62,7 +62,22 @@ int main(int argc,char** argv) {
   return img;
  };
  if(snapshot(810,428,"ui_810.png").isNull())return 2;
- if(snapshot(1157,612,"ui_1157.png").isNull())return 3;
+ const auto full=snapshot(1157,612,"ui_1157.png");
+ if(full.isNull())return 3;
+ // Detect real lit LED pixels, not just value updates. Reference checks use
+ // synthetic levels ONLY in this non-shipping capture program.
+ auto litCount=[&](int x0){
+  int total=0;
+  for(int y=105;y<235;++y)
+   for(int x=x0;x<x0+41;++x){
+    const auto p=full.getPixelAt(x,y);
+    if(p.getRed()>125 && p.getBlue()>125 && p.getGreen()>85)++total;
+   }
+  return total;
+ };
+ const int inLit=litCount(100),outLit=litCount(1016);
+ std::cout<<"Active LED pixels IN="<<inLit<<" OUT="<<outLit<<"\\n";
+ if(inLit<45||outLit<45){std::cerr<<"Active stereo meters are not legible in the captured UI\\n";return 10;}
  if(snapshot(1736,918,"ui_1736.png").isNull())return 4;
 
  editor->setSize(1157,612);

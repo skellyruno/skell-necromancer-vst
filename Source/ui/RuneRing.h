@@ -67,6 +67,9 @@ public:
    }
   }
  }
+ // Bypassed dials do not need to orbit 480 glyphs on every VBlank.
+ // Keep the timestamp fresh so reactivation has no time jump.
+ void pause(double t) noexcept {lastT=t;}
  // Advance the sparkle state to time `t` (seconds). Call once per animation frame.
  void advance(double t,float live){
   const double dt=juce::jlimit(0.0,.1,t-lastT);lastT=t;

@@ -135,3 +135,11 @@ Not verified: Windows CI, FL Studio host behaviour (PDC with the new fade-out/in
 - Meter decay scales with elapsed UI time rather than frame count; nonfinite level display is clamped to silence. This affects on-screen animation ONLY; metering calculations and audio processing are unchanged.
 - The editor 10 Hz status callback also applies meter-hold settings even without VBlank.
 - Latest capture visual QA and FL Studio no-VBlank host testing still need to confirm this fallback at runtime.
+
+## 2026-11-13 compact UI readability and bypass CPU pass
+- Updated MetalKnob to place caption below the readout using actual pixel bounds, avoiding collisions at 70%. Preserved all six knobs' look, inline value editing, and parameter handling.
+- Improved PeakMeter label, tick and hold-readout font sizes/contrast; autopsy and footer status / LUFS / GR / MIX readouts now target readable sizes in the 70% default editor.
+- Pauses the 480-rune orbital position calculations and flares during steady bypass, while updating the internal clock to avoid motion jumps on reactivation. It still smoothly finishes its fade-out.
+- Extended real-JUCE screenshot QA to fail when the synthetic preview signal does not create visibly lit **both** input and output LED banks (without affecting plugin audio).
+- No changes to DSP, audio calculations, plugin format, or plug-in parameter attachment.
+- Pending: Windows CI build, CTests, PNG inspection and FL Studio resize/control interaction.

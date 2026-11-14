@@ -20,7 +20,9 @@ public:
   const double now=juce::Time::getMillisecondCounterHiRes()*.001,dt=juce::jlimit(0.0,.1,now-lastTime);lastTime=now;
   const bool fading=std::abs(target-act)>.002f;
   act=fading?act+(target-act)*(1.f-(float)std::exp(-dt*9.0)):target;
-  seconds=now;ring.advance(now,live);
+  seconds=now;
+  if(act>.003f||fading)ring.advance(now,live);
+  else ring.pause(now); // no expensive rune orbit/sparkle work during steady bypass
   // VBlank usually calls at ~60 Hz: paint every other frame. The timer fallback
   // runs at 30 Hz already, so paint *every* timer tick (not 15 Hz).
   if(((++frame&1)==0||fallback)&&(act>.002f||fading))repaint();

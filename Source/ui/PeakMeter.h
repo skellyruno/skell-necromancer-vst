@@ -27,7 +27,7 @@ public:
   const auto value=[&](float d){return juce::jlimit(0.f,1.f,(d+60.f)/60.f);};
   const int barH=getHeight()-35-headerH;
   g.setColour(Theme::panelRaised);g.fillRoundedRectangle(21.f,(float)headerH,44.f,(float)barH+1.f,2.f);
-  g.setColour(Theme::bone.withAlpha(.8f));g.setFont(Theme::mono(10));
+  g.setColour(Theme::bone.withAlpha(.90f));g.setFont(Theme::mono(11));
   g.drawFittedText(label,21,0,44,headerH,juce::Justification::centred,1);
   for(int c=0;c<2;++c){const float d=shown[c],v=value(d);
     const int barX=22+c*27,barTop=headerH+1;
@@ -43,14 +43,14 @@ public:
     if(held[c]>-85.f){g.setColour(Theme::greenLight);g.fillRect((float)barX,heldPos,15.f,1.5f);}
   }
   for(int d:{0,-6,-12,-24,-48}){const float f=value((float)d);const int y=juce::jlimit(headerH+6,getHeight()-33,(int)((float)(headerH+1)+(float)barH*(1-f)));
-   g.setFont(Theme::mono(9));g.setColour(Theme::faint.brighter(.4f));
+   g.setFont(Theme::mono(10));g.setColour(Theme::faint.brighter(.64f));
    if(rightScale)g.drawText(juce::String(d),68,y-6,16,13,juce::Justification::centredLeft);
    else g.drawText(juce::String(d),0,y-6,20,13,juce::Justification::centredRight);
    g.drawLine(rightScale?64.f:18.f,(float)y,rightScale?68.f:22.f,(float)y,1.f);
   }
   g.setColour(Theme::panel);g.fillRoundedRectangle(9.f,(float)getHeight()-22,64.f,20.f,3.f);
   g.setColour(Theme::border);g.drawRoundedRectangle(9.f,(float)getHeight()-22,64.f,20.f,3.f,1.f);
-  g.setColour(Theme::bone);g.setFont(Theme::mono(11));
+  g.setColour(Theme::bone);g.setFont(Theme::mono(12));
   const float peak=juce::jmax(held[0],held[1]);
   g.drawFittedText(peak<=-89.f?juce::String("-INF"):juce::String(peak,1),
                    9,getHeight()-21,64,18,juce::Justification::centred,1);
