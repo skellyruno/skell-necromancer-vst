@@ -31,8 +31,13 @@ public:
   }
   juce::Path path;for(int s=0;s<=180;++s){float a=start+span*(s/180.f)*p;
     auto x=cx+std::cos(a)*133.f,y=cy+std::sin(a)*133.f;if(s==0)path.startNewSubPath(x,y);else path.lineTo(x,y);}
-  juce::ColourGradient gradient(Theme::violet,96,338,Theme::cyan,355,115,false);gradient.addColour(.57,Theme::green);
-  const juce::PathStrokeType stroke(4.f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded);
+  // Thin spectral trace: violet/pink at the bottom-left, warm light across the
+  // upper arc, then green-to-cyan at the right. The metal cap remains unchanged.
+  juce::ColourGradient gradient(juce::Colour(0xffac7aff),96,338,Theme::cyan,355,115,false);
+  gradient.addColour(.23,juce::Colour(0xfff38ec7));
+  gradient.addColour(.45,juce::Colour(0xffffca79));
+  gradient.addColour(.74,Theme::greenLight);
+  const juce::PathStrokeType stroke(2.7f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded);
   if(act<.999f){g.setColour(Theme::faint.withAlpha(.45f*(1.f-act)));g.strokePath(path,stroke);}
   {juce::Graphics::ScopedSaveState arcState(g);g.setGradientFill(gradient);g.setOpacity(act);g.strokePath(path,stroke);}
   const float angle=start+span*p;
