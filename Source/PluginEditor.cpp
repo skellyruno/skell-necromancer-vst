@@ -25,7 +25,7 @@ void SkellNecromancerAudioProcessorEditor::Panel::paint(Graphics&g){
  wing.startNewSubPath(47,51);wing.lineTo(60,47);wing.lineTo(54,57);wing.lineTo(63,60);wing.lineTo(47,61);
  g.strokePath(wing,PathStrokeType(2.f));
  }
- g.setFont(Theme::display(24).withExtraKerningFactor(.22f));g.setColour(Theme::bone);
+ g.setFont(Theme::display(23).withExtraKerningFactor(.32f));g.setColour(Theme::bone);
  g.drawFittedText("SKELL  -  NECROMANCER",290,38,556,29,Justification::centred,1);
  g.setColour(Theme::greenLight);g.setFont(Theme::mono(11));
  g.drawText("R A I S E   T H E   D E A D   M I X",413,65,310,12,Justification::centred);
