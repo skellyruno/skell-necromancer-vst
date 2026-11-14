@@ -36,7 +36,7 @@ public:
   constexpr std::array<float,3> sweepSpeeds{.86f,.62f,1.06f};
   for(size_t i=0;i<clusters.size();++i){
    auto& c=clusters[i];c.angle=initialAngles[i];c.spin=sweepSpeeds[i];
-   c.radius=163.f+6.f*(float)i;c.size=47.f+6.f*(float)i;
+   c.radius=163.f+6.f*(float)i;c.size=32.f+5.f*(float)i;
    c.life=3.8f+.8f*(float)i;c.age=.75f*(float)i;
   }
   for(size_t i=0;i<flashes.size();++i){flashes[i].age=(float)i*.03f;flashes[i].life=.2f+(float)i*.02f;flashes[i].glyph=random.nextInt(glyphCount);}
@@ -53,7 +53,7 @@ public:
    const auto&p=placements[i];const float size=p.size*1.45f;const int n=(int)std::ceil(size)+2;
    sprites[i]=juce::Image(juce::Image::ARGB,n,n,true);
    juce::Graphics sg(sprites[i]);sg.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
-   sg.setColour(tint(p).interpolatedWith(juce::Colours::white,.8f));
+   sg.setColour(tint(p).interpolatedWith(juce::Colours::white,.48f));
    const auto glyph=atlas.getClippedImage({(p.index%8)*32,(p.index/8)*32,32,32});
    sg.drawImageTransformed(glyph,juce::AffineTransform::scale(size/32.f).translated(((float)n-size)/2,((float)n-size)/2),true);
    // Separate normal-sized sprites for moving runes: the existing 1.45x flare
@@ -104,7 +104,7 @@ public:
   juce::Graphics::ScopedSaveState state(g);
   for(int j=0;j<layerCount;++j){
    const float breathe=.5f+.5f*(float)std::sin(t*(.5+.21*j)+j*1.7);
-   g.setOpacity(active*(.5f+.3f*amount)*(.78f+.22f*breathe));
+   g.setOpacity(active*(.43f+.23f*amount)*(.8f+.2f*breathe));
    g.drawImageAt(layers[(size_t)j],0,0);
   }
   g.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
@@ -114,10 +114,10 @@ public:
   for(size_t i=0;i<placements.size();++i){
    const auto&p=placements[i];if(!p.mobile)continue;
    const auto&pt=animatedPositions[i];const auto&sprite=motionSprites[i];
-   g.setOpacity(active*(.43f+.22f*amount)*p.weight*animatedFade[i]);
+   g.setOpacity(active*(.46f+.17f*amount)*p.weight*animatedFade[i]);
    g.drawImageAt(sprite,(int)std::lround(pt.x)-sprite.getWidth()/2,(int)std::lround(pt.y)-sprite.getHeight()/2);
   }
-  const float gain=active*(.75f+.25f*live);
+  const float gain=active*(.57f+.2f*live);
   for(const auto&c:clusters){
    const float env=.62f+.38f*std::sin(juce::MathConstants<float>::twoPi*c.age/c.life);
    const float cx=220.f+std::cos(c.angle)*c.radius,cy=220.f+std::sin(c.angle)*c.radius;
@@ -125,12 +125,12 @@ public:
     const auto&p=placements[i];const auto&pt=animatedPositions[i];
     const float dx=pt.x-cx,dy=pt.y-cy,d2=dx*dx+dy*dy;if(d2>c.size*c.size)continue;
     const float fall=1.f-std::sqrt(d2)/c.size;
-    drawBright(g,p,pt,gain*env*fall*animatedFade[i]*1.7f);
+    drawBright(g,p,pt,gain*env*fall*animatedFade[i]*.86f);
    }
   }
   for(const auto&f:flashes){
    const float env=std::sin(juce::MathConstants<float>::pi*f.age/f.life);
-   const auto i=(size_t)f.glyph;const auto&p=placements[i];drawBright(g,p,animatedPositions[i],gain*env*animatedFade[i]*1.4f);
+   const auto i=(size_t)f.glyph;const auto&p=placements[i];drawBright(g,p,animatedPositions[i],gain*env*animatedFade[i]*.95f);
   }
  }
 private:

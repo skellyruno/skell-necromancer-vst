@@ -81,9 +81,16 @@ public:
    p.addRectangle(at(.26f,.58f).x,at(.26f,.58f).y,s*.48f,s*.32f);
   } else if(name=="SET"){
    const auto c=at(.5f,.5f);
-   p.addEllipse(c.x-s*.2f,c.y-s*.2f,s*.4f,s*.4f);
-   for(int k=0;k<8;++k){const float a=k*pi/4.f;
-    p.startNewSubPath(c.x+std::cos(a)*s*.3f,c.y+std::sin(a)*s*.3f);p.lineTo(c.x+std::cos(a)*s*.46f,c.y+std::sin(a)*s*.46f);}
+   // Closed gear silhouette (32-sided alternating teeth), rather than spokes
+   // that look like a sun at the compact default editor size.
+   for(int k=0;k<32;++k){
+    const float a=2.f*pi*(float)k/32.f-pi*.5f;
+    const float r=(k%4==0||k%4==3)?.43f:.33f;
+    const auto point=juce::Point<float>(c.x+std::cos(a)*s*r,c.y+std::sin(a)*s*r);
+    if(k==0)p.startNewSubPath(point);else p.lineTo(point);
+   }
+   p.closeSubPath();
+   p.addEllipse(c.x-s*.15f,c.y-s*.15f,s*.30f,s*.30f);
   } else if(name=="?"){
    g.setFont(Theme::mono(14).boldened());g.drawFittedText("?",r.toNearestInt().expanded(4),juce::Justification::centred,1);return true;
   } else return false;

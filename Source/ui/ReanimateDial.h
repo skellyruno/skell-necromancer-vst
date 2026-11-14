@@ -1,11 +1,13 @@
 #pragma once
 #include "RuneRing.h"
+#include "PolishedCap.h"
 class ReanimateDial:public juce::Slider,private juce::Timer {
 public:
  ReanimateDial() {setRange(0.0,100.0,0.1);setValue(65.0,juce::dontSendNotification);setSliderStyle(juce::Slider::RotaryVerticalDrag);setTextBoxStyle(juce::Slider::NoTextBox,false,0,0);
  setDoubleClickReturnValue(true,65);setPopupMenuEnabled(true);setPopupDisplayEnabled(true,false,nullptr);setMouseCursor(juce::MouseCursor::PointingHandCursor);
  well=juce::ImageCache::getFromMemory(BinaryData::dial_well_png,BinaryData::dial_well_pngSize);
  cap=juce::ImageCache::getFromMemory(BinaryData::knob_cap_big_png,BinaryData::knob_cap_big_pngSize);
+ polishedFace=NecroPolishedCap::makeFace();
  setTooltip("REANIMATE blends tape weight, gentle compression, harmonic life and restored transients. Double-click returns to 65%.");
  // Some VST hosts do not deliver VBlank callbacks consistently. The JUCE
  // message-thread timer advances the runes at 30 Hz only when VBlank stalls.
@@ -48,16 +50,18 @@ public:
   const float angle=start+span*p;
   {juce::Graphics::ScopedSaveState save(g);g.setOpacity(1.f); // drawImage takes its alpha from the current colour
    g.addTransform(juce::AffineTransform::rotation(angle-start-1.18f,cx,cy));
-   g.drawImage(cap,{cx-104.f,cy-104.f,208.f,208.f});}
+   g.drawImage(cap,{cx-104.f,cy-104.f,208.f,208.f});
+   // Original outer hardware rim remains; the central face is now clean metal.
+   g.drawImageAt(polishedFace,(int)cx-104,(int)cy-104);}
   g.setColour(Theme::bone);g.drawLine(cx+std::cos(angle)*109.f,cy+std::sin(angle)*109.f,cx+std::cos(angle)*127.f,cy+std::sin(angle)*127.f,5.f);
   g.setColour(Theme::bone);g.setFont(Theme::display(13));g.drawFittedText("R E A N I M A T E",juce::Rectangle<int>(130,330,180,18),juce::Justification::centred,1);
   g.setFont(Theme::display(36));g.drawFittedText(juce::String((int)std::lround(getValue()))+"%",juce::Rectangle<int>(130,377,180,47),juce::Justification::centred,1);
-  if(isMouseOverOrDragging()){g.setColour(Theme::green.withAlpha(.5f));g.drawEllipse(90,90,260,260,1.4f);}
+  if(isMouseOverOrDragging()){g.setColour(Theme::greenLight.withAlpha(.28f));g.drawEllipse(90,90,260,260,1.f);}
  }
 private:
  void timerCallback() override {
   if(juce::Time::getMillisecondCounterHiRes()-lastVBlankMs>75.0)advance(true);
  }
- juce::Image well,cap;RuneRing ring;float live=0,act=1.f,target=1.f;
+ juce::Image well,cap,polishedFace;RuneRing ring;float live=0,act=1.f,target=1.f;
  int frame=0;double seconds=0,lastTime=0,lastVBlankMs=0;
 };

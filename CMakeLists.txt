@@ -51,7 +51,7 @@ target_sources(SkellNecromancer PRIVATE
   Source/dsp/Oversampler.h Source/dsp/TapeStage.h Source/dsp/GlueStage.h
   Source/dsp/HarmonicLife.h Source/dsp/TransientRestore.h Source/dsp/Glow.h Source/dsp/ReviveEngine.h
   Source/dsp/TruePeakLimiter.h Source/dsp/LufsMeter.h Source/dsp/AutoAnalyzer.h
-  Source/ui/ReanimateDial.h Source/ui/RuneRing.h Source/ui/RuneMotion.h Source/ui/MetalKnob.h
+  Source/ui/ReanimateDial.h Source/ui/PolishedCap.h Source/ui/RuneRing.h Source/ui/RuneMotion.h Source/ui/MetalKnob.h
   Source/ui/RangeSelector.h Source/ui/PeakMeter.h Source/ui/PushSlider.h
   Source/ui/TopBar.h Source/ui/PresetBar.h Source/ui/HintOverlay.h
   Source/ui/AutopsyReadout.h Source/ui/LookAndFeel.h)

@@ -28,11 +28,11 @@ public:
       // Reference-inspired LED palette: pale cyan low, lavender middle, pink high.
       const auto cyan=juce::Colour(0xff86efff),purple=juce::Colour(0xffc49ae9),pink=juce::Colour(0xffff87a8);
       const auto colour=(h<.53f?cyan.interpolatedWith(purple,h/.53f):purple.interpolatedWith(pink,(h-.53f)/.47f)).interpolatedWith(Theme::bone,.06f);
-      g.setColour(h<=v?colour:colour.withAlpha(.28f)); // unlit segments stay faintly visible
+      g.setColour(h<=v?colour:colour.withAlpha(.38f)); // unlit segments stay faintly visible
       g.fillRect(barX,barTop+barH-y-3,15,2);
     }
     const float heldPos=(float)barTop+(float)barH*(1.f-value(held[c]));
-    g.setColour(Theme::greenLight);g.fillRect((float)barX,heldPos,15.f,1.5f);
+    if(held[c]>-85.f){g.setColour(Theme::greenLight);g.fillRect((float)barX,heldPos,15.f,1.5f);}
   }
   for(int d:{0,-6,-12,-24,-48}){const float f=value((float)d);const int y=juce::jlimit(headerH+6,getHeight()-33,(int)((float)(headerH+1)+(float)barH*(1-f)));
    g.setFont(Theme::mono(9));g.setColour(Theme::faint.brighter(.4f));
@@ -43,7 +43,9 @@ public:
   g.setColour(Theme::panel);g.fillRoundedRectangle(9.f,(float)getHeight()-22,64.f,20.f,3.f);
   g.setColour(Theme::border);g.drawRoundedRectangle(9.f,(float)getHeight()-22,64.f,20.f,3.f,1.f);
   g.setColour(Theme::bone);g.setFont(Theme::mono(11));
-  g.drawFittedText(juce::String(juce::jmax(held[0],held[1]),1),9,getHeight()-21,64,18,juce::Justification::centred,1);
+  const float peak=juce::jmax(held[0],held[1]);
+  g.drawFittedText(peak<=-89.f?juce::String("-INF"):juce::String(peak,1),
+                   9,getHeight()-21,64,18,juce::Justification::centred,1);
  }
 private:static constexpr int headerH=13;
  juce::String label;std::atomic<float>&l,&r;bool rightScale;

@@ -19,6 +19,9 @@ void SkellNecromancerAudioProcessorEditor::Panel::paint(Graphics&g){
  // directional texture without regenerating or modifying the original assets.
  g.setColour(juce::Colours::black.withAlpha(.19f));
  g.fillRoundedRectangle(10.f,87.f,1137.f,484.f,10.f);
+ // Lift the brushed centre enough for horizontal steel grain to be readable.
+ g.setColour(juce::Colour(0xff3b4145).withAlpha(.21f));
+ g.fillRoundedRectangle(12.f,89.f,1133.f,480.f,9.f);
  {
   juce::Graphics::ScopedSaveState textureState(g);
   g.reduceClipRegion(juce::Rectangle<int>(13,90,1131,478));
@@ -109,7 +112,9 @@ SkellNecromancerAudioProcessorEditor::SkellNecromancerAudioProcessorEditor(Skell
  top.settings.onClick=[this]{openSettings();};top.help.onClick=[this]{showTour();};
  hintsOn=(bool)processor.uiState.getProperty("hints",true);
  if(hintsOn)tooltips=std::make_unique<TooltipWindow>(this,500);
- setResizable(true,true);setResizeLimits(810,428,1736,918);
+ // Keep all resize sizes; remove the host-independent striped JUCE corner
+ // handle that visually cuts across the lower-right hardware bezel.
+ setResizable(true,false);setResizeLimits(810,428,1736,918);
  if(auto* c=getConstrainer())c->setFixedAspectRatio((double)Theme::width/Theme::height);
  // One-time upgrade: existing saved M-size windows open at the new compact default.
  if (!(bool)processor.uiState.getProperty("compactV2", false)) {

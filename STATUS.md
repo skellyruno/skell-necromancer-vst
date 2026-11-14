@@ -102,3 +102,13 @@ Not verified: Windows CI, FL Studio host behaviour (PDC with the new fade-out/in
 - `ReanimateDial` now has a host-safe 30 Hz message-thread timer when VBlank stalls; fallback repaints on every fallback tick. The editor's 10 Hz timer also syncs active/live state when VBlank is missing.
 - Extracted JUCE-free `RuneMotion.h` geometry and added `NecromancerUI_RuneMovement` CTest. **Local g++ -std=c++17 -Wall -Wextra -Werror test PASSED**, including 30 frames of travel in silence, per-frame continuity, radius and direction, and 480 mobile glyph count. Measured one-second path displacement: 66.44 / 56.02 / 47.37 px at representative radii.
 - **Still unverified:** actual JUCE rendered frame sequence, animation CPU at three window sizes, latest Windows CI build, and FL Studio host callback/resize behavior. Source change is isolated to the draft PR branch, not main.
+
+## 2026-11-13 UI-only chrome + motion refinement (no DSP changes)
+- Local Windows screenshot path added: `tools/render-ui-local.ps1` builds **only** NecromancerUICapture (incremental) and produces four review images without GitHub Actions after the first JUCE setup. Use `-JucePath` for offline local source; `-SkipBuild` to re-capture existing binary.
+- REANIMATE face: adds a **cached** machine-polished metal centre image over the existing big-cap rim; removes the busy centre graphic without deleting the original cap asset. Generation is once during editor creation, not per frame.
+- 480 genuinely moving glyphs preserved; flare clusters narrowed and de-intensified; the base field remains visible in silence. All ring changes are UI-only.
+- Small knobs: less neon-green tick glare, brighter chrome readouts, subtler hover, preserved original small cap.
+- Faceplate: modestly brighter brushed steel; no striped resize-corner overlay; no change to resize limits.
+- Meters: brighter unlit pink/lavender/cyan LEDs; no fake peak-hold line at negative-infinity; silence readout uses -INF.
+- Top settings icon replaced with toothed gear to distinguish it from a sun.
+- Pending review: real 810/1157/1736 screenshots, motion-frame differences, UI paint budget, Windows compilation and FL Studio manual interaction test. DSP processing code explicitly unchanged.
