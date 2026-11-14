@@ -128,3 +128,10 @@ Not verified: Windows CI, FL Studio host behaviour (PDC with the new fade-out/in
 - Screenshot target additionally reports six actual editor snapshot times as informational UI rasterization numbers, NOT an audio-thread/FL Studio CPU benchmark.
 - Changes isolated to UI and capture harness. DSP source unaffected.
 - Windows CI, visual inspection, 70% legibility, FL Studio interaction, and frame-time review remain release gates.
+
+## 2026-11-13 Meter UI fallback and time-correct ballistics
+- PeakMeter now has an independent **UI-only** 30 Hz fallback timer when hosts stop sending VBlank events. The existing host VBlank callback is still the preferred high-refresh update route.
+- Fixed hold timing: peak hold is now measured in real milliseconds rather than assumed 17 ms frames. Previous fallback decays could keep hold levels longer than the configured 0.5 / 1 / 2 s.
+- Meter decay scales with elapsed UI time rather than frame count; nonfinite level display is clamped to silence. This affects on-screen animation ONLY; metering calculations and audio processing are unchanged.
+- The editor 10 Hz status callback also applies meter-hold settings even without VBlank.
+- Latest capture visual QA and FL Studio no-VBlank host testing still need to confirm this fallback at runtime.

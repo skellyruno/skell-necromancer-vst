@@ -1,19 +1,27 @@
 #pragma once
 #include "../Theme.h"
 #include <atomic>
-class PeakMeter:public juce::Component{
+#include <cmath>
+class PeakMeter:public juce::Component,private juce::Timer{
 public:
- PeakMeter(const juce::String&title,std::atomic<float>&left,std::atomic<float>&right,bool reversed=false):label(title),l(left),r(right),rightScale(reversed){}
- void setHoldMilliseconds(int millis) noexcept {holdFrames=juce::jmax(1,millis/17);}
+ PeakMeter(const juce::String&title,std::atomic<float>&left,std::atomic<float>&right,bool reversed=false):label(title),l(left),r(right),rightScale(reversed){
+  // VBlank is preferred, but some FL Studio / host configurations don't
+  // deliver it. This UI-only timer keeps both meters alive in that case.
+  startTimerHz(30);
+ }
+ void setHoldMilliseconds(int millis) noexcept {holdMs=juce::jmax(1,millis);}
  void tick() noexcept {
-    const float values[]={l.load(),r.load()};
-    for(int i=0;i<2;++i){const float v=values[i];
-      shown[i]=v>shown[i]?v:juce::jmax(-100.f,shown[i]-.48f);
-      if(v>=held[i]){held[i]=v;counter[i]=holdFrames;}
-      else if(counter[i]>0)--counter[i];
-      else held[i]=juce::jmax(shown[i],held[i]-.8f);
-    }
-    repaint();
+  const double now=juce::Time::getMillisecondCounterHiRes();
+  const float step=(float)(lastTickMs>0. ? juce::jlimit(0.0,100.0,now-lastTickMs)/17.0 : 1.0);
+  lastTickMs=now;
+  const float values[]={l.load(),r.load()};
+  for(int i=0;i<2;++i){
+   const float v=std::isfinite(values[i])?juce::jlimit(-100.f,12.f,values[i]):-100.f;
+   shown[i]=v>shown[i]?v:juce::jmax(-100.f,shown[i]-.48f*step);
+   if(v>=held[i]){held[i]=v;heldUntilMs[i]=now+(double)holdMs;}
+   else if(now>=heldUntilMs[i])held[i]=juce::jmax(shown[i],held[i]-.8f*step);
+  }
+  repaint();
  }
  void paint(juce::Graphics&g)override {
   const auto value=[&](float d){return juce::jlimit(0.f,1.f,(d+60.f)/60.f);};
@@ -47,7 +55,13 @@ public:
   g.drawFittedText(peak<=-89.f?juce::String("-INF"):juce::String(peak,1),
                    9,getHeight()-21,64,18,juce::Justification::centred,1);
  }
-private:static constexpr int headerH=13;
+private:
+ void timerCallback() override {
+  if(juce::Time::getMillisecondCounterHiRes()-lastTickMs>75.0)tick();
+ }
+ static constexpr int headerH=13;
  juce::String label;std::atomic<float>&l,&r;bool rightScale;
- float shown[2]{-100.f,-100.f},held[2]{-100.f,-100.f};int counter[2]{},holdFrames=60;
+ float shown[2]{-100.f,-100.f},held[2]{-100.f,-100.f};
+ double heldUntilMs[2]{},lastTickMs=0.;
+ int holdMs=1000;
 };

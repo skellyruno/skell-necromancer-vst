@@ -162,6 +162,10 @@ void SkellNecromancerAudioProcessorEditor::timerCallback(){
  // Maintain rune state even when the host does not provide VBlank callbacks.
  dial.setLive(processor.liveLevel.load());
  dial.setActive(onButton.getToggleState()&&!bypassButton.getToggleState());
+ // Meter hold is also applied here when VBlank is absent, so settings never
+ // silently depend on the host providing a display-refresh callback.
+ const auto hold=(int)processor.uiState.getProperty("meterHold",1000);
+ inMeter.setHoldMilliseconds(hold);outMeter.setHoldMilliseconds(hold);
  autopsy.repaint();top.presets.sync();
  const auto wf=processor.uiState.getProperty("lufsWindow","short").toString();
  float shown=wf=="momentary"?processor.momentary.load():processor.shortTerm.load();
