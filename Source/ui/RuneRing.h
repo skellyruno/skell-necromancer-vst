@@ -1,6 +1,8 @@
 #pragma once
 #include "../Theme.h"
 #include "RuneMotion.h"
+#include "RuneGlyphCatalog.h"
+#include "RuneGlyphArtwork.h"
 #include "BinaryData.h"
 #include <array>
 #include <cmath>
@@ -13,7 +15,8 @@ class RuneRing {
 public:
  static constexpr int glyphCount=640,layerCount=5;
  RuneRing(){
-  atlas=juce::ImageCache::getFromMemory(BinaryData::rune_atlas_png,BinaryData::rune_atlas_pngSize);
+  const auto originalAtlas=juce::ImageCache::getFromMemory(BinaryData::rune_atlas_png,BinaryData::rune_atlas_pngSize);
+  atlas=skell::necromancer::runes::glyphs::extendedAtlas(originalAtlas);
   constexpr float pi=juce::MathConstants<float>::pi;
   juce::Random random(142857);
   size_t glyphNumber=0;
@@ -21,7 +24,7 @@ public:
    p.angle=random.nextFloat()*2.f*pi;
    p.radius=std::sqrt(juce::jmap(random.nextFloat(),150.f*150.f,187.f*187.f)); // even area density
    p.x=220.f+std::cos(p.angle)*p.radius;p.y=220.f+std::sin(p.angle)*p.radius;
-   p.index=random.nextInt(40);p.size=8.f+random.nextFloat()*6.f;p.weight=.64f+.36f*random.nextFloat();
+   p.index=random.nextInt(skell::necromancer::runes::glyphs::totalCount);p.size=8.f+random.nextFloat()*6.f;p.weight=.64f+.36f*random.nextFloat();
    // The lower arc stays quiet so the percentage readout remains legible.
    p.fade=skell::necromancer::runes::quietFade(p.angle)*skell::necromancer::runes::headingFade(p.angle);
    p.band=p.radius<162.f?0:p.radius<175.f?1:2;

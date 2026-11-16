@@ -3,6 +3,8 @@
 #include <JuceHeader.h>
 #include "../Source/PluginProcessor.h"
 #include "../Source/PluginEditor.h"
+#include "../Source/ui/RuneGlyphArtwork.h"
+#include "../Source/ui/RuneGlyphCatalog.h"
 #include <cmath>
 #include <iostream>
 #include <memory>
@@ -46,6 +48,20 @@ int main(int argc,char** argv) {
  SkellNecromancerAudioProcessor processor;
  processor.setPlayConfigDetails(2,2,48000.,512);
  processor.prepareToPlay(48000.,512);
+ // Export the genuine 8x8 compiled atlas, not a design mockup. Test every
+ // Egyptian-inspired cell for non-empty, bounded line art.
+ const auto legacy=juce::ImageCache::getFromMemory(BinaryData::rune_atlas_png,BinaryData::rune_atlas_pngSize);
+ const auto glyphAtlas=skell::necromancer::runes::glyphs::extendedAtlas(legacy);
+ if(glyphAtlas.getWidth()!=256||glyphAtlas.getHeight()!=256 ||
+    !saveImage(glyphAtlas,outputDir.getChildFile("rune_glyph_atlas.png")))return 16;
+ for(int k=40;k<64;++k){
+  int covered=0;
+  for(int y=(k/8)*32;y<(k/8+1)*32;++y)
+   for(int x=(k%8)*32;x<(k%8+1)*32;++x)
+    if(glyphAtlas.getPixelAt(x,y).getAlpha()>32)++covered;
+  if(covered<12){std::cerr<<"Hieroglyph cell "<<k<<" is empty\\n";return 17;}
+ }
+ std::cout<<"24 Egyptian-inspired atlas cells have visible vector strokes\\n";
  auto editor=std::make_unique<SkellNecromancerAudioProcessorEditor>(processor);
  editor->setVisible(true);
  // VISUAL TEST SIGNAL, NOT PROCESSED AUDIO: match the reference meter levels

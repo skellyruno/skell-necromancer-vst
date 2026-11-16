@@ -210,3 +210,10 @@ Not verified: Windows CI, FL Studio host behaviour (PDC with the new fade-out/in
 - Repositioned GAIN MATCH 8px right and 4px narrower to remove a 2px overlap with MIX value label; layout guard now checks nonintersection.
 - Added capture-time pixel probe for an actual pale-silver PUSH thumb in the genuine 1157px JUCE screenshot.
 - No DSP/processor source, parameter identifiers, preset states or original artwork touched. Windows compile, 5 CTests, reference and UI screenshots pending.
+
+## 2026-11-15 original Egyptian-inspired glyph atlas extension (UI only)
+- Preserved original 40 symbols and their atlas pixels, with 24 **newly authored** Egyptian-inspired vector glyphs appended to a new 8×8 cached 256px atlas. 62.5% existing occult/geometric + 37.5% Egyptian-inspired, uniformly sampled through the established placement algorithm. Motifs include ankh, eye, scarab, ibis, cobra, cartouche, was-staff, reeds, feather, solar disk, lotus, falcon wing, djed, obelisk, papyrus, spiral, water waves, solar barque, jackal, winged scarab, temple gate, crescent, crook/flail, twin plumes.
+- No system-font glyphs, emoji fallback, downloadable assets, new binary font dependencies, external licensed symbols, or modifications to original art.
+- All 640 glyph placements (480 moving, 160 static), orbit rate, color cache, quiet headline region, 30fps scheduler and flare timing are preserved. Only the motif selected per placement changes.
+- Added portable JUCE-independent glyph-catalog CTest and a capture-time check that all 24 additional 32×32 atlas cells contain visible artwork. Actual `rune_glyph_atlas.png` exported for artwork review alongside the real 70/100/150% JUCE UI captures.
+- DSP, presets, automation IDs, plugin parameters and FL Studio state unchanged. Windows compilation and visual review of the real glyph atlas/host still required before merging.

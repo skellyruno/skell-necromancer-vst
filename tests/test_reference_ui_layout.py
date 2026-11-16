@@ -112,3 +112,13 @@ assert 'juce::ColourGradient metal' in push_source
 assert 'juce::Colour(0xfff0f1f0)' in push_source
 laf=(root / "Source/ui/LookAndFeel.h").read_text(encoding="utf-8")
 assert 'const bool compareSwitch=' in laf
+
+# The atlas expansion retains all 40 original symbols and adds 24 vector motifs.
+catalogue=(root / "Source/ui/RuneGlyphCatalog.h").read_text(encoding="utf-8")
+ring=(root / "Source/ui/RuneRing.h").read_text(encoding="utf-8")
+artwork=(root / "Source/ui/RuneGlyphArtwork.h").read_text(encoding="utf-8")
+assert "originalCount = 40" in catalogue and "egyptianCount = 24" in catalogue
+assert "runes::glyphs::extendedAtlas(originalAtlas)" in ring
+assert "random.nextInt(skell::necromancer::runes::glyphs::totalCount)" in ring
+assert "for(int motifId=0;motifId<egyptianCount;++motifId)" in artwork
+assert "p.mobile=(glyphNumber++%4)!=0" in ring
