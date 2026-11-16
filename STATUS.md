@@ -217,3 +217,9 @@ Not verified: Windows CI, FL Studio host behaviour (PDC with the new fade-out/in
 - All 640 glyph placements (480 moving, 160 static), orbit rate, color cache, quiet headline region, 30fps scheduler and flare timing are preserved. Only the motif selected per placement changes.
 - Added portable JUCE-independent glyph-catalog CTest and a capture-time check that all 24 additional 32×32 atlas cells contain visible artwork. Actual `rune_glyph_atlas.png` exported for artwork review alongside the real 70/100/150% JUCE UI captures.
 - DSP, presets, automation IDs, plugin parameters and FL Studio state unchanged. Windows compilation and visual review of the real glyph atlas/host still required before merging.
+
+## 2026-11-15 DSP foundation: no-sound-change Glow hot-path optimization
+- Discovered a `std::exp` sample-rate coefficient evaluated once **per stereo sample** in `Glow::process` (MS/MASTER stereo ambience mode). The 1.8 kHz highpass coefficient depends only on the host rate, so `Glow::prepare` now caches it once. This changes no audio parameters, phase/side injection formula, wet settings or presets.
+- Added a portable C++17 regression test with the exact previous implementation as a reference. Exercises four sample rates (44.1/48/96/192 kHz), automated amount and mode changes, stereo sum, deterministic noise + tones, and pathological sample-rate guard. Output parity threshold 2e-7.
+- Real-time safety: no allocations, file I/O or locks in process(); moved one transcendental operation from hot path to prepare. Actual CPU improvement and audible equality still require compiled test and measured host A/B.
+- No VST3 format, state serialization, or approved UI modified; further tonal improvements should wait for source-matched audio A/B.

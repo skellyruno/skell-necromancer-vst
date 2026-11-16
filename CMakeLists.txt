@@ -67,6 +67,11 @@ target_include_directories(NecromancerDSPTest PRIVATE tests/stubs)
 target_compile_features(NecromancerDSPTest PRIVATE cxx_std_17)
 enable_testing()
 add_test(NAME NecromancerDSP_StreamAndAuto COMMAND NecromancerDSPTest)
+# Real DSP equivalence to the previous Glow stage at multiple sample rates.
+add_executable(NecromancerGlowParity tests/dsp_glow_parity.cpp)
+target_include_directories(NecromancerGlowParity PRIVATE tests/stubs)
+target_compile_features(NecromancerGlowParity PRIVATE cxx_std_17)
+add_test(NAME NecromancerDSP_GlowParity COMMAND NecromancerGlowParity)
 
 # Exact FIR group-delay, zero-amount revival null, and passband checks.
 add_executable(NecromancerOversamplerTest tests/oversampler_latency.cpp)
