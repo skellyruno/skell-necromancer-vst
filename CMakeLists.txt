@@ -72,6 +72,12 @@ add_executable(NecromancerGlowParity tests/dsp_glow_parity.cpp)
 target_include_directories(NecromancerGlowParity PRIVATE tests/stubs)
 target_compile_features(NecromancerGlowParity PRIVATE cxx_std_17)
 add_test(NAME NecromancerDSP_GlowParity COMMAND NecromancerGlowParity)
+# Freeze TapeStage baseline and catch unintended tone/alias changes when
+# optimizing the constant bias-removal work in the nonlinear oversampling loop.
+add_executable(NecromancerTapeParity tests/dsp_tape_parity.cpp)
+target_include_directories(NecromancerTapeParity PRIVATE tests/stubs)
+target_compile_features(NecromancerTapeParity PRIVATE cxx_std_17)
+add_test(NAME NecromancerDSP_TapeParity COMMAND NecromancerTapeParity)
 
 # Exact FIR group-delay, zero-amount revival null, and passband checks.
 add_executable(NecromancerOversamplerTest tests/oversampler_latency.cpp)

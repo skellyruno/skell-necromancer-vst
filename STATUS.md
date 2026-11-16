@@ -223,3 +223,8 @@ Not verified: Windows CI, FL Studio host behaviour (PDC with the new fade-out/in
 - Added a portable C++17 regression test with the exact previous implementation as a reference. Exercises four sample rates (44.1/48/96/192 kHz), automated amount and mode changes, stereo sum, deterministic noise + tones, and pathological sample-rate guard. Output parity threshold 2e-7.
 - Real-time safety: no allocations, file I/O or locks in process(); moved one transcendental operation from hot path to prepare. Actual CPU improvement and audible equality still require compiled test and measured host A/B.
 - No VST3 format, state serialization, or approved UI modified; further tonal improvements should wait for source-matched audio A/B.
+
+## 2026-11-15 DSP performance: nonlinear TapeStage bias-correction cache
+- Found a second expensive invariant inside the oversampled nonlinear hot path: `std::tanh(bias)` re-evaluated for every oversampled L/R invocation (up to 8 calls per stereo frame at 4x). The offset now updates only when amount changes in `TapeStage::set`, keeping the same `std::tanh(drive*x+bias)-offset` equation.
+- Frozen **old unmodified TapeStage** as `tests/reference/TapeStageReference.h` and added 3 rates (44.1/48/96k) × 3 modes × 3 factors (1/2/4x) with real streaming stereo tone/noise/transient comparisons; threshold 3e-7 sample amplitude.
+- No plugin parameter ID, preset, UI artwork, latency or oversampling filter is changed. Improvement applies only to hot-path CPU work; claim of lower measured CPU still requires profiling and tests.
