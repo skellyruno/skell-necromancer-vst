@@ -5,6 +5,17 @@
 class RangeSelector:public juce::ComboBox {
 public:
  RangeSelector(){addItemList({"I","II","III"},1);setTooltip("Select body (I), upper mids (II), or presence (III).");setMouseCursor(juce::MouseCursor::PointingHandCursor);}
+ void resized()override {
+  // ComboBox owns a native Label for its normal dropdown text. Because this
+  // selector paints a bespoke I / II / III radio column, the Label used to
+  // double-draw the current selection over the middle lamp (visible as a
+  // white glyph at 70/150%). Keep ComboBox and its automation attachment,
+  // but hide ONLY the built-in text Label, not the underlying selection.
+  juce::ComboBox::resized();
+  for(int i=0;i<getNumChildComponents();++i)
+   if(auto* text=dynamic_cast<juce::Label*>(getChildComponent(i)))
+    text->setVisible(false);
+ }
  void paint(juce::Graphics&g)override {
   const char*names[]={"I","II","III"};
   for(int i=0;i<3;++i){

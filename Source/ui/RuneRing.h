@@ -36,7 +36,7 @@ public:
   constexpr std::array<float,3> sweepSpeeds{.86f,.62f,1.06f};
   for(size_t i=0;i<clusters.size();++i){
    auto& c=clusters[i];c.angle=initialAngles[i];c.spin=sweepSpeeds[i];
-   c.radius=163.f+6.f*(float)i;c.size=32.f+5.f*(float)i;
+   c.radius=163.f+6.f*(float)i;c.size=28.f+4.f*(float)i;
    c.life=3.8f+.8f*(float)i;c.age=.75f*(float)i;
   }
   for(size_t i=0;i<flashes.size();++i){flashes[i].age=(float)i*.03f;flashes[i].life=.2f+(float)i*.02f;flashes[i].glyph=random.nextInt(glyphCount);}
@@ -50,7 +50,7 @@ public:
   }
   // Per-glyph flare sprites: slightly enlarged, tinted toward white.
   for(size_t i=0;i<placements.size();++i){
-   const auto&p=placements[i];const float size=p.size*1.45f;const int n=(int)std::ceil(size)+2;
+   const auto&p=placements[i];const float size=p.size*1.32f;const int n=(int)std::ceil(size)+2;
    sprites[i]=juce::Image(juce::Image::ARGB,n,n,true);
    juce::Graphics sg(sprites[i]);sg.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
    sg.setColour(tint(p).interpolatedWith(juce::Colours::white,.48f));
@@ -126,7 +126,7 @@ public:
    g.setOpacity(active*(.30f+.08f*amount)*p.weight*animatedFade[i]);
    g.drawImageAt(sprite,(int)std::lround(pt.x)-sprite.getWidth()/2,(int)std::lround(pt.y)-sprite.getHeight()/2);
   }
-  const float gain=active*(.57f+.2f*live);
+  const float gain=active*(.50f+.14f*live);
   for(const auto&c:clusters){
    const float env=.62f+.38f*std::sin(juce::MathConstants<float>::twoPi*c.age/c.life);
    const float cx=220.f+std::cos(c.angle)*c.radius,cy=220.f+std::sin(c.angle)*c.radius;
@@ -134,12 +134,12 @@ public:
     const auto&p=placements[i];const auto&pt=animatedPositions[i];
     const float dx=pt.x-cx,dy=pt.y-cy,d2=dx*dx+dy*dy;if(d2>c.size*c.size)continue;
     const float fall=1.f-std::sqrt(d2)/c.size;
-    drawBright(g,p,pt,gain*env*fall*animatedFade[i]*.86f);
+    drawBright(g,p,pt,gain*env*fall*animatedFade[i]*.70f);
    }
   }
   for(const auto&f:flashes){
    const float env=std::sin(juce::MathConstants<float>::pi*f.age/f.life);
-   const auto i=(size_t)f.glyph;const auto&p=placements[i];drawBright(g,p,animatedPositions[i],gain*env*animatedFade[i]*.95f);
+   const auto i=(size_t)f.glyph;const auto&p=placements[i];drawBright(g,p,animatedPositions[i],gain*env*animatedFade[i]*.75f);
   }
  }
 private:

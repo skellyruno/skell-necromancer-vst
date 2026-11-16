@@ -194,3 +194,11 @@ Not verified: Windows CI, FL Studio host behaviour (PDC with the new fade-out/in
 - Strengthened real JUCE screenshot QA: the previously approved black engraved skull detail AND bright silver highlight must both be visible at the center of the real screenshot. This detects the accidental solid-silver cap overlay that previously hid the original artwork. Synthetic test meters remain screenshot-only.
 - No DSP, processing, plugin parameter or stored preset logic changed.
 - Latest Windows build and 810/1157/1736 screenshots still required before promoting this checkpoint over the verified baseline.
+
+## 2026-11-15 close visual QA: selector double text, rune restraint, satin MIX track
+- Inspected actual Windows JUCE screenshots at 70/100/150% and reference comparison. The I / II / III selector showed a stray white vertical glyph over the middle row at 150%; this was the ComboBox native Label painting over the custom radio column. Hide the native child Label on resize but preserve ComboBox, APVTS attachment, mouse selection, and host automation.
+- Added a separate `ui_mid_range_ii.png` real-JUCE capture and a native-label visibility assertion so the MID range artifact cannot regress unseen.
+- Reduced roaming flare sprite scale 1.45x→1.32x, concentrated cluster size 32/37/42→28/32/36, and peak flare opacity to stop white symbol clusters overwhelming the dark reference faceplate. The 480 moving runes and their positions are untouched; silent-motion regression still required.
+- Added custom satin steel MIX track and 8px silver thumb via LookAndFeel; preserves Slider/APVTS behavior, range and hit testing. Dedicated PUSH painter unaffected.
+- Slightly raised bottom LUFS/GR display contrast and gave SKELL AUDIO footer logotype a little more letter spacing, without changing any panel bounds.
+- No DSP, processor, preset state, automation ID, plugin format or original artwork changed. Windows CI plus real image review required.

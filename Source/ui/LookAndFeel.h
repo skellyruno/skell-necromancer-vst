@@ -101,6 +101,32 @@ public:
   g.strokePath(p,pen);
   return true;
  }
+ // Custom mechanical linear slider for the MIX control: use a dark engraved
+ // track and brushed-silver thumb instead of the default neon-green ball.
+ // PUSH retains its own dedicated custom slider painter.
+ void drawLinearSlider(juce::Graphics&g,int x,int y,int w,int h,
+                       float sliderPos,float minSliderPos,float maxSliderPos,
+                       const juce::Slider::SliderStyle style,juce::Slider&slider)override {
+  if(style!=juce::Slider::LinearHorizontal){
+   juce::LookAndFeel_V4::drawLinearSlider(g,x,y,w,h,sliderPos,minSliderPos,maxSliderPos,style,slider);
+   return;
+  }
+  juce::Graphics::ScopedSaveState saved(g);
+  const float cy=(float)y+(float)h*.5f;
+  const auto track=juce::Rectangle<float>((float)x+2.f,cy-2.4f,(float)w-4.f,4.8f);
+  g.setColour(juce::Colour(0xff0a1012));g.fillRoundedRectangle(track,2.4f);
+  g.setColour(juce::Colour(0xff586267).withAlpha(.72f));g.drawRoundedRectangle(track,2.4f,.7f);
+  const float px=juce::jlimit(track.getX(),track.getRight(),sliderPos);
+  if(px>track.getX()+2.f){
+   g.setColour(Theme::greenDim.withAlpha(.82f));
+   g.fillRoundedRectangle(track.withWidth(px-track.getX()),2.4f);
+  }
+  g.setColour(juce::Colours::black.withAlpha(.62f));g.fillEllipse(px-5.2f,cy-4.5f,10.4f,10.4f);
+  g.setColour(juce::Colour(0xffd1d5d4));
+  g.fillEllipse(px-4.f,cy-4.f,8.f,8.f);
+  g.setColour(juce::Colours::white.withAlpha(slider.isMouseOverOrDragging()?.70f:.36f));
+  g.drawEllipse(px-4.f,cy-4.f,8.f,8.f,.85f);
+ }
  void drawComboBox(juce::Graphics&g,int w,int h,bool,int,int,int,int,juce::ComboBox&)override{
   g.setColour(Theme::panel);g.fillRoundedRectangle(0,0,(float)w,(float)h,4);
   g.setColour(Theme::border);g.drawRoundedRectangle(.5f,.5f,(float)w-1,(float)h-1,4,1.f);

@@ -65,7 +65,7 @@ void SkellNecromancerAudioProcessorEditor::Panel::paint(Graphics&g){
  g.setFont(Theme::display(22).withExtraKerningFactor(.41f));
  g.setColour(Theme::bone);
  g.drawFittedText("SKELL  NECROMANCER",278,37,600,33,Justification::centred,1);
- g.setFont(Theme::mono(12));g.setColour(Theme::faint.brighter(1.1f));g.drawText("SKELL AUDIO",27,588,160,16,Justification::centredLeft);
+ g.setFont(Theme::mono(12).withExtraKerningFactor(.16f));g.setColour(Theme::faint.brighter(1.1f));g.drawText("SKELL AUDIO",27,588,160,16,Justification::centredLeft);
  g.setFont(Theme::mono(11));g.setColour(Theme::faint.brighter(1.15f));
 }
 SkellNecromancerAudioProcessorEditor::SkellNecromancerAudioProcessorEditor(SkellNecromancerAudioProcessor&p):
@@ -106,9 +106,9 @@ SkellNecromancerAudioProcessorEditor::SkellNecromancerAudioProcessorEditor(Skell
  add(pushValue);pushValue.setBounds(1053,585,90,22);pushValue.setColour(Label::textColourId,Theme::bone);pushValue.setFont(Theme::mono(13));
  add(autopsy);autopsy.setBounds(221,580,268,31);
  add(lufs);lufs.setBounds(501,595,204,15);lufs.setFont(Theme::mono(11));
- lufs.setColour(Label::textColourId,Theme::bone.withAlpha(.83f));
+ lufs.setColour(Label::textColourId,Theme::bone.withAlpha(.91f));
  add(gr);gr.setBounds(709,595,95,15);gr.setFont(Theme::mono(11));
- gr.setColour(Label::textColourId,Theme::bone.withAlpha(.82f));
+ gr.setColour(Label::textColourId,Theme::bone.withAlpha(.91f));
  add(status);status.setBounds(501,580,306,15);status.setFont(Theme::mono(11));
  status.setColour(Label::textColourId,Theme::greenLight.withAlpha(.94f));
  add(hints);hints.setBounds(0,0,Theme::width,Theme::height);hints.toFront(false);

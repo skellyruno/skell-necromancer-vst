@@ -94,3 +94,13 @@ preset_source=(root / "Source/ui/PresetBar.h").read_text(encoding="utf-8")
 assert "undo.setEnabled(processor.undoManager.canUndo())" in preset_source
 assert "redo.setEnabled(processor.undoManager.canRedo())" in preset_source
 assert "formatLufs(shown)" in editor and 'String("-INF")' in editor
+
+# No native ComboBox label is allowed on top of the custom I / II / III radio.
+range_source=(root / "Source/ui/RangeSelector.h").read_text(encoding="utf-8")
+assert "juce::ComboBox::resized()" in range_source
+assert "dynamic_cast<juce::Label*>" in range_source
+assert "text->setVisible(false)" in range_source
+# A satin MIX track rather than the standard bright green Slider painting.
+look_source=(root / "Source/ui/LookAndFeel.h").read_text(encoding="utf-8")
+assert "void drawLinearSlider(" in look_source
+assert "juce::Colour(0xffd1d5d4)" in look_source

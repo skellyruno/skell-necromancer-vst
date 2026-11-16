@@ -8,6 +8,14 @@
 #include <memory>
 #include <vector>
 
+static RangeSelector* findRange(juce::Component& root) {
+ if(auto* r=dynamic_cast<RangeSelector*>(&root))return r;
+ for(int i=0;i<root.getNumChildComponents();++i)
+  if(auto* child=root.getChildComponent(i))
+   if(auto* found=findRange(*child))return found;
+ return nullptr;
+}
+
 static ReanimateDial* findDial(juce::Component& root) {
  if(auto* d=dynamic_cast<ReanimateDial*>(&root))return d;
  for(int i=0;i<root.getNumChildComponents();++i)
@@ -93,6 +101,20 @@ int main(int argc,char** argv) {
  std::cout<<"Active LED pixels IN="<<inLit<<" OUT="<<outLit<<"\\n";
  if(inLit<45||outLit<45){std::cerr<<"Active stereo meters are not legible in the captured UI\\n";return 10;}
  if(snapshot(1736,918,"ui_1736.png").isNull())return 4;
+ // Capture MID range II with the real ComboBox attachment but without a
+ // parameter notification. Ensure the native ComboBox text Label cannot be
+ // drawn across our custom radio lamps.
+ auto* range=findRange(*editor);
+ if(range==nullptr){std::cerr<<"MID range selector missing\\n";return 12;}
+ const auto oldRange=range->getSelectedItemIndex();
+ range->setSelectedItemIndex(1,juce::dontSendNotification);
+ for(int c=0;c<range->getNumChildComponents();++c)
+  if(dynamic_cast<juce::Label*>(range->getChildComponent(c))!=nullptr &&
+     range->getChildComponent(c)->isVisible()){
+   std::cerr<<"Native ComboBox text overlaps custom MID range radio\\n";return 13;
+  }
+ if(snapshot(1157,612,"ui_mid_range_ii.png").isNull())return 14;
+ range->setSelectedItemIndex(oldRange,juce::dontSendNotification);
 
  editor->setSize(1157,612);
  auto* dial=findDial(*editor);
