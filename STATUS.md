@@ -202,3 +202,11 @@ Not verified: Windows CI, FL Studio host behaviour (PDC with the new fade-out/in
 - Added custom satin steel MIX track and 8px silver thumb via LookAndFeel; preserves Slider/APVTS behavior, range and hit testing. Dedicated PUSH painter unaffected.
 - Slightly raised bottom LUFS/GR display contrast and gave SKELL AUDIO footer logotype a little more letter spacing, without changing any panel bounds.
 - No DSP, processor, preset state, automation ID, plugin format or original artwork changed. Windows CI plus real image review required.
+
+## 2026-11-15 full-footer hardware alignment
+- Post-render audit confirmed the MID I/II/III duplicate JUCE Label was fixed and dedicated II capture passed, while the default 6dB PUSH thumb remained disproportionately neon green compared with the reference's pale-silver hardware.
+- Replaced PUSH painter's oversized 14px green dot with an 11px multi-tone silver thumb, dark engraved track, muted green progress. No changes to its Slider, 0–24 dB automation, double-click reset, or actual signal chain.
+- Softened GAIN MATCH and DELTA active hardware styling to the same satin silver active state as the existing ON/LIMITER buttons. Behaviors and toggle states preserved.
+- Repositioned GAIN MATCH 8px right and 4px narrower to remove a 2px overlap with MIX value label; layout guard now checks nonintersection.
+- Added capture-time pixel probe for an actual pale-silver PUSH thumb in the genuine 1157px JUCE screenshot.
+- No DSP/processor source, parameter identifiers, preset states or original artwork touched. Windows compile, 5 CTests, reference and UI screenshots pending.

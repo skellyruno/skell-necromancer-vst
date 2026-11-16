@@ -90,7 +90,7 @@ SkellNecromancerAudioProcessorEditor::SkellNecromancerAudioProcessorEditor(Skell
  setTextButton(bypassButton,"BYPASS",1037,41,107,26,"Latency-aligned, optional gain-matched bypass.",true);
  setTextButton(limiterButton,"LIMITER",820,584,105,24,"True-peak detection limiter; configure the ceiling in Settings.",true);
  setTextButton(deltaButton,"DELTA",376,543,104,24,"Listen to level-matched difference between processed and dry signal.",true);
- setTextButton(matchButton,"GAIN MATCH",676,543,104,24,"Loudness-compensated compare; uses a smoothed RMS estimate.",true);
+ setTextButton(matchButton,"GAIN MATCH",684,543,100,24,"Loudness-compensated compare; uses a smoothed RMS estimate.",true);
  attachButton(onButton,"reanimateOn");attachButton(bypassButton,"bypass");attachButton(limiterButton,"limiterOn");
  attachButton(deltaButton,"deltaListen");attachButton(matchButton,"levelMatch");
  autoButton.onClick=[this]{processor.requestAuto();};

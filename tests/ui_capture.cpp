@@ -100,6 +100,16 @@ int main(int argc,char** argv) {
  const int inLit=litCount(100),outLit=litCount(1016);
  std::cout<<"Active LED pixels IN="<<inLit<<" OUT="<<outLit<<"\\n";
  if(inLit<45||outLit<45){std::cerr<<"Active stereo meters are not legible in the captured UI\\n";return 10;}
+ // The PUSH hardware thumb should be a neutral pale-silver disk, not the
+ // previous neon-green dot. Its default setting is 6dB, located at x~=971.
+ int silverThumb=0;
+ for(int y=591;y<=602;++y)for(int x=966;x<=977;++x){
+  const auto p=full.getPixelAt(x,y);
+  if(p.getRed()>145 && p.getGreen()>145 && p.getBlue()>145 &&
+     std::abs((int)p.getRed()-(int)p.getGreen())<25)++silverThumb;
+ }
+ std::cout<<"Silver PUSH thumb pixels: "<<silverThumb<<"\\n";
+ if(silverThumb<12){std::cerr<<"PUSH hardware thumb is not silver in actual capture\\n";return 15;}
  if(snapshot(1736,918,"ui_1736.png").isNull())return 4;
  // Capture MID range II with the real ComboBox attachment but without a
  // parameter notification. Ensure the native ComboBox text Label cannot be

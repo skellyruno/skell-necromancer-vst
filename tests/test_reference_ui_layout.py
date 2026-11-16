@@ -104,3 +104,11 @@ assert "text->setVisible(false)" in range_source
 look_source=(root / "Source/ui/LookAndFeel.h").read_text(encoding="utf-8")
 assert "void drawLinearSlider(" in look_source
 assert "juce::Colour(0xffd1d5d4)" in look_source
+
+# Keep the MIX value and GAIN MATCH button separated at every UI scale.
+assert controls["mixValue"][0]+controls["mixValue"][2]<buttons["matchButton"][0]
+push_source=(root / "Source/ui/PushSlider.h").read_text(encoding="utf-8")
+assert 'juce::ColourGradient metal' in push_source
+assert 'juce::Colour(0xfff0f1f0)' in push_source
+laf=(root / "Source/ui/LookAndFeel.h").read_text(encoding="utf-8")
+assert 'const bool compareSwitch=' in laf
