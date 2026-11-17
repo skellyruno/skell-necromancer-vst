@@ -90,6 +90,33 @@ class Vst3PackagerTests(unittest.TestCase):
             self.assertIn(bundle.name + "/Contents/Resources/moduleinfo.json", names)
             self.assertEqual(len(names), 3)
 
+
+    def test_normalizes_juce_trailing_commas_in_package_only(self) -> None:
+        bundle = make_bundle(self.build)
+        info_path = bundle / "Contents" / "Resources" / "moduleinfo.json"
+        original = info_path.read_text(encoding="utf-8")
+        payload = json.loads(original)
+        raw = json.dumps(payload, indent=2).replace(
+            '"Category": "Audio Module Class"\n    }',
+            '"Category": "Audio Module Class",\n    }',
+        )
+        info_path.write_text(raw, encoding="utf-8")
+        original_hash = __import__("hashlib").sha256(raw.encode("utf-8")).hexdigest()
+
+        manifest = self.package()
+
+        self.assertTrue(manifest["moduleinfo_normalized"])
+        self.assertEqual(manifest["moduleinfo_original_sha256"], original_hash)
+        self.assertNotEqual(manifest["moduleinfo_sha256"], original_hash)
+        self.assertEqual(info_path.read_text(encoding="utf-8"), raw)
+        with zipfile.ZipFile(self.output) as archive:
+            packaged_text = archive.read(
+                bundle.name + "/Contents/Resources/moduleinfo.json"
+            ).decode("utf-8")
+            parsed = json.loads(packaged_text)
+            self.assertEqual(parsed["Name"], "Skell-Necromancer")
+            self.assertNotRegex(packaged_text, r",\s*[}\]]")
+
     def test_refuses_multiple_vst3_bundles_in_build_tree(self) -> None:
         make_bundle(self.build, "Skell-Necromancer.vst3")
         make_bundle(self.build, "Unexpected.vst3", "FEDCBA9876543210FEDCBA9876543210")

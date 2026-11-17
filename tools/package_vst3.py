@@ -46,14 +46,64 @@ def _read_pe_machine(binary: Path) -> int:
         return struct.unpack("<H", machine_bytes)[0]
 
 
-def _module_info(bundle: Path) -> tuple[dict, list[dict], Path]:
+def _strip_json5_trailing_commas(text: str) -> str:
+    """Remove commas immediately before } or ] without touching quoted strings."""
+    output: list[str] = []
+    in_string = False
+    escaped = False
+    index = 0
+    while index < len(text):
+        char = text[index]
+        if in_string:
+            output.append(char)
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+            index += 1
+            continue
+        if char == '"':
+            in_string = True
+            output.append(char)
+            index += 1
+            continue
+        if char == ",":
+            lookahead = index + 1
+            while lookahead < len(text) and text[lookahead].isspace():
+                lookahead += 1
+            if lookahead < len(text) and text[lookahead] in "}]":
+                index += 1
+                continue
+        output.append(char)
+        index += 1
+    return "".join(output)
+
+
+def _module_info(bundle: Path) -> tuple[dict, list[dict], Path, str | None, str]:
     info_path = bundle / "Contents" / "Resources" / "moduleinfo.json"
     if not info_path.is_file():
         raise PackageError(f"Missing VST3 moduleinfo.json: {info_path}")
     try:
-        info = json.loads(info_path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
-        raise PackageError(f"Invalid VST3 moduleinfo.json: {exc}") from exc
+        raw_text = info_path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as exc:
+        raise PackageError(f"Unable to read VST3 moduleinfo.json: {exc}") from exc
+    original_sha256 = sha256_bytes(raw_text.encode("utf-8"))
+    normalized_text = None
+    try:
+        info = json.loads(raw_text)
+    except json.JSONDecodeError as strict_error:
+        candidate = _strip_json5_trailing_commas(raw_text)
+        if candidate == raw_text:
+            raise PackageError(f"Invalid VST3 moduleinfo.json: {strict_error}") from strict_error
+        try:
+            info = json.loads(candidate)
+        except json.JSONDecodeError as normalized_error:
+            raise PackageError(
+                f"VST3 moduleinfo.json is not valid JSON after trailing-comma normalization: {normalized_error}"
+            ) from normalized_error
+        normalized_text = json.dumps(info, indent=2, ensure_ascii=False) + "\n"
     if not isinstance(info, dict):
         raise PackageError("VST3 moduleinfo.json must contain a JSON object")
 
@@ -84,7 +134,7 @@ def _module_info(bundle: Path) -> tuple[dict, list[dict], Path]:
             "name": entry.get("Name"),
             "category": entry.get("Category"),
         })
-    return info, normalized_classes, info_path
+    return info, normalized_classes, info_path, normalized_text, original_sha256
 
 
 def _bundle_files(bundle: Path) -> list[Path]:
@@ -97,10 +147,10 @@ def _bundle_files(bundle: Path) -> list[Path]:
     return files
 
 
-def _validate_bundle(bundle: Path) -> tuple[dict, list[dict], Path, list[Path]]:
+def _validate_bundle(bundle: Path) -> tuple[dict, list[dict], Path, str | None, str, Path, list[Path]]:
     if not bundle.is_dir() or bundle.suffix.lower() != ".vst3":
         raise PackageError(f"Not a VST3 bundle directory: {bundle}")
-    info, classes, info_path = _module_info(bundle)
+    info, classes, info_path, normalized_moduleinfo, original_moduleinfo_sha256 = _module_info(bundle)
     binary_dir = bundle / "Contents" / "x86_64-win"
     binaries = sorted(p for p in binary_dir.glob("*.vst3") if p.is_file()) if binary_dir.is_dir() else []
     if len(binaries) != 1:
@@ -115,7 +165,7 @@ def _validate_bundle(bundle: Path) -> tuple[dict, list[dict], Path, list[Path]]:
     files = _bundle_files(bundle)
     if info_path not in files or binaries[0] not in files:
         raise PackageError("VST3 metadata or module binary is not part of the bundle file set")
-    return info, classes, binaries[0], files
+    return info, classes, info_path, normalized_moduleinfo, original_moduleinfo_sha256, binaries[0], files
 
 
 def package_vst3(build_root: Path, output: Path, source_root: Path | None = None) -> dict:
@@ -147,7 +197,7 @@ def package_vst3(build_root: Path, output: Path, source_root: Path | None = None
             f"Expected exactly one VST3 bundle below {build_root}; found {len(bundles)}"
         )
     bundle = bundles[0]
-    info, classes, binary, files = _validate_bundle(bundle)
+    info, classes, info_path, normalized_moduleinfo, original_moduleinfo_sha256, binary, files = _validate_bundle(bundle)
 
     output.parent.mkdir(parents=True, exist_ok=True)
     temp_output = output.with_name(output.name + ".tmp")
@@ -162,12 +212,21 @@ def package_vst3(build_root: Path, output: Path, source_root: Path | None = None
             for path in files:
                 relative = path.relative_to(bundle).as_posix()
                 archive_name = f"{bundle.name}/{relative}"
-                archive.write(path, archive_name)
-                package_records.append({
-                    "path": archive_name,
-                    "size": path.stat().st_size,
-                    "sha256": sha256_file(path),
-                })
+                if path == info_path and normalized_moduleinfo is not None:
+                    payload = normalized_moduleinfo.encode("utf-8")
+                    archive.writestr(archive_name, payload)
+                    package_records.append({
+                        "path": archive_name,
+                        "size": len(payload),
+                        "sha256": sha256_bytes(payload),
+                    })
+                else:
+                    archive.write(path, archive_name)
+                    package_records.append({
+                        "path": archive_name,
+                        "size": path.stat().st_size,
+                        "sha256": sha256_file(path),
+                    })
             for notice_path, archive_name in notices:
                 archive.write(notice_path, archive_name)
                 package_records.append({
@@ -217,6 +276,12 @@ def package_vst3(build_root: Path, output: Path, source_root: Path | None = None
         "bundle": bundle.name,
         "binary": binary_record["path"],
         "binary_sha256": binary_record["sha256"],
+        "moduleinfo_normalized": normalized_moduleinfo is not None,
+        "moduleinfo_original_sha256": original_moduleinfo_sha256,
+        "moduleinfo_sha256": next(
+            record["sha256"] for record in package_records
+            if record["path"] == f"{bundle.name}/{info_path.relative_to(bundle).as_posix()}"
+        ),
         "archive": output.name,
         "archive_size_bytes": output.stat().st_size,
         "archive_sha256": archive_hash,

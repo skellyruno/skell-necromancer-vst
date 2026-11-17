@@ -246,3 +246,12 @@ Not verified: Windows CI, FL Studio host behaviour (PDC with the new fade-out/in
 - The package now includes `THIRD_PARTY_NOTICES/OFL-Montserrat.txt` when the Montserrat font is present, and hashes the notice in the package manifest. If the font exists but its license file is missing, packaging fails closed. This does not assign a license to Skell's own source/product; the repository has no root LICENSE/COPYING/NOTICE and that owner decision remains a commercial-release blocker.
 - Added a tenth offline package test for missing font-license failure and asserted that the actual OFL notice is present in the ZIP.
 - Workflow now runs push validation only on `main` (PRs still validate every candidate) to avoid duplicate push + pull_request builds. Concurrency cancellation is restricted to `pull_request` events; main pushes and manual runs are never auto-cancelled.
+
+
+### 2026-11-17 package verifier correction — JUCE moduleinfo trailing commas
+
+- The first exact-head Windows build of the new strict packager reached packaging successfully but exposed the real upstream metadata shape: JUCE generated a trailing comma in `moduleinfo.json`. The two initial exact-head runs #44035666459 and #44035708103 therefore failed at the package step after the 9/9 synthetic tests passed. This is a real compatibility defect, not a CMake/DSP failure.
+- Added a quote/escape-aware trailing-comma normalizer. It accepts strict JSON as-is, or removes only commas immediately before `}` / `]` and reparses with the standard JSON parser; other malformed JSON still fails closed.
+- Normalization occurs only in the ZIP staging stream. The original build-tree VST3 bundle is never modified. The manifest records the original moduleinfo SHA-256, packaged strict-JSON moduleinfo SHA-256 and whether normalization occurred.
+- Added an exact regression fixture with a JUCE-style trailing comma; the test verifies the archive parses as strict JSON and the source moduleinfo remains byte-for-byte unchanged. Current local packager suite: 11/11 passed.
+- The next exact-head Windows run must prove the real generated moduleinfo, PE architecture, font license notice, manifest, sidecar and full archive together before any download is accepted.
