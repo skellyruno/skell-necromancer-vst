@@ -238,3 +238,11 @@ Not verified: Windows CI, FL Studio host behaviour (PDC with the new fade-out/in
 - Added nine isolated synthetic-bundle regression tests for valid packaging, duplicate bundles/CIDs, missing metadata/module, malformed JSON, non-AMD64 binaries, existing outputs and archive integrity.
 - Windows VST3 artifact retention is now 30 days; actual UI-review captures are retained for 14 days. The distribution ZIP remains VST3-only; no standalone executable is added to the downloadable package.
 - The new Windows workflow must pass on this branch before any artifact is treated as a current release candidate. FL Studio loading, musical A/B, licensing approval and real target-hardware CPU remain unverified.
+
+
+### 2026-11-17 release follow-up — embedded font license and CI cancellation safety
+
+- Confirmed `CMakeLists.txt` embeds `Assets/fonts/Montserrat-SemiBold.ttf` through JUCE binary data and the exact corresponding `Assets/fonts/OFL-Montserrat.txt` contains the full SIL Open Font License 1.1. The VST3 bundle alone did not guarantee that this notice reached the user.
+- The package now includes `THIRD_PARTY_NOTICES/OFL-Montserrat.txt` when the Montserrat font is present, and hashes the notice in the package manifest. If the font exists but its license file is missing, packaging fails closed. This does not assign a license to Skell's own source/product; the repository has no root LICENSE/COPYING/NOTICE and that owner decision remains a commercial-release blocker.
+- Added a tenth offline package test for missing font-license failure and asserted that the actual OFL notice is present in the ZIP.
+- Workflow now runs push validation only on `main` (PRs still validate every candidate) to avoid duplicate push + pull_request builds. Concurrency cancellation is restricted to `pull_request` events; main pushes and manual runs are never auto-cancelled.

@@ -2,6 +2,7 @@ name: Build Skell-Necromancer (Windows VST3)
 on:
   workflow_dispatch:
   push:
+    branches: [main]
     paths:
       - 'Source/**'
       - 'SkellCore/**'
@@ -21,7 +22,7 @@ on:
 # New UI/DSP commits supersede older builds of the same branch.
 concurrency:
   group: necromancer-windows-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
@@ -56,7 +57,7 @@ jobs:
       - name: Package verifier regression tests
         run: python tests/test_vst3_packager.py
       - name: Package and verify Windows x64 VST3
-        run: python tools/package_vst3.py --build-root build --output Skell-Necromancer-Windows-VST3.zip
+        run: python tools/package_vst3.py --build-root build --source-root . --output Skell-Necromancer-Windows-VST3.zip
       - uses: actions/upload-artifact@v4
         with:
           retention-days: 30

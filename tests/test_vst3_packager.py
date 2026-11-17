@@ -49,19 +49,35 @@ class Vst3PackagerTests(unittest.TestCase):
         self.build = self.root / "build"
         self.build.mkdir()
         self.output = self.root / "Skell-Necromancer-Windows-VST3.zip"
+        self.source = self.root / "source"
+        font_dir = self.source / "Assets" / "fonts"
+        font_dir.mkdir(parents=True)
+        (font_dir / "Montserrat-SemiBold.ttf").write_bytes(b"embedded-font-fixture")
+        (font_dir / "OFL-Montserrat.txt").write_text(
+            "SIL OPEN FONT LICENSE Version 1.1\\nfixture license text\\n",
+            encoding="utf-8",
+        )
+
+    def package(self) -> dict:
+        return package_vst3(self.build, self.output, self.source)
 
     def tearDown(self) -> None:
         self.temp.cleanup()
 
     def test_packages_one_valid_x64_bundle_with_manifest_and_checksum(self) -> None:
         bundle = make_bundle(self.build)
-        manifest = package_vst3(self.build, self.output)
+        manifest = self.package()
         self.assertTrue(self.output.is_file())
         self.assertEqual(manifest["format"], "VST3")
         self.assertEqual(manifest["platform"], "windows-x64")
         self.assertEqual(manifest["architecture"], "AMD64")
         self.assertEqual(manifest["version"], "0.1.0")
         self.assertEqual(manifest["bundle_file_count"], 3)
+        self.assertEqual(manifest["package_file_count"], 4)
+        self.assertEqual(
+            manifest["third_party_notices"],
+            ["THIRD_PARTY_NOTICES/OFL-Montserrat.txt"],
+        )
         self.assertEqual(len(manifest["classes"]), 1)
         self.assertEqual(
             self.output.with_suffix(".sha256").read_text(encoding="ascii").split()[0],
@@ -78,7 +94,7 @@ class Vst3PackagerTests(unittest.TestCase):
         make_bundle(self.build, "Skell-Necromancer.vst3")
         make_bundle(self.build, "Unexpected.vst3", "FEDCBA9876543210FEDCBA9876543210")
         with self.assertRaisesRegex(PackageError, "exactly one VST3 bundle"):
-            package_vst3(self.build, self.output)
+            self.package()
 
     def test_refuses_duplicate_class_ids(self) -> None:
         bundle = make_bundle(self.build)
@@ -87,7 +103,7 @@ class Vst3PackagerTests(unittest.TestCase):
         payload["Classes"].append(dict(payload["Classes"][0]))
         info.write_text(json.dumps(payload), encoding="utf-8")
         with self.assertRaisesRegex(PackageError, "Duplicate VST3 class CID"):
-            package_vst3(self.build, self.output)
+            self.package()
 
     def test_refuses_non_amd64_binary(self) -> None:
         bundle = make_bundle(self.build)
@@ -96,38 +112,45 @@ class Vst3PackagerTests(unittest.TestCase):
         struct.pack_into("<H", data, 0x84, 0x14C)
         binary.write_bytes(data)
         with self.assertRaisesRegex(PackageError, "Expected AMD64 PE machine"):
-            package_vst3(self.build, self.output)
+            self.package()
 
     def test_refuses_missing_moduleinfo(self) -> None:
         bundle = make_bundle(self.build)
         (bundle / "Contents" / "Resources" / "moduleinfo.json").unlink()
         with self.assertRaisesRegex(PackageError, "Missing VST3 moduleinfo"):
-            package_vst3(self.build, self.output)
+            self.package()
 
     def test_refuses_missing_binary(self) -> None:
         bundle = make_bundle(self.build)
         (bundle / "Contents" / "x86_64-win" / "Skell-Necromancer.vst3").unlink()
         with self.assertRaisesRegex(PackageError, "exactly one x86_64 Windows VST3 module"):
-            package_vst3(self.build, self.output)
+            self.package()
 
     def test_refuses_invalid_moduleinfo_json(self) -> None:
         bundle = make_bundle(self.build)
         (bundle / "Contents" / "Resources" / "moduleinfo.json").write_text("{", encoding="utf-8")
         with self.assertRaisesRegex(PackageError, "Invalid VST3 moduleinfo"):
-            package_vst3(self.build, self.output)
+            self.package()
 
     def test_refuses_existing_sidecar_before_creating_package(self) -> None:
         make_bundle(self.build)
         self.output.with_suffix(".manifest.json").write_text("keep", encoding="utf-8")
         with self.assertRaisesRegex(PackageError, "Refusing to overwrite an existing sidecar"):
-            package_vst3(self.build, self.output)
+            self.package()
+        self.assertFalse(self.output.exists())
+
+    def test_requires_font_license_when_font_is_embedded(self) -> None:
+        make_bundle(self.build)
+        (self.source / "Assets" / "fonts" / "OFL-Montserrat.txt").unlink()
+        with self.assertRaisesRegex(PackageError, "Montserrat is bundled"):
+            self.package()
         self.assertFalse(self.output.exists())
 
     def test_refuses_to_overwrite_existing_package(self) -> None:
         make_bundle(self.build)
         self.output.write_bytes(b"known-good package")
         with self.assertRaisesRegex(PackageError, "Refusing to overwrite"):
-            package_vst3(self.build, self.output)
+            self.package()
         self.assertEqual(self.output.read_bytes(), b"known-good package")
 
 

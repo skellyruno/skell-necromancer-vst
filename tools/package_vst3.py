@@ -118,9 +118,19 @@ def _validate_bundle(bundle: Path) -> tuple[dict, list[dict], Path, list[Path]]:
     return info, classes, binaries[0], files
 
 
-def package_vst3(build_root: Path, output: Path) -> dict:
+def package_vst3(build_root: Path, output: Path, source_root: Path | None = None) -> dict:
     build_root = build_root.resolve()
     output = output.resolve()
+    source_root = (source_root or Path.cwd()).resolve()
+    font_path = source_root / "Assets" / "fonts" / "Montserrat-SemiBold.ttf"
+    font_license = source_root / "Assets" / "fonts" / "OFL-Montserrat.txt"
+    notices: list[tuple[Path, str]] = []
+    if font_path.is_file():
+        if not font_license.is_file():
+            raise PackageError(
+                "Montserrat is bundled in the plugin, but Assets/fonts/OFL-Montserrat.txt is missing"
+            )
+        notices.append((font_license, "THIRD_PARTY_NOTICES/OFL-Montserrat.txt"))
     if not build_root.is_dir():
         raise PackageError(f"Build root does not exist: {build_root}")
     if output.exists():
@@ -144,7 +154,7 @@ def package_vst3(build_root: Path, output: Path) -> dict:
     if temp_output.exists():
         temp_output.unlink()
 
-    file_records = []
+    package_records = []
     try:
         with zipfile.ZipFile(
             temp_output, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9
@@ -153,10 +163,17 @@ def package_vst3(build_root: Path, output: Path) -> dict:
                 relative = path.relative_to(bundle).as_posix()
                 archive_name = f"{bundle.name}/{relative}"
                 archive.write(path, archive_name)
-                file_records.append({
+                package_records.append({
                     "path": archive_name,
                     "size": path.stat().st_size,
                     "sha256": sha256_file(path),
+                })
+            for notice_path, archive_name in notices:
+                archive.write(notice_path, archive_name)
+                package_records.append({
+                    "path": archive_name,
+                    "size": notice_path.stat().st_size,
+                    "sha256": sha256_file(notice_path),
                 })
 
         with zipfile.ZipFile(temp_output, "r") as archive:
@@ -166,11 +183,14 @@ def package_vst3(build_root: Path, output: Path) -> dict:
             if not names or any(name.startswith("/") or ".." in Path(name).parts for name in names):
                 raise PackageError("Package contains an unsafe archive path")
             roots = {Path(name).parts[0] for name in names}
-            if roots != {bundle.name}:
-                raise PackageError(f"Package must contain only {bundle.name}; found {sorted(roots)}")
-            if len(names) != len(file_records):
-                raise PackageError("Package entry count differs from verified bundle file count")
-            for record in file_records:
+            expected_roots = {bundle.name}
+            if notices:
+                expected_roots.add("THIRD_PARTY_NOTICES")
+            if roots != expected_roots:
+                raise PackageError(f"Package roots differ from expected {sorted(expected_roots)}; found {sorted(roots)}")
+            if len(names) != len(package_records):
+                raise PackageError("Package entry count differs from verified package file count")
+            for record in package_records:
                 with archive.open(record["path"], "r") as stream:
                     if sha256_bytes(stream.read()) != record["sha256"]:
                         raise PackageError(f"Archive content hash mismatch: {record['path']}")
@@ -183,7 +203,7 @@ def package_vst3(build_root: Path, output: Path) -> dict:
 
     archive_hash = sha256_file(output)
     binary_record = next(
-        record for record in file_records
+        record for record in package_records
         if record["path"] == f"{bundle.name}/{binary.relative_to(bundle).as_posix()}"
     )
     factory = info.get("Factory Info", {})
@@ -200,13 +220,18 @@ def package_vst3(build_root: Path, output: Path) -> dict:
         "archive": output.name,
         "archive_size_bytes": output.stat().st_size,
         "archive_sha256": archive_hash,
-        "bundle_file_count": len(file_records),
+        "bundle_file_count": len(files),
+        "package_file_count": len(package_records),
+        "third_party_notices": [
+            record["path"] for record in package_records
+            if record["path"].startswith("THIRD_PARTY_NOTICES/")
+        ],
         "classes": classes,
         "vendor": factory.get("Vendor") if isinstance(factory, dict) else None,
         "source_commit": os.environ.get("GITHUB_SHA"),
         "workflow_run_id": os.environ.get("GITHUB_RUN_ID"),
         "workflow_attempt": os.environ.get("GITHUB_RUN_ATTEMPT"),
-        "files": file_records,
+        "files": package_records,
     }
     manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     checksum_path.write_text(f"{archive_hash}  {output.name}\n", encoding="ascii")
@@ -217,9 +242,10 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--build-root", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--source-root", type=Path, default=Path.cwd())
     args = parser.parse_args(argv)
     try:
-        manifest = package_vst3(args.build_root, args.output)
+        manifest = package_vst3(args.build_root, args.output, args.source_root)
     except PackageError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
