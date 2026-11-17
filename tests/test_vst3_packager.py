@@ -86,9 +86,20 @@ class Vst3PackagerTests(unittest.TestCase):
         with zipfile.ZipFile(self.output) as archive:
             self.assertIsNone(archive.testzip())
             names = archive.namelist()
-            self.assertTrue(all(name.startswith(bundle.name + "/") for name in names))
-            self.assertIn(bundle.name + "/Contents/Resources/moduleinfo.json", names)
-            self.assertEqual(len(names), 3)
+            bundle_entries = [name for name in names if name.startswith(bundle.name + "/")]
+            notice_entries = [name for name in names if name.startswith("THIRD_PARTY_NOTICES/")]
+            self.assertEqual(len(bundle_entries), manifest["bundle_file_count"])
+            self.assertEqual(
+                notice_entries,
+                ["THIRD_PARTY_NOTICES/OFL-Montserrat.txt"],
+            )
+            self.assertEqual(set(names), set(bundle_entries) | set(notice_entries))
+            self.assertIn(bundle.name + "/Contents/Resources/moduleinfo.json", bundle_entries)
+            self.assertIn(
+                "SIL OPEN FONT LICENSE Version 1.1",
+                archive.read("THIRD_PARTY_NOTICES/OFL-Montserrat.txt").decode("utf-8"),
+            )
+            self.assertEqual(len(names), manifest["package_file_count"])
 
 
     def test_normalizes_juce_trailing_commas_in_package_only(self) -> None:
