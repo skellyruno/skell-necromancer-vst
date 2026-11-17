@@ -5,6 +5,7 @@ import struct
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 import zipfile
 from pathlib import Path
 
@@ -191,6 +192,17 @@ class Vst3PackagerTests(unittest.TestCase):
         with self.assertRaisesRegex(PackageError, "Refusing to overwrite"):
             self.package()
         self.assertEqual(self.output.read_bytes(), b"known-good package")
+
+
+    def test_manifest_records_source_head_and_ci_checkout_commit(self) -> None:
+        make_bundle(self.build)
+        with patch.dict("os.environ", {
+            "SOURCE_COMMIT": "source-head-sha",
+            "GITHUB_SHA": "ci-merge-sha",
+        }):
+            manifest = self.package()
+        self.assertEqual(manifest["source_commit"], "source-head-sha")
+        self.assertEqual(manifest["ci_checkout_commit"], "ci-merge-sha")
 
 
 if __name__ == "__main__":
