@@ -35,7 +35,7 @@ def make_bundle(
     info.write_text(json.dumps({
         "Name": "Skell-Necromancer",
         "Version": "0.1.0",
-        "Factory Info": {"Vendor": "Skell Audio"},
+        "Factory Info": {"Vendor": "Skell Audio", "URL": "", "E-Mail": ""},
         "Classes": [{"CID": cid, "Name": "Skell-Necromancer", "Category": "Audio Module Class"}],
     }), encoding="utf-8")
     write_fake_pe64(binary)
@@ -61,6 +61,17 @@ class Vst3PackagerTests(unittest.TestCase):
 
     def package(self) -> dict:
         return package_vst3(self.build, self.output, self.source)
+
+    def package_commercial(self) -> dict:
+        return package_vst3(self.build, self.output, self.source, commercial_release=True)
+
+    def set_factory_contact(self, url: str = "https://example.invalid", email: str = "support@example.invalid") -> None:
+        info_path = self.build / "Skell-Necromancer.vst3" / "Contents" / "Resources" / "moduleinfo.json"
+        payload = json.loads(info_path.read_text(encoding="utf-8"))
+        factory = payload.setdefault("Factory Info", {})
+        factory["URL"] = url
+        factory["E-Mail"] = email
+        info_path.write_text(json.dumps(payload), encoding="utf-8")
 
     def tearDown(self) -> None:
         self.temp.cleanup()
@@ -203,6 +214,55 @@ class Vst3PackagerTests(unittest.TestCase):
             manifest = self.package()
         self.assertEqual(manifest["source_commit"], "source-head-sha")
         self.assertEqual(manifest["ci_checkout_commit"], "ci-merge-sha")
+
+
+    def test_preview_manifest_records_missing_commercial_contacts_without_blocking_private_package(self) -> None:
+        make_bundle(self.build)
+        manifest = self.package()
+        self.assertFalse(manifest["commercial_release"])
+        self.assertIsNone(manifest["license_file"])
+        self.assertEqual(manifest["vendor_url"], "")
+        self.assertEqual(manifest["support_email"], "")
+
+    def test_commercial_release_requires_https_vendor_url(self) -> None:
+        make_bundle(self.build)
+        self.set_factory_contact(url="http://example.invalid")
+        (self.source / "LICENSE").write_text("owner-approved test license", encoding="utf-8")
+        with self.assertRaisesRegex(PackageError, "HTTPS Factory Info URL"):
+            self.package_commercial()
+        self.assertFalse(self.output.exists())
+
+    def test_commercial_release_requires_support_email(self) -> None:
+        make_bundle(self.build)
+        self.set_factory_contact(email="")
+        (self.source / "LICENSE").write_text("owner-approved test license", encoding="utf-8")
+        with self.assertRaisesRegex(PackageError, "E-Mail support address"):
+            self.package_commercial()
+        self.assertFalse(self.output.exists())
+
+    def test_commercial_release_requires_owner_approved_license(self) -> None:
+        make_bundle(self.build)
+        self.set_factory_contact()
+        with self.assertRaisesRegex(PackageError, "owner-approved root LICENSE or COPYING"):
+            self.package_commercial()
+        self.assertFalse(self.output.exists())
+
+    def test_commercial_release_includes_owner_license_and_records_contacts(self) -> None:
+        make_bundle(self.build)
+        self.set_factory_contact()
+        license_text = "Skell product license terms — test fixture only."
+        (self.source / "LICENSE").write_text(license_text, encoding="utf-8")
+
+        manifest = self.package_commercial()
+
+        self.assertTrue(manifest["commercial_release"])
+        self.assertEqual(manifest["license_file"], "LICENSE")
+        self.assertEqual(manifest["vendor_url"], "https://example.invalid")
+        self.assertEqual(manifest["support_email"], "support@example.invalid")
+        with zipfile.ZipFile(self.output) as archive:
+            self.assertIn("LICENSE", archive.namelist())
+            self.assertEqual(archive.read("LICENSE").decode("utf-8"), license_text)
+            self.assertIsNone(archive.testzip())
 
 
 if __name__ == "__main__":

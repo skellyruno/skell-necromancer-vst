@@ -12,6 +12,7 @@ import struct
 import sys
 import zipfile
 from pathlib import Path
+from urllib.parse import urlsplit
 
 
 class PackageError(RuntimeError):
@@ -169,7 +170,49 @@ def _validate_bundle(bundle: Path) -> tuple[dict, list[dict], Path, str | None, 
     return info, classes, info_path, normalized_moduleinfo, original_moduleinfo_sha256, binaries[0], files
 
 
-def package_vst3(build_root: Path, output: Path, source_root: Path | None = None) -> dict:
+def _commercial_release_license(info: dict, source_root: Path) -> Path:
+    """Require owner-supplied commercial metadata and return its approved license file."""
+    factory = info.get("Factory Info")
+    if not isinstance(factory, dict):
+        raise PackageError("Commercial release requires VST3 Factory Info")
+
+    vendor = factory.get("Vendor")
+    if not isinstance(vendor, str) or not vendor.strip():
+        raise PackageError("Commercial release requires an owner-approved VST3 Vendor name")
+
+    url = factory.get("URL")
+    parsed_url = urlsplit(url.strip()) if isinstance(url, str) else None
+    if parsed_url is None or parsed_url.scheme != "https" or not parsed_url.netloc:
+        raise PackageError("Commercial release requires a non-empty HTTPS Factory Info URL")
+
+    email = factory.get("E-Mail")
+    if not isinstance(email, str) or not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email.strip()):
+        raise PackageError("Commercial release requires a valid Factory Info E-Mail support address")
+
+    candidates = (
+        source_root / "LICENSE",
+        source_root / "LICENSE.txt",
+        source_root / "LICENSE.md",
+        source_root / "COPYING",
+        source_root / "COPYING.txt",
+    )
+    license_path = next(
+        (path for path in candidates if path.is_file() and path.stat().st_size > 0),
+        None,
+    )
+    if license_path is None:
+        raise PackageError(
+            "Commercial release requires a non-empty owner-approved root LICENSE or COPYING file"
+        )
+    return license_path
+
+
+def package_vst3(
+    build_root: Path,
+    output: Path,
+    source_root: Path | None = None,
+    commercial_release: bool = False,
+) -> dict:
     build_root = build_root.resolve()
     output = output.resolve()
     source_root = (source_root or Path.cwd()).resolve()
@@ -199,6 +242,7 @@ def package_vst3(build_root: Path, output: Path, source_root: Path | None = None
         )
     bundle = bundles[0]
     info, classes, info_path, normalized_moduleinfo, original_moduleinfo_sha256, binary, files = _validate_bundle(bundle)
+    license_path = _commercial_release_license(info, source_root) if commercial_release else None
 
     output.parent.mkdir(parents=True, exist_ok=True)
     temp_output = output.with_name(output.name + ".tmp")
@@ -235,6 +279,13 @@ def package_vst3(build_root: Path, output: Path, source_root: Path | None = None
                     "size": notice_path.stat().st_size,
                     "sha256": sha256_file(notice_path),
                 })
+            if license_path is not None:
+                archive.write(license_path, "LICENSE")
+                package_records.append({
+                    "path": "LICENSE",
+                    "size": license_path.stat().st_size,
+                    "sha256": sha256_file(license_path),
+                })
 
         with zipfile.ZipFile(temp_output, "r") as archive:
             if archive.testzip() is not None:
@@ -246,6 +297,8 @@ def package_vst3(build_root: Path, output: Path, source_root: Path | None = None
             expected_roots = {bundle.name}
             if notices:
                 expected_roots.add("THIRD_PARTY_NOTICES")
+            if license_path is not None:
+                expected_roots.add("LICENSE")
             if roots != expected_roots:
                 raise PackageError(f"Package roots differ from expected {sorted(expected_roots)}; found {sorted(roots)}")
             if len(names) != len(package_records):
@@ -294,6 +347,10 @@ def package_vst3(build_root: Path, output: Path, source_root: Path | None = None
         ],
         "classes": classes,
         "vendor": factory.get("Vendor") if isinstance(factory, dict) else None,
+        "vendor_url": factory.get("URL") if isinstance(factory, dict) else None,
+        "support_email": factory.get("E-Mail") if isinstance(factory, dict) else None,
+        "commercial_release": bool(commercial_release),
+        "license_file": "LICENSE" if license_path is not None else None,
         "source_commit": os.environ.get("SOURCE_COMMIT") or os.environ.get("GITHUB_SHA"),
         "ci_checkout_commit": os.environ.get("GITHUB_SHA"),
         "workflow_run_id": os.environ.get("GITHUB_RUN_ID"),
@@ -310,9 +367,19 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--build-root", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--source-root", type=Path, default=Path.cwd())
+    parser.add_argument(
+        "--commercial-release",
+        action="store_true",
+        help="Require owner-approved HTTPS vendor URL, support email and root LICENSE/COPYING; include that license in the ZIP",
+    )
     args = parser.parse_args(argv)
     try:
-        manifest = package_vst3(args.build_root, args.output, args.source_root)
+        manifest = package_vst3(
+            args.build_root,
+            args.output,
+            args.source_root,
+            commercial_release=args.commercial_release,
+        )
     except PackageError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
