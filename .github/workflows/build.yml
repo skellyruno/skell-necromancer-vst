@@ -38,6 +38,17 @@ jobs:
         run: cmake -S . -B build -A x64 -DSKELL_BUILD_UI_CAPTURE=ON
       - name: Build
         run: cmake --build build --config Release --parallel 2
+      - name: Verify VST3-only product output
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $productRoot = Join-Path $PWD 'build/SkellNecromancer_artefacts/Release'
+          $vst3 = Join-Path $productRoot 'VST3/Skell-Necromancer.vst3'
+          $standalone = Join-Path $productRoot 'Standalone/Skell-Necromancer.exe'
+          if (-not (Test-Path -LiteralPath $vst3 -PathType Container)) { throw "Expected Windows VST3 bundle missing: $vst3" }
+          if (Test-Path -LiteralPath $standalone) { throw "Unexpected plugin Standalone executable: $standalone" }
+          $bundles = @(Get-ChildItem -LiteralPath 'build' -Recurse -Directory -Filter 'Skell-Necromancer.vst3')
+          if ($bundles.Count -ne 1) { throw "Expected exactly one Skell-Necromancer.vst3 bundle, found $($bundles.Count)" }
       - name: DSP regression tests
         run: ctest --test-dir build --build-config Release --output-on-failure
       - name: Source integrity

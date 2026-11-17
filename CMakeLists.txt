@@ -12,7 +12,7 @@ juce_add_plugin(SkellNecromancer
   BUNDLE_ID "audio.skellyr.necromancer"
   PLUGIN_MANUFACTURER_CODE SkAu
   PLUGIN_CODE SnCr
-  FORMATS VST3 Standalone
+  FORMATS VST3
   PRODUCT_NAME "Skell-Necromancer"
   IS_SYNTH FALSE
   NEEDS_MIDI_INPUT FALSE
