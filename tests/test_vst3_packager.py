@@ -100,15 +100,16 @@ class Vst3PackagerTests(unittest.TestCase):
             '"Category": "Audio Module Class"\n    }',
             '"Category": "Audio Module Class",\n    }',
         )
-        info_path.write_text(raw, encoding="utf-8")
-        original_hash = __import__("hashlib").sha256(raw.encode("utf-8")).hexdigest()
+        raw_bytes = raw.replace("\\n", "\\r\\n").encode("utf-8")
+        info_path.write_bytes(raw_bytes)
+        original_hash = __import__("hashlib").sha256(raw_bytes).hexdigest()
 
         manifest = self.package()
 
         self.assertTrue(manifest["moduleinfo_normalized"])
         self.assertEqual(manifest["moduleinfo_original_sha256"], original_hash)
         self.assertNotEqual(manifest["moduleinfo_sha256"], original_hash)
-        self.assertEqual(info_path.read_text(encoding="utf-8"), raw)
+        self.assertEqual(info_path.read_bytes(), raw_bytes)
         with zipfile.ZipFile(self.output) as archive:
             packaged_text = archive.read(
                 bundle.name + "/Contents/Resources/moduleinfo.json"

@@ -255,3 +255,9 @@ Not verified: Windows CI, FL Studio host behaviour (PDC with the new fade-out/in
 - Normalization occurs only in the ZIP staging stream. The original build-tree VST3 bundle is never modified. The manifest records the original moduleinfo SHA-256, packaged strict-JSON moduleinfo SHA-256 and whether normalization occurred.
 - Added an exact regression fixture with a JUCE-style trailing comma; the test verifies the archive parses as strict JSON and the source moduleinfo remains byte-for-byte unchanged. Current local packager suite: 11/11 passed.
 - The next exact-head Windows run must prove the real generated moduleinfo, PE architecture, font license notice, manifest, sidecar and full archive together before any download is accepted.
+
+
+### 2026-11-17 manifest hash accuracy follow-up
+
+- Tightened the original moduleinfo digest to hash the raw source bytes, not decoded/re-encoded text. UTF-8 BOM is accepted for parsing, but the original SHA-256 now remains byte-accurate across BOM and CRLF inputs.
+- Expanded the trailing-comma fixture to CRLF line endings and asserted the original build-tree file is byte-for-byte unchanged after packaging. Local packager suite remains 11/11.

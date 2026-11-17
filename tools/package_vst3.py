@@ -86,10 +86,11 @@ def _module_info(bundle: Path) -> tuple[dict, list[dict], Path, str | None, str]
     if not info_path.is_file():
         raise PackageError(f"Missing VST3 moduleinfo.json: {info_path}")
     try:
-        raw_text = info_path.read_text(encoding="utf-8")
+        raw_bytes = info_path.read_bytes()
+        raw_text = raw_bytes.decode("utf-8-sig")
     except (OSError, UnicodeError) as exc:
         raise PackageError(f"Unable to read VST3 moduleinfo.json: {exc}") from exc
-    original_sha256 = sha256_bytes(raw_text.encode("utf-8"))
+    original_sha256 = sha256_bytes(raw_bytes)
     normalized_text = None
     try:
         info = json.loads(raw_text)
