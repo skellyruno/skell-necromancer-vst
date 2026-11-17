@@ -121,3 +121,8 @@ Create 10–20 rights-cleared clips representing dull/thin/harsh voices, muddy/n
 ### Verified Windows FIR / metering build
 
 [GitHub Actions run #42409204081](https://github.com/skellyruno/skell-necromancer-vst/actions/runs/42409204081) passed CMake, native VST3/Standalone compilation, FIR delay/null/alias tests, 24 independent LUFS reference cases, 108 independent 8x inter-sample peak cases, source integrity and artifact packaging. Retrieve `Skell-Necromancer-Windows-VST3` from the run's Artifacts section. Host PDC verification in FL Studio is **not** included; use `docs/FL_STUDIO_PDC_TEST.md` for that acceptance procedure.
+
+
+## Windows release package
+
+The Windows release workflow distributes **one Windows x64 VST3 bundle only**. The developer build may still create the optional Standalone target, but the distributable ZIP does not include it. The package verifier refuses ambiguous/multiple VST3 bundles, checks the VST3 module metadata and unique class IDs, verifies the embedded PE machine is AMD64, validates ZIP CRCs and per-file hashes, and emits a provenance manifest plus a SHA-256 sidecar. The VST3 Actions artifact is retained for 30 days; UI-review captures are retained for 14 days. These are private testing artifacts, not a public release.

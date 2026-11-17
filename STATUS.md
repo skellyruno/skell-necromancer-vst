@@ -228,3 +228,13 @@ Not verified: Windows CI, FL Studio host behaviour (PDC with the new fade-out/in
 - Found a second expensive invariant inside the oversampled nonlinear hot path: `std::tanh(bias)` re-evaluated for every oversampled L/R invocation (up to 8 calls per stereo frame at 4x). The offset now updates only when amount changes in `TapeStage::set`, keeping the same `std::tanh(drive*x+bias)-offset` equation.
 - Frozen **old unmodified TapeStage** as `tests/reference/TapeStageReference.h` and added 3 rates (44.1/48/96k) × 3 modes × 3 factors (1/2/4x) with real streaming stereo tone/noise/transient comparisons; threshold 3e-7 sample amplitude.
 - No plugin parameter ID, preset, UI artwork, latency or oversampling filter is changed. Improvement applies only to hot-path CPU work; claim of lower measured CPU still requires profiling and tests.
+
+
+## 2026-11-17 release pipeline: Windows VST3 package integrity and retention
+
+- Audited exact source head `44e511247ac0331115dedb9c4464bc980dfb9694` and Windows workflow run [#43806103369](https://github.com/skellyruno/skell-necromancer-vst/actions/runs/43806103369). The workflow completed successfully and its logs confirm a VST3 ZIP upload (artifact ID `14198069948`), but the artifact was configured for only **1 day** retention and the artifact API returned 404 when independently retrieved. The old ZIP contained no provenance sidecars.
+- Added `tools/package_vst3.py`: requires exactly one VST3 bundle; validates `Contents/Resources/moduleinfo.json`, non-empty version/name, unique 32-hex class IDs, exactly one `Contents/x86_64-win/*.vst3` module and AMD64 PE headers; rejects symlinks and unsafe/duplicate package roots; checks ZIP CRC and every archived file hash; refuses to overwrite existing release outputs.
+- The packager emits a Windows x64/VST3 manifest with source commit and Actions run provenance, bundle/class inventory and per-file SHA-256 values, plus a detached archive SHA-256 sidecar.
+- Added nine isolated synthetic-bundle regression tests for valid packaging, duplicate bundles/CIDs, missing metadata/module, malformed JSON, non-AMD64 binaries, existing outputs and archive integrity.
+- Windows VST3 artifact retention is now 30 days; actual UI-review captures are retained for 14 days. The distribution ZIP remains VST3-only; no standalone executable is added to the downloadable package.
+- The new Windows workflow must pass on this branch before any artifact is treated as a current release candidate. FL Studio loading, musical A/B, licensing approval and real target-hardware CPU remain unverified.
