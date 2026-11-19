@@ -4,7 +4,7 @@
 
 This is a complete, self-contained **source package** for a Windows-first VST3-only product target, starting from the structure of the `skellyruno/skell-vst-template` JUCE/CMake project. The WAV Monopoly screenshots were used as **layout and material references only**. No reference artwork, rune sprite, trademark, or DSP code has been copied.
 
-> **Release status:** The product target is Windows-first and VST3-only. The historical Windows baseline run [#42409204081](https://github.com/skellyruno/skell-necromancer-vst/actions/runs/42409204081) passed its earlier VST3/Standalone build, DSP/reference checks, and packaging, but predates this target change. The exact-head Windows CI for the current VST3-only branch is the acceptance gate. FL Studio host-load testing, reference listening, metering conformity, and CPU benchmarks remain outstanding. A green build is not mastering-grade certification.
+> **Release status:** The current VST3-only installer candidate is [draft PR #5](https://github.com/skellyruno/skell-necromancer-vst/pull/5), head `92f2ea0340922d7795e234318381d570ec9e8152`. Exact-head Windows run [#44430327542](https://github.com/skellyruno/skell-necromancer-vst/actions/runs/44430327542) passed the MSVC build, CTest, reference metering, JUCE UI capture/resize, package verifier, pluginval 1.0.4 strictness 5, installer self-tests, and real-package WhatIf/no-write check. Independent artifact inspection confirmed strict JSON, both preserved class IDs, AMD64 PE32+, ZIP CRCs, and all eight installer-package checksums. These are CI/package gates only: FL Studio host-load/PDC, saved-project/preset/automation recall, real musical A/B, target-PC CPU/latency, legal review and owner approval remain outstanding. Product artifacts are withheld from this public repository by the updated workflow.
 
 ## Functional architecture
 
@@ -138,6 +138,6 @@ Example after owner-approved values and license text have been supplied:
 python tools/package_vst3.py --build-root build --source-root . --output Skell-Necromancer-Windows-VST3.zip --commercial-release
 ```
 
-## Windows VST3 private preview
+## Windows VST3 owner-test preview
 
-The Windows workflow keeps the VST3-only build artifact and also creates a separate private-preview installer package. The per-user PowerShell 7 installer supports a no-write WhatIf check, verified update backup, and reversible rollback. See the Windows install guide at docs/WINDOWS-VST3-INSTALL.md and the release checklist at docs/RELEASE_CHECKLIST.md. These artifacts are unsigned private previews, not commercial releases; FL Studio, real-audio, licensing, support-contact and owner-approval gates remain open.
+The Windows workflow builds and validates the VST3 package and per-user installer in the job workspace. Product artifacts are uploaded only when repository visibility is private. This repository is currently public, so future product-artifact uploads are withheld; historical Actions artifacts remain publicly accessible until their expiry and must not be described as private. The PowerShell 7 installer supports a no-write WhatIf check, verified update backup, and reversible rollback. See the Windows install guide at docs/WINDOWS-VST3-INSTALL.md and the release checklist at docs/RELEASE_CHECKLIST.md. The package is unsigned and non-commercial; FL Studio, real-audio, licensing, support-contact and owner-approval gates remain open.
