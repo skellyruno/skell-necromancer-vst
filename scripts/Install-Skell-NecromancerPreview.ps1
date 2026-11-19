@@ -1,4 +1,6 @@
 [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
+# Internal adaptation of the Skell Choir private-preview installer template.
+# Product identity, VST3 bundle name, and class IDs are specific to Skell-Necromancer.
 param(
     [string]$PackageRoot,
     [string]$Destination,
@@ -518,13 +520,13 @@ function Write-TestPe {
 
 function Write-TestModuleInfo {
     param([string]$BundlePath, [string]$Version, [switch]$DuplicateIds, [switch]$ExtraClass)
-    $secondId = if ($DuplicateIds) { 'ABCDEF019182FAEB536B41754F6D4632' } else { 'ABCDEF011234ABCD536B41754F6D4632' }
+    $secondId = if ($DuplicateIds) { 'ABCDEF019182FAEB536B4175536E4372' } else { 'ABCDEF011234ABCD536B4175536E4372' }
     $classes = @(
-        [ordered]@{ CID = 'ABCDEF019182FAEB536B41754F6D4632'; Category = 'Audio Module Class'; Name = $script:ProductName; Vendor = 'Skell Audio'; Version = $Version },
+        [ordered]@{ CID = 'ABCDEF019182FAEB536B4175536E4372'; Category = 'Audio Module Class'; Name = $script:ProductName; Vendor = 'Skell Audio'; Version = $Version },
         [ordered]@{ CID = $secondId; Category = 'Component Controller Class'; Name = $script:ProductName; Vendor = 'Skell Audio'; Version = $Version }
     )
     if ($ExtraClass) {
-        $classes += [ordered]@{ CID = 'ABCDEF019182FAEB536B41754F6D4632'; Category = 'Factory Preset Class'; Name = $script:ProductName; Vendor = 'Skell Audio'; Version = $Version }
+        $classes += [ordered]@{ CID = 'ABCDEF019182FAEB536B4175536E4372'; Category = 'Factory Preset Class'; Name = $script:ProductName; Vendor = 'Skell Audio'; Version = $Version }
     }
     $document = [ordered]@{
         Name = $script:ProductName
