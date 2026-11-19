@@ -1,11 +1,11 @@
-# Skell-Necromancer 0.1.0 — Windows VST3 private preview
+# Skell-Necromancer 0.1.0 — Windows VST3 owner-test preview
 
-This is a **private, unsigned preview package**, not a commercial release. Use a disposable DAW project until the separate FL Studio and sound-acceptance gates are complete.
+This is an **unsigned owner-test preview**, not a commercial release. Artifact visibility follows the repository's visibility. The current repository is public, so existing GitHub Actions artifacts are publicly accessible; future product-artifact uploads are withheld by CI until the repository is private. Do not describe historical artifact URLs as private or share them as a secure distribution channel. Use a disposable DAW project until the separate FL Studio and sound-acceptance gates are complete.
 
 ## Install
 
 1. Close FL Studio and any other host that may have Skell-Necromancer loaded.
-2. Extract the complete private-preview artifact to a normal folder. Keep the build-info file, checksum manifest, installer, notices, and Skell-Necromancer VST3 bundle together.
+2. Extract the complete owner-test package to a normal folder. Keep the build-info file, checksum manifest, installer, notices, and Skell-Necromancer VST3 bundle together.
 3. Open PowerShell 7 in that extracted folder.
 4. Validate the package without changing files by running:
 
@@ -37,5 +37,5 @@ Rollback restores only the immediately previous verified Skell-Necromancer bundl
 - The installer checks the complete SHA-256 inventory, provenance, strict VST3 JSON, both preserved processor/controller CIDs, AMD64 PE32+, and pluginval strictness 5.
 - Reparse points, path traversal, overlapping package/install/backup paths, tampered bundles, unknown installations, and modified rollback targets are rejected.
 - The installer does not alter other plugins, presets, host state, automation IDs, FL Studio projects, registry entries, or licensing files.
-- The artifact is unsigned and preview-only. Do not distribute it publicly or treat CI success as FL Studio acceptance.
+- The package is unsigned and preview-only. Do not distribute it publicly or treat CI success as FL Studio acceptance. Product artifact uploads are withheld while this repository is public; existing historical Actions artifacts remain public until expiry.
 - FL Studio scan/load, old-project compatibility, preset/state/automation recall, real musical A/B, target-hardware CPU/latency, final third-party attribution, owner-approved vendor URL/support email/license, code signing, and commercial release approval remain separate gates.
