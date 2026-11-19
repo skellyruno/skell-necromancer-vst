@@ -2,9 +2,9 @@
 
 **RAISE THE DEAD MIX** · original SKELL-branded JUCE audio effect · source prototype v0.1.0
 
-This is a complete, self-contained **source package** for a VST3 + Standalone target, starting from the structure of the `skellyruno/skell-vst-template` JUCE/CMake project. The WAV Monopoly screenshots were used as **layout and material references only**. No reference artwork, rune sprite, trademark, or DSP code has been copied.
+This is a Windows-first, **VST3-only** JUCE audio-effect source package, starting from the structure of the `skellyruno/skell-vst-template` JUCE/CMake project. No standalone application target is generated. The WAV Monopoly screenshots were used as **layout and material references only**. No reference artwork, rune sprite, trademark, or DSP code has been copied.
 
-> **Status:** Latest Windows JUCE VST3/Standalone compilation, FIR/latency DSP regression test, independent LUFS/true-peak references, and VST3 packaging **passed** ([GitHub Actions #42409204081](https://github.com/skellyruno/skell-necromancer-vst/actions/runs/42409204081), commit 4a60df5). FL Studio host-load testing, reference listening, metering conformity, and CPU benchmarks remain outstanding. A green build is not mastering-grade certification.
+> **Status:** The historical Windows build and DSP/reference suite passed ([GitHub Actions #42409204081](https://github.com/skellyruno/skell-necromancer-vst/actions/runs/42409204081), commit `4a60df5`). However, independent inspection of its downloaded artifact on November 19, 2026 found trailing commas in `moduleinfo.json`; that artifact is a protected diagnostic baseline, **not a strict-JSON release package**. The current release branch adds normalization and exact bundle validation; its exact-head Windows CI must pass before this defect is considered fixed. FL Studio host-load testing, reference listening, metering conformity, and CPU benchmarks remain outstanding.
 
 ## Functional architecture
 
@@ -32,7 +32,7 @@ AUTO suggestions are bounded and host gesture notifications are sent from the me
 
 ## Build
 
-Requires CMake 3.22+, a C++17 toolchain, JUCE 8.0.12 (or a compatible JUCE 7+ source checkout), and Windows Visual Studio or macOS Xcode. Internet is needed on the first CMake configure **unless** you pass `JUCE_PATH`.
+Requires CMake 3.22+, a C++17 toolchain, JUCE 8.0.12, and Windows Visual Studio 2022 or newer. Internet is needed on the first CMake configure **unless** you pass `JUCE_PATH`.
 
 ### Windows (MSVC 2022 or newer)
 
@@ -45,24 +45,9 @@ If you use Visual Studio 2026, select the generator installed on your system and
 
 ```text
 build/SkellNecromancer_artefacts/Release/VST3/Skell-Necromancer.vst3
-build/SkellNecromancer_artefacts/Release/Standalone/Skell-Necromancer.exe
 ```
 
-### macOS (Xcode/Clang)
-
-```bash
-cmake -S . -B build -G Xcode -DJUCE_PATH="$HOME/JUCE"
-cmake --build build --config Release --parallel 2
-```
-
-Expected paths:
-
-```text
-build/SkellNecromancer_artefacts/Release/VST3/Skell-Necromancer.vst3
-build/SkellNecromancer_artefacts/Release/Standalone/Skell-Necromancer.app
-```
-
-Without `JUCE_PATH`, the project follows the SKELL starter template's `FetchContent` path to JUCE 8.0.12. The included `.github/workflows/build.yml` compiles Windows VST3 and Standalone, packages the VST3, and uploads a GitHub Actions artifact. macOS is supported by local CMake/Xcode instructions but is not currently a GitHub Actions target. The workflow runs on source changes and cancels superseded runs.
+Without `JUCE_PATH`, the project follows the SKELL starter template's `FetchContent` path to JUCE 8.0.12. The only generated plugin format is Windows x64 VST3. The workflow runs DSP and packaging regressions, canonicalizes JUCE's `moduleinfo.json` into strict JSON, requires exactly one VST3 bundle with one processor and one controller class, validates unique 32-hex CIDs and the AMD64 PE32+ module, then uploads the package ZIP and SHA-256 manifest. Automatic cancellation is limited to superseded PR runs on non-protected branches; manual, main, production, and release runs are protected.
 
 ## Original art assets
 
@@ -93,7 +78,7 @@ python tests/test_limiter.py
 - **Passed (independent numerical model, not the VST3):** boost-then-cut null-test for shelves/peaks at 44.1, 48, 96 kHz: residual lower than -90 dB, normally about -240 dB or lower for the test vector.
 - **Passed:** DSP header compilation and 13 seconds of synthetic audio against a minimal JUCE math/parameter shim, no NaNs/Inf, and AUTO entered its second-pass waiting state.
 - **Passed (limited artificial stress):** 4× reconstructed true-peak checks on 36 synthetic cases across 44.1/48/96 kHz with PUSH 0/12/24 dB at a -1.0 dBTP ceiling. The limiter uses a conservative safety margin. **This is not an ITU, EBU, or commercial limiter certification.**
-- **Passed for the latest changes:** Windows CMake configuration, VST3/Standalone compilation, CTest streaming/AUTO/limiter smoke, source integrity check, and VST3 packaging/artifact upload.
+- **Historical Windows evidence:** run #42409204081 compiled the VST3/Standalone targets and passed its DSP/reference checks. Its artifact was later found to contain non-strict trailing-comma metadata, so its packaging result is not accepted as a release gate. The new VST3-only strict package workflow is pending exact-head CI.
 - **Not executed for the latest changes:** VST3 host load, macOS/Xcode build, actual DAW UI rendering, reference LUFS validation, CPU profiling, reference vocal/master listening, high-quality polyphase oversampling checks, and bypass null tests during oversampling changes.
 
 ## Known engineering gaps / release blockers
@@ -120,4 +105,4 @@ Create 10–20 rights-cleared clips representing dull/thin/harsh voices, muddy/n
 
 ### Verified Windows FIR / metering build
 
-[GitHub Actions run #42409204081](https://github.com/skellyruno/skell-necromancer-vst/actions/runs/42409204081) passed CMake, native VST3/Standalone compilation, FIR delay/null/alias tests, 24 independent LUFS reference cases, 108 independent 8x inter-sample peak cases, source integrity and artifact packaging. Retrieve `Skell-Necromancer-Windows-VST3` from the run's Artifacts section. Host PDC verification in FL Studio is **not** included; use `docs/FL_STUDIO_PDC_TEST.md` for that acceptance procedure.
+[GitHub Actions run #42409204081](https://github.com/skellyruno/skell-necromancer-vst/actions/runs/42409204081) passed CMake, historical VST3/Standalone compilation, FIR delay/null/alias tests, 24 independent LUFS reference cases, 108 independent 8x inter-sample peak cases, and source integrity. The downloaded artifact #13588469551 was independently inspected on November 19, 2026: its nested ZIP CRC passed and its module was AMD64 PE32+, but `moduleinfo.json` failed strict JSON parsing because of trailing commas. Preserve that artifact as a diagnostic baseline only; do not distribute it as release-ready. The new release branch adds a string-aware normalizer, strict metadata/class/CID checks, one-bundle enforcement and a SHA-256 manifest. Its exact-head Windows CI is still required. Host PDC verification in FL Studio is **not** included; use `docs/FL_STUDIO_PDC_TEST.md` for that acceptance procedure.
