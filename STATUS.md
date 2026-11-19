@@ -82,3 +82,26 @@ Not verified: Windows CI, FL Studio host behaviour (PDC with the new fade-out/in
 - Rune glyph roaming clusters/flashes (sprite blits, ~3.4 ms/frame).
 - Meter unlit segments brighter (.22), dial arc 4px.
 - Verified: harness render at 3 sizes, knob-edit tests pass. Not verified: Windows CI, FL Studio.
+
+## 2026-11-19 release packaging hardening (draft)
+
+### Protected baseline and confirmed defect
+- Protected Windows artifact: workflow run [#42409204081](https://github.com/skellyruno/skell-necromancer-vst/actions/runs/42409204081), artifact #13588469551, source commit `4a60df5a5cce6a9cd801e67cfff4bb1b6380aa5c`.
+- Downloaded outer artifact SHA-256: `5faf58042ee16fa65bfbc2110b90aea05513ab5753d099207599a575b5a3fdb4` (2,579,356 bytes). Its inner product ZIP SHA-256: `1746bfe973f7e104105ff73f07803ccc6bb213f27026a1e1c98cd6ed0cb4b398`.
+- Both ZIP CRC checks passed. The bundle contains the expected `Contents/Resources/moduleinfo.json` and `Contents/x86_64-win/Skell-Necromancer.vst3`; the module is AMD64 PE32+.
+- **Release blocker confirmed:** strict `json.loads` rejects the shipped moduleinfo because JUCE emitted JSON5-style trailing commas. The old workflow selected the first `.vst3` directory and compressed it without validating metadata, class inventory, module architecture, duplicates or hashes.
+- Baseline artifact is retained unchanged and must be treated as diagnostic, not release-ready.
+
+### Draft branch changes
+- Branch: `release/necromancer-vst3-only-strict-package-20261119`.
+- Added `scripts/package_vst3.py`: string-aware trailing-comma normalization; strict JSON parse and canonical UTF-8 write; exact expected bundle path; one-bundle/one-module/one-moduleinfo checks; product/version/vendor validation; exactly one processor and one controller class; unique 32-hex CIDs; AMD64 PE32+ validation; ZIP CRC verification; per-file and archive SHA-256 manifest.
+- Added `tests/test_vst3_package.py` with seven regression tests, including commas inside strings, escaped quotes/backslashes, malformed JSON no-mutation, duplicate class IDs, duplicate bundles, and wrong architecture.
+- Changed CMake to generate **VST3 only**; no Standalone target is part of the Windows plugin release.
+- Updated the Windows workflow to run package regressions, use the exact bundle path, publish the ZIP plus manifest, and protect manual/main/production/release CI from cancellation. Only superseded automatic PR runs on non-protected branches may be cancelled.
+- Updated README to distinguish the historical build from a strict-JSON accepted package and document the Windows-only VST3 gate.
+
+### Verification
+- Local unit suite: 7/7 packaging tests passed.
+- Re-ran the new packager against the downloaded historical artifact after extraction: trailing commas were normalized without changing string contents; strict JSON passed; two class records passed; AMD64 PE32+ passed; output ZIP CRC passed; normalized package SHA-256 `a3c72efe59156a7e8ab989128ad0d685cec22841745f5aa7f1bc69c9771a9277`.
+- Exact-head Windows CMake/MSVC build, CTest, independent reference suite and final Actions artifact are pending PR CI. No current Windows build is claimed from this runtime.
+- FL Studio scan/load, preset/state recall, automation, audio A/B, true-peak/LUFS conformance, target-PC CPU/latency and current Quick4 UI screenshots remain UNVERIFIED. No DSP, UI, APVTS IDs, presets or host-state data were changed.
