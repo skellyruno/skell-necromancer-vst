@@ -137,3 +137,7 @@ Example after owner-approved values and license text have been supplied:
 ```powershell
 python tools/package_vst3.py --build-root build --source-root . --output Skell-Necromancer-Windows-VST3.zip --commercial-release
 ```
+
+## Windows VST3 private preview
+
+The Windows workflow keeps the VST3-only build artifact and also creates a separate private-preview installer package. The per-user PowerShell 7 installer supports a no-write WhatIf check, verified update backup, and reversible rollback. See the Windows install guide at docs/WINDOWS-VST3-INSTALL.md and the release checklist at docs/RELEASE_CHECKLIST.md. These artifacts are unsigned private previews, not commercial releases; FL Studio, real-audio, licensing, support-contact and owner-approval gates remain open.
