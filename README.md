@@ -126,3 +126,16 @@ Create 10–20 rights-cleared clips representing dull/thin/harsh voices, muddy/n
 ## Windows release package
 
 The Windows release workflow distributes **one Windows x64 VST3 bundle only**. The developer build may still create the optional Standalone target, but the distributable ZIP does not include it. The package verifier refuses ambiguous/multiple VST3 bundles, checks the VST3 module metadata and unique class IDs, normalizes JUCE's trailing-comma moduleinfo only in the staged package (preserving the build output), verifies the embedded PE machine is AMD64, validates ZIP CRCs and per-file hashes, and emits a provenance manifest plus a SHA-256 sidecar. Because the display font is embedded in the plugin, the ZIP also carries the original Montserrat SIL Open Font License under `THIRD_PARTY_NOTICES/` and hashes it in the manifest. The VST3 Actions artifact is retained for 30 days; UI-review captures are retained for 14 days. Superseded pull-request checks may cancel each other, but main-branch and manual workflow runs are not auto-cancelled; PR branches use the pull-request event rather than a duplicate push build. These are private testing artifacts, not a public release.
+
+
+## Commercial release gate
+
+The normal Windows workflow creates a **private preview**, not a commercial release. The current generated VST3 metadata has an empty Factory Info `URL` and `E-Mail`, and this repository does not yet contain an owner-approved root product license. Do not fill these fields with guessed contact details or generic legal text.
+
+For a commercial package, supply the approved HTTPS vendor URL, support email, and a non-empty root `LICENSE` or `COPYING` file, then invoke the packager with `--commercial-release`. That explicit mode fails closed until all three are present, includes the approved license in the ZIP, and records the contact fields and license filename in the provenance manifest. Ordinary preview packaging remains available without those owner decisions. This gate does not choose Skell's legal terms, pricing, trial policy, or commercial distribution permissions.
+
+Example after owner-approved values and license text have been supplied:
+
+```powershell
+python tools/package_vst3.py --build-root build --source-root . --output Skell-Necromancer-Windows-VST3.zip --commercial-release
+```
