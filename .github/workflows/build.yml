@@ -2,7 +2,7 @@ name: Build Skell-Necromancer (Windows VST3)
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, production]
     paths:
       - 'Source/**'
       - 'SkellCore/**'
@@ -19,16 +19,18 @@ on:
       - 'CMakeLists.txt'
       - '.github/workflows/build.yml'
 
-# New UI/DSP commits supersede older builds of the same branch.
+# Only superseded automatic PR checks on non-protected branches may cancel.
+# Manual runs get unique groups; release branches and production-target PRs are protected.
 concurrency:
-  group: necromancer-windows-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: necromancer-windows-${{ github.event.pull_request.head.ref || github.ref }}-${{ github.event_name == 'workflow_dispatch' && github.run_id || 'auto' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref != 'main' && github.event.pull_request.head.ref != 'production' && !startsWith(github.event.pull_request.head.ref, 'release/') && github.event.pull_request.base.ref != 'production' && !startsWith(github.event.pull_request.base.ref, 'release/') }}
 
 jobs:
   build:
     runs-on: windows-latest
     env:
       SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+      REPOSITORY_VISIBILITY: ${{ github.repository_visibility }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -121,9 +123,15 @@ jobs:
           path: pluginval-reports/
           if-no-files-found: ignore
           retention-days: 14
+      - name: Withhold product artifacts from public repositories
+        if: github.repository_visibility != 'private'
+        shell: pwsh
+        run: |
+          Write-Host '::notice::Product VST3 and installer artifacts are withheld because this repository is public. Existing historical artifacts remain accessible until expiry.'
       - uses: actions/upload-artifact@v4
+        if: github.repository_visibility == 'private'
         with:
-          retention-days: 30
+          retention-days: 14
           name: Skell-Necromancer-Windows-VST3
           path: |
             Skell-Necromancer-Windows-VST3.zip
@@ -136,3 +144,191 @@ jobs:
           name: Skell-Necromancer-UI-Review
           path: build/ui-captures/*.png
           if-no-files-found: error
+
+      - name: Assemble private-preview install package
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $stage = Join-Path $PWD 'release-package'
+          if (Test-Path -LiteralPath $stage) { throw "Refusing to reuse release package directory: $stage" }
+          New-Item -ItemType Directory -Path $stage | Out-Null
+          Expand-Archive -LiteralPath 'Skell-Necromancer-Windows-VST3.zip' -DestinationPath $stage
+
+          $bundle = Join-Path $stage 'Skell-Necromancer.vst3'
+          $moduleInfoPath = Join-Path $bundle 'Contents/Resources/moduleinfo.json'
+          $binaryPath = Join-Path $bundle 'Contents/x86_64-win/Skell-Necromancer.vst3'
+          $manifestPath = Join-Path $PWD 'Skell-Necromancer-Windows-VST3.manifest.json'
+          foreach ($required in @($moduleInfoPath, $binaryPath, $manifestPath)) {
+            if (-not (Test-Path -LiteralPath $required -PathType Leaf)) { throw "Required staged release file is missing: $required" }
+          }
+
+          $baseManifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json -AsHashtable -ErrorAction Stop
+          if ($baseManifest.product -ne 'Skell-Necromancer' -or $baseManifest.vendor -ne 'Skell Audio' -or
+              $baseManifest.version -ne '0.1.0' -or $baseManifest.format -ne 'VST3' -or
+              $baseManifest.platform -ne 'windows-x64' -or $baseManifest.architecture -ne 'AMD64' -or
+              $baseManifest.commercial_release -ne $false) {
+            throw 'Base VST3 manifest does not match the approved private-preview identity'
+          }
+          if ($baseManifest.source_commit -ne $env:SOURCE_COMMIT -or
+              $baseManifest.ci_checkout_commit -ne $env:GITHUB_SHA -or
+              $baseManifest.workflow_run_id -ne $env:GITHUB_RUN_ID) {
+            throw 'Base VST3 manifest provenance does not match this exact workflow run'
+          }
+
+          $moduleInfo = [System.IO.File]::ReadAllText($moduleInfoPath) | ConvertFrom-Json -AsHashtable -ErrorAction Stop
+          if ($moduleInfo.Name -ne 'Skell-Necromancer' -or $moduleInfo.Version -ne '0.1.0' -or
+              $moduleInfo['Factory Info'].Vendor -ne 'Skell Audio') {
+            throw 'Staged VST3 moduleinfo identity mismatch'
+          }
+          $classIds = @($moduleInfo.Classes | ForEach-Object { ([string]$_.CID).ToLowerInvariant() } | Sort-Object)
+          $expectedIds = @('abcdef019182faeb536b4175536e4372', 'abcdef011234abcd536b4175536e4372')
+          if (($classIds -join '|') -ne (($expectedIds | Sort-Object) -join '|')) {
+            throw 'Staged VST3 class IDs differ from the preserved processor/controller identity'
+          }
+
+          $binaryHash = (Get-FileHash -LiteralPath $binaryPath -Algorithm SHA256).Hash.ToLowerInvariant()
+          $moduleInfoHash = (Get-FileHash -LiteralPath $moduleInfoPath -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($binaryHash -ne $baseManifest.binary_sha256 -or $moduleInfoHash -ne $baseManifest.moduleinfo_sha256) {
+            throw 'Extracted VST3 binary/moduleinfo hashes differ from the verified base package manifest'
+          }
+          if ([string]::IsNullOrWhiteSpace($env:SOURCE_COMMIT) -or
+              [string]::IsNullOrWhiteSpace($env:GITHUB_SHA) -or
+              [string]::IsNullOrWhiteSpace($env:GITHUB_RUN_ID)) {
+            throw 'Exact source/CI provenance environment values are required'
+          }
+
+          Copy-Item -LiteralPath 'scripts/Install-Skell-NecromancerPreview.ps1' -Destination (Join-Path $stage 'Install-Skell-NecromancerPreview.ps1')
+          Copy-Item -LiteralPath 'docs/WINDOWS-VST3-INSTALL.md' -Destination (Join-Path $stage 'WINDOWS-VST3-INSTALL.md')
+          Copy-Item -LiteralPath 'docs/THIRD_PARTY_NOTICES.md' -Destination (Join-Path $stage 'THIRD_PARTY_NOTICES.md')
+          $privateDistributionAvailable = $env:REPOSITORY_VISIBILITY -eq 'private'
+          $distributionLine = if ($privateDistributionAvailable) {
+            'Product artifacts are uploaded only to this private repository.'
+          } else {
+            'Product artifacts are withheld while this repository is public; historical artifacts are not private.'
+          }
+          $previewLines = @(
+            'SKELL-NECROMANCER 0.1.0 — UNSIGNED OWNER-TEST PREVIEW'
+            'This package is preview-only; it is not a commercial release.'
+            "Source repository visibility: $($env:REPOSITORY_VISIBILITY)"
+            $distributionLine
+            'FL Studio acceptance, owner listening approval, target-hardware CPU/latency, vendor/support metadata, licensing and commercial approval remain open.'
+            'SHA-256 manifests detect accidental corruption; they are not digital signatures.'
+          )
+          [System.IO.File]::WriteAllLines(
+            (Join-Path $stage 'PREVIEW-ONLY.txt'),
+            [string[]]$previewLines,
+            [System.Text.UTF8Encoding]::new($false)
+          )
+
+          $buildInfo = [ordered]@{
+            schema_version = 1
+            repository_visibility = [string]$env:REPOSITORY_VISIBILITY
+            private_distribution_available = [bool]$privateDistributionAvailable
+            distribution_status = if ($privateDistributionAvailable) { 'private-artifact-available' } else { 'withheld-public-repository' }
+            product = [string]$baseManifest.product
+            vendor = [string]$baseManifest.vendor
+            version = [string]$baseManifest.version
+            format = 'VST3'
+            platform = 'windows-x64'
+            release_status = 'preview-only'
+            source_commit = [string]$baseManifest.source_commit
+            ci_checkout_commit = [string]$baseManifest.ci_checkout_commit
+            workflow_run_id = [string]$baseManifest.workflow_run_id
+            workflow_attempt = [string]$baseManifest.workflow_attempt
+            bundle_archive = [string]$baseManifest.archive
+            bundle_archive_sha256 = [string]$baseManifest.archive_sha256
+            bundle_archive_size_bytes = [long]$baseManifest.archive_size_bytes
+            binary = [ordered]@{
+              path = 'Skell-Necromancer.vst3/Contents/x86_64-win/Skell-Necromancer.vst3'
+              size_bytes = (Get-Item -LiteralPath $binaryPath).Length
+              sha256 = $binaryHash
+              architecture = 'AMD64'
+              pe_format = 'PE32+'
+            }
+            moduleinfo = [ordered]@{
+              path = 'Skell-Necromancer.vst3/Contents/Resources/moduleinfo.json'
+              sha256 = $moduleInfoHash
+              strict_json = $true
+              unique_class_ids = $classIds
+              normalization_applied = [bool]$baseManifest.moduleinfo_normalized
+            }
+            validation = [ordered]@{
+              windows_build = 'passed'
+              ctest = 'passed'
+              package_verifier = 'passed'
+              bundle_structure = 'passed'
+              metadata_identity = 'passed'
+              pe32_plus_amd64 = 'passed'
+              pluginval = [ordered]@{ strictness_level = 5; result = 'passed' }
+            }
+            commercial_metadata_gate = [ordered]@{
+              status = 'blocked'
+              blockers = @(
+                'Owner-approved HTTPS vendor URL is not configured',
+                'Owner-approved support email is not configured',
+                'Owner-approved root product LICENSE or COPYING is not configured'
+              )
+            }
+            vendor_url = [string]$baseManifest.vendor_url
+            support_email = [string]$baseManifest.support_email
+            commercial_release = $false
+            license_file = $null
+            third_party_notices = @($baseManifest.third_party_notices)
+            release_blockers = @(
+              'FL Studio scan/load, save/reopen, automation and old-project compatibility are not accepted',
+              'Real musical A/B and owner listening approval are pending',
+              'Target Windows hardware CPU and latency are not measured',
+              'Vendor URL, support email and product license require owner approval',
+              'Third-party asset rights and attribution review remain pending',
+              'Code signing and commercial release approval remain pending'
+            )
+          }
+          [System.IO.File]::WriteAllText(
+            (Join-Path $stage 'build-info.json'),
+            (ConvertTo-Json -InputObject $buildInfo -Depth 12),
+            [System.Text.UTF8Encoding]::new($false)
+          )
+
+          $reparsePoints = @(Get-ChildItem -LiteralPath $stage -Recurse -Force | Where-Object {
+            ($_.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0
+          })
+          if ($reparsePoints.Count -ne 0) { throw 'Preview package contains a reparse point' }
+          $checksumLines = foreach ($file in (Get-ChildItem -LiteralPath $stage -File -Recurse -Force | Sort-Object FullName)) {
+            $relative = [IO.Path]::GetRelativePath($stage, $file.FullName).Replace('\', '/')
+            if ($relative -eq 'SHA256SUMS.txt') { continue }
+            $hash = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$hash  $relative"
+          }
+          [System.IO.File]::WriteAllLines(
+            (Join-Path $stage 'SHA256SUMS.txt'),
+            [string[]]$checksumLines,
+            [System.Text.Encoding]::ASCII
+          )
+          Write-Host "Owner-test preview staged with $($checksumLines.Count) SHA-256 protected files; product artifact upload is gated by repository visibility."
+
+      - name: Run installer update and rollback self-tests
+        shell: pwsh
+        run: pwsh -NoProfile -File scripts/Install-Skell-NecromancerPreview.ps1 -SelfTest
+
+      - name: Verify real preview package with no filesystem changes
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installRoot = Join-Path $env:LOCALAPPDATA 'Programs/Common/VST3'
+          $backupRoot = Join-Path $env:LOCALAPPDATA 'Skelly/Backups/Skell-Necromancer'
+          $installExisted = Test-Path -LiteralPath $installRoot
+          $backupExisted = Test-Path -LiteralPath $backupRoot
+          pwsh -NoProfile -File scripts/Install-Skell-NecromancerPreview.ps1 -PackageRoot release-package -WhatIf
+          if ($LASTEXITCODE -ne 0) { throw "Preview installer -WhatIf validation failed with exit code $LASTEXITCODE" }
+          if (-not $installExisted -and (Test-Path -LiteralPath $installRoot)) { throw 'WhatIf unexpectedly created the VST3 install destination' }
+          if (-not $backupExisted -and (Test-Path -LiteralPath $backupRoot)) { throw 'WhatIf unexpectedly created the backup directory' }
+
+      - name: Upload owner-test installer package (private repository only)
+        if: github.repository_visibility == 'private'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Skell-Necromancer-Private-Preview
+          path: release-package/
+          if-no-files-found: error
+          retention-days: 14
+
