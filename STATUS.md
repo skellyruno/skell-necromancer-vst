@@ -228,3 +228,36 @@ Not verified: Windows CI, FL Studio host behaviour (PDC with the new fade-out/in
 - Found a second expensive invariant inside the oversampled nonlinear hot path: `std::tanh(bias)` re-evaluated for every oversampled L/R invocation (up to 8 calls per stereo frame at 4x). The offset now updates only when amount changes in `TapeStage::set`, keeping the same `std::tanh(drive*x+bias)-offset` equation.
 - Frozen **old unmodified TapeStage** as `tests/reference/TapeStageReference.h` and added 3 rates (44.1/48/96k) × 3 modes × 3 factors (1/2/4x) with real streaming stereo tone/noise/transient comparisons; threshold 3e-7 sample amplitude.
 - No plugin parameter ID, preset, UI artwork, latency or oversampling filter is changed. Improvement applies only to hot-path CPU work; claim of lower measured CPU still requires profiling and tests.
+
+
+## 2026-11-17 release pipeline: Windows VST3 package integrity and retention
+
+- Audited exact source head `44e511247ac0331115dedb9c4464bc980dfb9694` and Windows workflow run [#43806103369](https://github.com/skellyruno/skell-necromancer-vst/actions/runs/43806103369). The workflow completed successfully and its logs confirm a VST3 ZIP upload (artifact ID `14198069948`), but the artifact was configured for only **1 day** retention and the artifact API returned 404 when independently retrieved. The old ZIP contained no provenance sidecars.
+- Added `tools/package_vst3.py`: requires exactly one VST3 bundle; validates `Contents/Resources/moduleinfo.json`, non-empty version/name, unique 32-hex class IDs, exactly one `Contents/x86_64-win/*.vst3` module and AMD64 PE headers; rejects symlinks and unsafe/duplicate package roots; checks ZIP CRC and every archived file hash; refuses to overwrite existing release outputs.
+- The packager emits a Windows x64/VST3 manifest with source commit and Actions run provenance, bundle/class inventory and per-file SHA-256 values, plus a detached archive SHA-256 sidecar.
+- Added nine isolated synthetic-bundle regression tests for valid packaging, duplicate bundles/CIDs, missing metadata/module, malformed JSON, non-AMD64 binaries, existing outputs and archive integrity.
+- Windows VST3 artifact retention is now 30 days; actual UI-review captures are retained for 14 days. The distribution ZIP remains VST3-only; no standalone executable is added to the downloadable package.
+- The new Windows workflow must pass on this branch before any artifact is treated as a current release candidate. FL Studio loading, musical A/B, licensing approval and real target-hardware CPU remain unverified.
+
+
+### 2026-11-17 release follow-up — embedded font license and CI cancellation safety
+
+- Confirmed `CMakeLists.txt` embeds `Assets/fonts/Montserrat-SemiBold.ttf` through JUCE binary data and the exact corresponding `Assets/fonts/OFL-Montserrat.txt` contains the full SIL Open Font License 1.1. The VST3 bundle alone did not guarantee that this notice reached the user.
+- The package now includes `THIRD_PARTY_NOTICES/OFL-Montserrat.txt` when the Montserrat font is present, and hashes the notice in the package manifest. If the font exists but its license file is missing, packaging fails closed. This does not assign a license to Skell's own source/product; the repository has no root LICENSE/COPYING/NOTICE and that owner decision remains a commercial-release blocker.
+- Added a tenth offline package test for missing font-license failure and asserted that the actual OFL notice is present in the ZIP.
+- Workflow now runs push validation only on `main` (PRs still validate every candidate) to avoid duplicate push + pull_request builds. Concurrency cancellation is restricted to `pull_request` events; main pushes and manual runs are never auto-cancelled.
+
+
+### 2026-11-17 package verifier correction — JUCE moduleinfo trailing commas
+
+- The first exact-head Windows build of the new strict packager reached packaging successfully but exposed the real upstream metadata shape: JUCE generated a trailing comma in `moduleinfo.json`. The two initial exact-head runs #44035666459 and #44035708103 therefore failed at the package step after the 9/9 synthetic tests passed. This is a real compatibility defect, not a CMake/DSP failure.
+- Added a quote/escape-aware trailing-comma normalizer. It accepts strict JSON as-is, or removes only commas immediately before `}` / `]` and reparses with the standard JSON parser; other malformed JSON still fails closed.
+- Normalization occurs only in the ZIP staging stream. The original build-tree VST3 bundle is never modified. The manifest records the original moduleinfo SHA-256, packaged strict-JSON moduleinfo SHA-256 and whether normalization occurred.
+- Added an exact regression fixture with a JUCE-style trailing comma; the test verifies the archive parses as strict JSON and the source moduleinfo remains byte-for-byte unchanged. Current local packager suite: 11/11 passed.
+- The next exact-head Windows run must prove the real generated moduleinfo, PE architecture, font license notice, manifest, sidecar and full archive together before any download is accepted.
+
+
+### 2026-11-17 manifest hash accuracy follow-up
+
+- Tightened the original moduleinfo digest to hash the raw source bytes, not decoded/re-encoded text. UTF-8 BOM is accepted for parsing, but the original SHA-256 now remains byte-accurate across BOM and CRLF inputs.
+- Expanded the trailing-comma fixture to CRLF line endings and asserted the original build-tree file is byte-for-byte unchanged after packaging. Local packager suite remains 11/11.
