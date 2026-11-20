@@ -1,22 +1,47 @@
 #pragma once
 #include "RuneRing.h"
-class ReanimateDial:public juce::Slider {
+#include "UiFramePacer.h"
+class ReanimateDial:public juce::Slider,private juce::Timer {
 public:
  ReanimateDial() {setRange(0.0,100.0,0.1);setValue(65.0,juce::dontSendNotification);setSliderStyle(juce::Slider::RotaryVerticalDrag);setTextBoxStyle(juce::Slider::NoTextBox,false,0,0);
  setDoubleClickReturnValue(true,65);setPopupMenuEnabled(true);setPopupDisplayEnabled(true,false,nullptr);setMouseCursor(juce::MouseCursor::PointingHandCursor);
- well=juce::ImageCache::getFromMemory(BinaryData::dial_well_png,BinaryData::dial_well_pngSize);
+ well=juce::ImageCache::getFromMemory(BinaryData::dial_well_png,BinaryData::dial_well_pngSize).createCopy();
+ // Simplify the over-layered chrome bezel toward the reference's single
+ // restrained hardware edge. The quieting stroke replaces the old inner rings,
+ // rather than merely darkening their bright crests. This touches a private
+ // copy of the dial well ONCE and leaves the outer rim and skull asset intact.
+ if(!well.isNull()){
+  juce::Graphics rim(well);
+  rim.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
+  juce::Path quietZone;
+  quietZone.addEllipse(32.f,32.f,376.f,376.f);
+  rim.setColour(juce::Colour(0xff101418).withAlpha(.94f));
+  rim.strokePath(quietZone,juce::PathStrokeType(38.f));
+  // Retain a single fine steel highlight close to the original outside rim.
+  rim.setColour(juce::Colour(0xff9ba4aa).withAlpha(.28f));
+  rim.drawEllipse(11.5f,11.5f,417.f,417.f,1.0f);
+ }
  cap=juce::ImageCache::getFromMemory(BinaryData::knob_cap_big_png,BinaryData::knob_cap_big_pngSize);
- setTooltip("REANIMATE blends tape weight, gentle compression, harmonic life and restored transients. Double-click returns to 65%.");}
+ setTooltip("REANIMATE blends tape weight, gentle compression, harmonic life and restored transients. Double-click returns to 65%.");
+ // Some VST hosts do not deliver VBlank callbacks consistently. The JUCE
+ // message-thread timer advances the runes at 30 Hz only when VBlank stalls.
+ startTimerHz(30);}
  void setLive(float v){live=juce::jlimit(0.f,1.f,v);}
  // REVIVE on and not bypassed: the rune field fades in; otherwise the well empties (as in a bypassed unit).
  void setActive(bool on){target=on?1.f:0.f;}
- void advance(){
+ void tickFromVBlank(){lastVBlankMs=juce::Time::getMillisecondCounterHiRes();advance();}
+ void advance(bool fallback=false){
   const double now=juce::Time::getMillisecondCounterHiRes()*.001,dt=juce::jlimit(0.0,.1,now-lastTime);lastTime=now;
   const bool fading=std::abs(target-act)>.002f;
   act=fading?act+(target-act)*(1.f-(float)std::exp(-dt*9.0)):target;
-  seconds=now;ring.advance(now,live);
-  // 30 Hz is enough for the shimmer; a settled, bypassed dial needs no animation repaints at all.
-  if((++frame&1)==0&&(act>.002f||fading))repaint();
+  seconds=now;
+  // Schedule the actual rune calculation at the visible display cadence.
+  // 30 Hz hosts paint every VBlank; 60/120/144 Hz hosts remain near 30 FPS.
+  // The separate 30 Hz host-VBlank fallback forces its own repaint.
+  const bool hasVisibleField=act>.002f||fading;
+  const bool renderFrame=framePacer.shouldRender(dt,fallback) && hasVisibleField;
+  if(renderFrame){ring.advance(now,live);repaint();}
+  else if(!hasVisibleField)ring.pause(now); // steady bypass: no orbit work
  }
  void paint(juce::Graphics&g)override {
   g.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
@@ -31,18 +56,37 @@ public:
   }
   juce::Path path;for(int s=0;s<=180;++s){float a=start+span*(s/180.f)*p;
     auto x=cx+std::cos(a)*133.f,y=cy+std::sin(a)*133.f;if(s==0)path.startNewSubPath(x,y);else path.lineTo(x,y);}
-  juce::ColourGradient gradient(Theme::violet,96,338,Theme::cyan,355,115,false);gradient.addColour(.57,Theme::green);
-  const juce::PathStrokeType stroke(4.f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded);
+  // Thin spectral trace: violet/pink at the bottom-left, warm light across the
+  // upper arc, then green-to-cyan at the right. The metal cap remains unchanged.
+  juce::ColourGradient gradient(juce::Colour(0xffac7aff),96,338,Theme::cyan,355,115,false);
+  gradient.addColour(.23,juce::Colour(0xfff38ec7));
+  gradient.addColour(.45,juce::Colour(0xffffca79));
+  gradient.addColour(.74,Theme::greenLight);
+  const juce::PathStrokeType stroke(2.7f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded);
   if(act<.999f){g.setColour(Theme::faint.withAlpha(.45f*(1.f-act)));g.strokePath(path,stroke);}
   {juce::Graphics::ScopedSaveState arcState(g);g.setGradientFill(gradient);g.setOpacity(act);g.strokePath(path,stroke);}
   const float angle=start+span*p;
   {juce::Graphics::ScopedSaveState save(g);g.setOpacity(1.f); // drawImage takes its alpha from the current colour
    g.addTransform(juce::AffineTransform::rotation(angle-start-1.18f,cx,cy));
-   g.drawImage(cap,{cx-104.f,cy-104.f,208.f,208.f});}
-  g.setColour(Theme::bone);g.drawLine(cx+std::cos(angle)*109.f,cy+std::sin(angle)*109.f,cx+std::cos(angle)*127.f,cy+std::sin(angle)*127.f,5.f);
-  g.setColour(Theme::bone);g.setFont(Theme::display(13));g.drawFittedText("R E A N I M A T E",juce::Rectangle<int>(130,330,180,18),juce::Justification::centred,1);
+   // Restore the original skull/rune-engraved center knob the user approved.
+   // Its original asset remains untouched; no opaque silver overlay hides it.
+   g.drawImage(cap,{cx-97.f,cy-97.f,194.f,194.f});}
+  g.setColour(Theme::bone);g.drawLine(cx+std::cos(angle)*103.f,cy+std::sin(angle)*103.f,cx+std::cos(angle)*125.f,cy+std::sin(angle)*125.f,4.2f);
+  // Reference-accurate heading above the metal face, protected by subtle dark
+  // glazing so moving symbols remain legible behind it.
+  g.setColour(juce::Colour(0xff050809).withAlpha(.57f));
+  g.fillRoundedRectangle(137.f,48.f,166.f,25.f,4.f);
+  g.setColour(Theme::bone.withAlpha(.94f));
+  g.setFont(Theme::display(12).withExtraKerningFactor(.28f));
+  g.drawFittedText("REANIMATE",juce::Rectangle<int>(132,50,176,21),juce::Justification::centred,1);
   g.setFont(Theme::display(36));g.drawFittedText(juce::String((int)std::lround(getValue()))+"%",juce::Rectangle<int>(130,377,180,47),juce::Justification::centred,1);
-  if(isMouseOverOrDragging()){g.setColour(Theme::green.withAlpha(.5f));g.drawEllipse(90,90,260,260,1.4f);}
+  if(isMouseOverOrDragging()){g.setColour(Theme::greenLight.withAlpha(.20f));g.drawEllipse(cx-101.f,cy-101.f,202.f,202.f,.8f);}
  }
-private:juce::Image well,cap;RuneRing ring;float live=0,act=1.f,target=1.f;int frame=0;double seconds=0,lastTime=0;
+private:
+ void timerCallback() override {
+  if(juce::Time::getMillisecondCounterHiRes()-lastVBlankMs>75.0)advance(true);
+ }
+ juce::Image well,cap;RuneRing ring;float live=0,act=1.f,target=1.f;
+ skell::necromancer::ui::FramePacer framePacer;
+ double seconds=0,lastTime=0,lastVBlankMs=0;
 };

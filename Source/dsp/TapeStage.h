@@ -8,6 +8,11 @@ public:
  void reset() noexcept {os.reset();for(auto& q:dc)q.reset();for(auto& q:bump)q.reset();}
  void set(float amount,int mode,int factor) noexcept {
     a=amount;quality=factor;
+    // Constant nonlinear bias correction does not depend on incoming audio.
+    // Cache tanh(bias) only when a changes; at 4x, this avoids repeating it
+    // up to 8 times per stereo sample. Existing drive/response stay identical.
+    const float currentBias=.13f*a;
+    if(currentBias!=lastBias){lastBias=currentBias;biasOffset=std::tanh(currentBias);}
     if(std::abs(a-lastAmount)>1.0e-5f||mode!=lastMode){
       const double weight=mode==1?1.0:mode==0?.63:.8;
       for(auto& q:bump)q.design(Biquad::Kind::lowShelf,sr,78.0,amount*1.25*weight);
@@ -17,13 +22,13 @@ public:
  float process(int ch,float input) noexcept {
     auto x=(float)bump[ch].process(ch,input);
     const float drive=1.f+a*(1.55f);const float bias=.13f*a;
-    x=os.process(ch,x,quality,[&](float s) noexcept {const float z=drive*s+bias;return std::tanh(z)-std::tanh(bias);});
+    x=os.process(ch,x,quality,[&](float s) noexcept {const float z=drive*s+bias;return std::tanh(z)-biasOffset;});
     x/=std::max(.75f,drive*.78f);
     // Symmetric pre/post frequency shaping: the DC filter protects the host.
     const float processed=(float)dc[ch].process(ch,x);
     const float alignedDry=os.alignDry(ch,input,quality);
     return alignedDry+(processed-alignedDry)*a;
  }
-private: double sr=44100;float a=0,lastAmount=-100.f;int quality=1,lastMode=-1;std::array<Biquad,2>dc,bump;Oversampler os;
+private: double sr=44100;float a=0,lastAmount=-100.f;int quality=1,lastMode=-1;float lastBias=-100.f,biasOffset=0.f;std::array<Biquad,2>dc,bump;Oversampler os;
 };
 }

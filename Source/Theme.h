@@ -3,14 +3,14 @@
 #include "BinaryData.h"
 namespace Theme {
 constexpr int width = 1157, height = 612;
-constexpr float cx = 568.0f, cy = 325.0f;
+constexpr float cx = 578.0f, cy = 319.0f;
 constexpr int footerY = 580, headerY = 36;
 const juce::Colour black(0xff07090a), panel(0xff14181a), panelRaised(0xff1c2123);
 const juce::Colour green(0xff39ff3a), greenLight(0xff8dff8a), greenDim(0xff135c1a);
 const juce::Colour bone(0xffe8e6da), violet(0xff9b5cff), cyan(0xff3affd9);
 const juce::Colour faint(0xff687176), border(0xff424d4f);
 inline const juce::Rectangle<int> topBar(0,0,width,36), header(0,36,width,44), footer(0,580,width,32);
-inline const juce::Rectangle<int> dial(348,105,440,440), inputMeter(85,99,48,282), outputMeter(1012,99,48,282);
+inline const juce::Rectangle<int> dial(358,99,440,440), inputMeter(85,99,48,282), outputMeter(1012,99,48,282);
 inline const juce::Rectangle<int> low(230,170,65,65), mid(230,323,65,65), high(847,170,65,65), hf(847,323,65,65);
 inline const juce::Rectangle<int> input(73,443,66,66), output(1001,443,66,66);
 inline const juce::Rectangle<int> range(302,329,48,70);
