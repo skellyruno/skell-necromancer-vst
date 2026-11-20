@@ -2,9 +2,9 @@
 
 **RAISE THE DEAD MIX** · original SKELL-branded JUCE audio effect · source prototype v0.1.0
 
-This is a complete, self-contained **source package** for a VST3 + Standalone target, starting from the structure of the `skellyruno/skell-vst-template` JUCE/CMake project. The WAV Monopoly screenshots were used as **layout and material references only**. No reference artwork, rune sprite, trademark, or DSP code has been copied.
+This is a complete, self-contained **source package** for a Windows-first VST3-only product target, starting from the structure of the `skellyruno/skell-vst-template` JUCE/CMake project. The WAV Monopoly screenshots were used as **layout and material references only**. No reference artwork, rune sprite, trademark, or DSP code has been copied.
 
-> **Status:** Latest Windows JUCE VST3/Standalone compilation, FIR/latency DSP regression test, independent LUFS/true-peak references, and VST3 packaging **passed** ([GitHub Actions #42409204081](https://github.com/skellyruno/skell-necromancer-vst/actions/runs/42409204081), commit 4a60df5). FL Studio host-load testing, reference listening, metering conformity, and CPU benchmarks remain outstanding. A green build is not mastering-grade certification.
+> **Release status:** The product target is Windows-first and VST3-only. The historical Windows baseline run [#42409204081](https://github.com/skellyruno/skell-necromancer-vst/actions/runs/42409204081) passed its earlier VST3/Standalone build, DSP/reference checks, and packaging, but predates this target change. The exact-head Windows CI for the current VST3-only branch is the acceptance gate. FL Studio host-load testing, reference listening, metering conformity, and CPU benchmarks remain outstanding. A green build is not mastering-grade certification.
 
 ## Functional architecture
 
@@ -45,7 +45,6 @@ If you use Visual Studio 2026, select the generator installed on your system and
 
 ```text
 build/SkellNecromancer_artefacts/Release/VST3/Skell-Necromancer.vst3
-build/SkellNecromancer_artefacts/Release/Standalone/Skell-Necromancer.exe
 ```
 
 ### macOS (Xcode/Clang)
@@ -59,10 +58,9 @@ Expected paths:
 
 ```text
 build/SkellNecromancer_artefacts/Release/VST3/Skell-Necromancer.vst3
-build/SkellNecromancer_artefacts/Release/Standalone/Skell-Necromancer.app
 ```
 
-Without `JUCE_PATH`, the project follows the SKELL starter template's `FetchContent` path to JUCE 8.0.12. The included `.github/workflows/build.yml` compiles Windows VST3 and Standalone, packages the VST3, and uploads a GitHub Actions artifact. macOS is supported by local CMake/Xcode instructions but is not currently a GitHub Actions target. The workflow runs on source changes and cancels superseded runs.
+Without `JUCE_PATH`, the project follows the SKELL starter template's `FetchContent` path to JUCE 8.0.12. The included `.github/workflows/build.yml` compiles the Windows x64 VST3 product target only, packages the single VST3 bundle, and uploads a GitHub Actions artifact. macOS is supported by local CMake/Xcode instructions but is not currently a GitHub Actions target. The workflow runs on source changes and cancels superseded runs.
 
 ## Original art assets
 
@@ -120,12 +118,12 @@ Create 10–20 rights-cleared clips representing dull/thin/harsh voices, muddy/n
 
 ### Verified Windows FIR / metering build
 
-[GitHub Actions run #42409204081](https://github.com/skellyruno/skell-necromancer-vst/actions/runs/42409204081) passed CMake, native VST3/Standalone compilation, FIR delay/null/alias tests, 24 independent LUFS reference cases, 108 independent 8x inter-sample peak cases, source integrity and artifact packaging. Retrieve `Skell-Necromancer-Windows-VST3` from the run's Artifacts section. Host PDC verification in FL Studio is **not** included; use `docs/FL_STUDIO_PDC_TEST.md` for that acceptance procedure.
+[GitHub Actions run #42409204081](https://github.com/skellyruno/skell-necromancer-vst/actions/runs/42409204081) passed CMake, native VST3/Standalone compilation, FIR delay/null/alias tests, 24 independent LUFS reference cases, 108 independent 8x inter-sample peak cases, source integrity and artifact packaging. Retrieve `Skell-Necromancer-Windows-VST3` from the run's Artifacts section. Host PDC verification in FL Studio is **not** included; use `docs/FL_STUDIO_PDC_TEST.md` for that acceptance procedure. This historical run predates the current VST3-only target change and does not validate it.
 
 
 ## Windows release package
 
-The Windows release workflow distributes **one Windows x64 VST3 bundle only**. The developer build may still create the optional Standalone target, but the distributable ZIP does not include it. The package verifier refuses ambiguous/multiple VST3 bundles, checks the VST3 module metadata and unique class IDs, normalizes JUCE's trailing-comma moduleinfo only in the staged package (preserving the build output), verifies the embedded PE machine is AMD64, validates ZIP CRCs and per-file hashes, and emits a provenance manifest plus a SHA-256 sidecar. Because the display font is embedded in the plugin, the ZIP also carries the original Montserrat SIL Open Font License under `THIRD_PARTY_NOTICES/` and hashes it in the manifest. The VST3 Actions artifact is retained for 30 days; UI-review captures are retained for 14 days. Superseded pull-request checks may cancel each other, but main-branch and manual workflow runs are not auto-cancelled; PR branches use the pull-request event rather than a duplicate push build. These are private testing artifacts, not a public release.
+The Windows release workflow distributes **one Windows x64 VST3 bundle only**. The JUCE product target is now VST3-only: no plugin Standalone executable is built or packaged. The package verifier refuses ambiguous/multiple VST3 bundles, checks the VST3 module metadata and unique class IDs, normalizes JUCE's trailing-comma moduleinfo only in the staged package (preserving the build output), verifies the embedded PE machine is AMD64, validates ZIP CRCs and per-file hashes, and emits a provenance manifest plus a SHA-256 sidecar. Because the display font is embedded in the plugin, the ZIP also carries the original Montserrat SIL Open Font License under `THIRD_PARTY_NOTICES/` and hashes it in the manifest. The VST3 Actions artifact is retained for 30 days; UI-review captures are retained for 14 days. Superseded pull-request checks may cancel each other, but main-branch and manual workflow runs are not auto-cancelled; PR branches use the pull-request event rather than a duplicate push build. These are private testing artifacts, not a public release.
 
 
 ## Commercial release gate
